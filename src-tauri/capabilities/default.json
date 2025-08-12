@@ -1,0 +1,50 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-is-maximized",
+    "dialog:allow-message",
+    "dialog:allow-open",
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        {
+          "path": "C:/Program Files (x86)/Steam/steamapps/workshop/content/431960/**/*"
+        },
+        {
+          "path": "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\431960\\**\\*"
+        },
+        {
+          "path": "**/steamapps/workshop/content/431960/**/*"
+        },
+        {
+          "path": "**/*.pkg"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [
+        {
+          "path": "C:/Program Files (x86)/Steam/steamapps/workshop/content/431960/*"
+        },
+        {
+          "path": "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\431960\\*"
+        },
+        {
+          "path": "**/steamapps/workshop/content/431960/*"
+        }
+      ]
+    },
+    "upload:default"
+  ]
+}

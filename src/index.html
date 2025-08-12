@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="system">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>repkg - GUI</title>
+    
+    <!-- 预加载关键样式资源 -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- 内联关键样式防止FOUC -->
+    <style>
+        /* 防止FOUC的关键样式 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* 初始隐藏内容直到样式加载完成 */
+        body {
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
+        }
+        
+        /* 样式加载完成后的显示状态 */
+        body.styles-loaded {
+            opacity: 1;
+        }
+        
+        /* 基础主题变量 - 防止初始渲染时的样式缺失 */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f7;
+            --bg-tertiary: #efefef;
+            --border-color: #e5e5e5;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent-color: #3b82f6;
+            --accent-text: #ffffff;
+        }
+
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --bg-tertiary: #3f3f46;
+            --border-color: #3f3f46;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+        }
+        
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden">
+    
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- 自定义标题栏 -->
+    <header id="titlebar"
+        class="h-8 bg-[var(--bg-secondary)] flex items-center justify-between px-2 drag-region fixed top-0 left-0 right-0 z-50 border-b border-[var(--border-color)]">
+        <div class="flex items-center space-x-2">
+            <!-- <img src="assets/icon.svg" alt="Icon" class="w-4 h-4"> -->
+            <span class="text-xs font-medium">RePKG-GUI</span>
+        </div>
+        <div class="flex items-center space-x-1 no-drag">
+            <button id="minimize-btn"
+                class="w-8 h-6 flex items-center justify-center hover:bg-[var(--bg-tertiary)] rounded text-[var(--text-secondary)] transition-colors">
+                <svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M853.333333 469.333333H170.666667a42.666667 42.666667 0 0 1 0-85.333333h682.666666a42.666667 42.666667 0 0 1 0 85.333333z"
+                        fill="currentColor"></path>
+                </svg>
+            </button>
+            <button id="maximize-btn"
+                class="w-8 h-6 flex items-center justify-center hover:bg-[var(--bg-tertiary)] rounded text-[var(--text-secondary)] transition-colors">
+                <svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M597.333333 395.861333V192a21.333333 21.333333 0 0 0-42.666666 0v256a21.333333 21.333333 0 0 0 21.333333 21.333333h256a21.333333 21.333333 0 0 0 0-42.666666h-205.12L890.24 163.306667a21.333333 21.333333 0 0 0-30.165333-30.165334L597.333333 395.861333z m-170.666666 232.277334V832a21.333333 21.333333 0 0 0 42.666666 0V576a21.333333 21.333333 0 0 0-21.333333-21.333333H192a21.333333 21.333333 0 0 0 0 42.666666h205.12L133.76 860.693333a21.333333 21.333333 0 0 0 30.165333 30.165334L426.666667 628.138667z"
+                        fill="currentColor"></path>
+                </svg>
+            </button>
+            <button id="close-btn"
+                class="w-8 h-6 flex items-center justify-center hover:bg-red-500 hover:text-white rounded text-[var(--text-secondary)] transition-colors">
+                <svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M481.834667 512L155.584 185.749333a21.333333 21.333333 0 0 1 30.165333-30.165333L512 481.834667 838.250667 155.584a21.333333 21.333333 0 0 1 30.165333 30.165333L542.165333 512l326.250667 326.250667a21.333333 21.333333 0 0 1-30.165333 30.165333L512 542.165333 185.749333 868.416a21.333333 21.333333 0 1 1-30.165333-30.165333L481.834667 512z"
+                        fill="currentColor"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-8">
+        <!-- 左侧标签栏 (可折叠) -->
+        <aside
+            class="w-20 hover:w-60 bg-[var(--bg-secondary)] p-4 flex flex-col border-r border-[var(--border-color)] transition-all duration-300 ease-in-out group">
+            <div class="flex items-center mb-8 px-3">
+                <img src="./assets/icon.svg" alt="repkg" width="23" height="23"
+                    class="text-[var(--accent-color)] flex-shrink-0">
+                <h1
+                    class="text-xl font-bold w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-2 transition-all duration-200 whitespace-nowrap">
+                    RePKG</h1>
+            </div>
+            <nav class="flex flex-col gap-2">
+                <a href="#" class="nav-link active flex items-center px-3 py-2 rounded-md text-base font-medium"
+                    data-page="home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="flex-shrink-0">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    <span
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">首页</span>
+                </a>
+                <a href="#" class="nav-link flex items-center px-3 py-2 rounded-md text-base font-medium"
+                    data-page="manual">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="flex-shrink-0">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                    <span
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">手动提取</span>
+                </a>
+            </nav>
+            <div class="mt-auto">
+                <a href="#" class="nav-link flex items-center px-3 py-2 rounded-md text-base font-medium"
+                    data-page="settings">
+                    <svg t="1755013019415" class="icon flex-shrink-0 w-[23px] h-[23px]" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6832" width="200" height="200">
+                        <path d="M449.194667 82.346667a128 128 0 0 1 125.610666 0l284.16 160a128 128 0 0 1 65.194667 111.530666v316.245334a128 128 0 0 1-65.194667 111.530666l-284.16 160a128 128 0 0 1-125.610666 0l-284.16-160a128 128 0 0 1-65.194667-111.530666V353.877333A128 128 0 0 1 165.034667 242.346667z m83.754666 74.410666a42.666667 42.666667 0 0 0-41.898666 0L206.933333 316.714667a42.666667 42.666667 0 0 0-21.76 37.162666v316.245334a42.666667 42.666667 0 0 0 21.76 37.162666l284.16 160a42.666667 42.666667 0 0 0 41.898667 0l284.16-160a42.666667 42.666667 0 0 0 21.76-37.162666V353.877333a42.666667 42.666667 0 0 0-21.76-37.162666zM512 341.333333a170.666667 170.666667 0 1 1 0 341.333334 170.666667 170.666667 0 0 1 0-341.333334z m0 85.333334a85.333333 85.333333 0 1 0 0 170.666666 85.333333 85.333333 0 0 0 0-170.666666z" fill="currentColor" p-id="6833"></path>
+                    </svg>
+                    <span
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">设置</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- 右侧主内容区 -->
+        <main class="flex-1 overflow-y-auto relative">
+            <!-- 首页 -->
+            <div id="home" class="page active p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">本地壁纸</h2>
+                    <div class="flex space-x-2">
+                        <button id="refresh-wallpapers"
+                            class="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md transition-colors" title="刷新">
+                            <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </button>
+                        
+                        <div class="flex items-center">
+                            <span id="name-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
+                            <button id="sort-by-name"
+                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm">名称</button>
+                        </div>
+                        <div class="flex items-center">
+                            <span id="date-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
+                            <button id="sort-by-date"
+                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm">日期</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wallpaper-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    <!-- JS动态生成壁纸卡片 -->
+                </div>
+            </div>
+
+            <!-- 手动提取页 -->
+            <div id="manual" class="page p-8">
+                <h2 class="text-2xl font-bold mb-6">手动提取</h2>
+                <div class="max-w-xl mx-auto mt-10">
+                    <div id="dropzone"
+                        class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer bg-[var(--bg-secondary)] hover:border-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                        <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M17.25 8.25L21 12m-18 0l3.75-3.75M3 12h18" />
+                        </svg>
+                        <p class="mt-4 text-lg font-medium text-[var(--text-primary)]">点击此处批量选择 .pkg 文件</p>
+                        <input type="file" id="file-input" class="hidden" multiple accept=".pkg">
+                    </div>
+                    <div id="file-list" class="mt-4 space-y-2"></div>
+
+                    <!-- 提取目录选择组件 -->
+                    <div class="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="font-medium">提取到</p>
+                            <div class="flex gap-2">
+                                <button id="change-extract-path-manual"
+                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">更改</button>
+                                <button id="restore-default-extract-path-manual"
+                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                            </div>
+                        </div>
+                        <input type="text" id="extract-path-manual"
+                            class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                            placeholder="请输入提取路径">
+                    </div>
+
+                    <!-- 手动提取按钮 -->
+                    <button id="manual-extract-btn"
+                        class="mt-4 w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity">开始提取</button>
+                    <button id="open-manual-extract-folder-btn"
+                        class="mt-2 w-full py-3 rounded-lg btn-green">打开提取文件夹</button>
+                </div>
+            </div>
+
+            <!-- 设置页 -->
+            <div id="settings" class="page p-8">
+                <h2 class="text-2xl font-bold mb-8">设置</h2>
+                <div class="max-w-2xl mx-auto space-y-8">
+                    <!-- 外观设置 -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">外观</h3>
+                        <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <span class="font-medium">主题</span>
+                            <div class="flex items-center gap-2 p-1 bg-[var(--bg-tertiary)] rounded-md">
+                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="system">跟随系统</button>
+                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="light">亮色</button>
+                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="dark">暗色</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 创意工坊路径设置 -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">创意工坊路径</h3>
+                        <div class="space-y-2">
+                            <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="font-medium">自定义路径</p>
+                                    <div class="flex gap-2">
+                                        <button id="browse-workshop-path"
+                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">浏览</button>
+                                        <button id="restore-default-path"
+                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                                        <button id="save-workshop-path"
+                                            class="px-3 py-1 text-sm bg-[var(--accent-color)] text-[var(--accent-text)] rounded-md">保存</button>
+                                    </div>
+                                </div>
+                                <input type="text" id="workshop-path"
+                                    class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                                    placeholder="请输入创意工坊路径">
+                                <!-- <p id="current-workshop-path" class="text-xs text-[var(--text-secondary)] mt-1"></p> -->
+                                <!-- <p class="text-xs text-[var(--text-secondary)] mt-1">默认路径: <code class="text-[var(--accent-color)]">C:\Program Files (x86)\Steam\steamapps\workshop\content\431960</code></p> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统设置 -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">系统设置</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div>
+                                    <p class="font-medium">提取完成后自动打开提取文件夹</p>
+                                    <p class="text-sm text-[var(--text-secondary)]">解包完成后自动打开提取文件夹</p>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="auto-open-extract-folder"><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 解包设置 -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">解包设置</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div>
+                                    <p class="font-medium">仅保留图像文件</p>
+                                    <p class="text-sm text-[var(--text-secondary)]">只提取图片和视频，忽略其他文件</p>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"
+                                        checked><span class="toggle-slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div>
+                                    <p class="font-medium">不把Tex文件转换为图像</p>
+                                    <p class="text-sm text-[var(--text-secondary)]">保留原始的 .tex 文件</p>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="no-tex-convert-checkbox"><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div>
+                                    <p class="font-medium">忽略原有目录结构</p>
+                                    <p class="text-sm text-[var(--text-secondary)]">将所有文件放在同一级目录中</p>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox"
+                                        id="ignore-dir-structure-checkbox"><span class="toggle-slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <div>
+                                    <p class="font-medium">覆盖所有现有文件</p>
+                                    <p class="text-sm text-[var(--text-secondary)]">如果目标文件夹中存在同名文件则覆盖</p>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="overwrite-files-checkbox"><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 关于 -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">关于</h3>
+                        <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">RePKG-GUI</span>
+                                <a href="https://github.com/naiheeeee/repkg-gui" target="_blank"
+                                    class="text-sm text-[var(--accent-color)] hover:underline flex items-center gap-1">
+                                    <img src="./assets/github.svg" alt="GitHub" class="w-4 h-4 theme-icon-light">
+                                    <img src="./assets/github-white.svg" alt="GitHub" class="w-4 h-4 theme-icon-dark hidden">
+                                    naiheeeee/repkg-gui
+
+                                </a>
+                            </div>
+                            <hr class="border-[var(--border-color)] my-3">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">RePKG-GUI版本</span>
+                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.1.0</span>
+                            </div>
+                            <script>
+                                // 动态加载 package.json 并更新版本号
+                                fetch('../package.json')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        document.getElementById('app-version').textContent = 'v' + data.version;
+                                    })
+                                    .catch(error => {
+                                        // console.error('无法加载 package.json:', error);
+                                    });
+                            </script>
+                            <!-- <hr class="border-[var(--border-color)] my-3">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">检查更新</span>
+                                <button class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">检查更新</button>
+                            </div> -->
+                            <hr class="border-[var(--border-color)] my-3">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">RePKG</span>
+                                <a href="https://github.com/notscuffed/repkg" target="_blank"
+                                    class="text-sm text-[var(--accent-color)] hover:underline flex items-center gap-1">
+                                    <img src="./assets/github.svg" alt="GitHub" class="w-4 h-4 theme-icon-light">
+                                    <img src="./assets/github-white.svg" alt="GitHub" class="w-4 h-4 theme-icon-dark hidden">
+                                    notscuffed/repkg
+                                </a>
+                            </div>
+                            <hr class="border-[var(--border-color)] my-3">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">RePKG 版本</span>
+                                <span class="text-sm text-[var(--text-secondary)]" id="repkg-version">RePKG
+                                    0.4.0+e69a76dcdb461f5bdeba01a8a7fa5131a09bcefe</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 首页右侧详情弹窗 -->
+        <div id="details-backdrop" class="fixed inset-0 bg-black/30 z-10 opacity-0 pointer-events-none"
+            onclick="closeDrawer()"></div>
+        <div id="details-drawer"
+            class="fixed top-8 right-0 h-[calc(100%-2rem)] w-[500px] bg-[var(--bg-primary)] shadow-2xl z-20 p-6 flex flex-col">
+            <div class="flex-shrink-0">
+                <!-- <button onclick="closeDrawer()" class="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button> -->
+                <img id="details-img" src=""
+                    class="w-48 h-48 mx-auto aspect-square object-cover rounded-lg mb-4 bg-[var(--bg-tertiary)]">
+                <h3 id="details-name" class="text-xl font-bold mb-4 text-center"></h3>
+                <div class="h-8"></div>
+            </div>
+            <div class="flex-grow space-y-6">
+                <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="font-medium">提取到</p>
+                        <div class="flex gap-2">
+                            <button id="change-extract-path"
+                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">更改</button>
+                            <button id="restore-default-extract-path"
+                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                        </div>
+                    </div>
+                    <input type="text" id="extract-path"
+                        class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                        placeholder="请输入提取路径">
+                </div>
+                <button id="open-folder-btn"
+                    class="w-full py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-semibold hover:bg-[var(--bg-tertiary)] transition-colors">打开壁纸所在文件夹</button>
+                <button id="extract-btn"
+                    class="w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity">开始提取</button>
+                <button id="open-extract-folder-btn" class="w-full py-3 rounded-lg btn-green">打开提取文件夹</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/tailwindcss.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

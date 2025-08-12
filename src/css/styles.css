@@ -1,0 +1,201 @@
+/* 自定义字体和基础样式 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 主题颜色变量 */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
+  --bg-tertiary: #efefef;
+  --border-color: #e5e5e5;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --accent-color: #3b82f6;
+  --accent-text: #ffffff;
+}
+
+html.dark {
+  --bg-primary: #18181b;
+  --bg-secondary: #27272a;
+  --bg-tertiary: #3f3f46;
+  --border-color: #3f3f46;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* 页面切换过渡效果 */
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 侧边栏详情页过渡效果 */
+#details-drawer {
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(100%);
+}
+
+#details-drawer.open {
+  transform: translateX(0);
+}
+
+#details-backdrop {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* 自定义开关样式 */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-tertiary);
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked+.toggle-slider {
+  background-color: var(--accent-color);
+}
+
+input:checked+.toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* 自定义标题栏样式 */
+.drag-region {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+#titlebar button {
+  -webkit-app-region: no-drag;
+}
+
+/* 确保内容不被标题栏遮挡 */
+.pt-8 {
+  padding-top: 32px;
+}
+
+/* 排序箭头样式 */
+.sort-arrow {
+  /* 使用透明度而不是 display: none 来防止布局变化 */
+  transition: opacity 0.2s ease-in-out;
+}
+
+.sort-arrow:not(.opacity-0) {
+  opacity: 1;
+}
+
+.sort-arrow.opacity-0 {
+  opacity: 0;
+}
+
+/* Windows 特定的样式调整 */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+}
+
+/* 绿色按钮样式 */
+.btn-green {
+  background-color: rgb(34, 197, 94);
+  color: white;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-green:hover {
+  background-color: rgb(22, 163, 74);
+}
+
+html.dark .btn-green {
+  background-color: rgb(34, 197, 94);
+}
+
+html.dark .btn-green:hover {
+  background-color: rgb(22, 163, 74);
+}
+
+/* 刷新图标旋转动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.refresh-icon-spinning {
+  animation: spin 1s linear;
+}
