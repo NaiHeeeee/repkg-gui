@@ -363,19 +363,8 @@
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG-GUI版本</span>
-                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.1.0</span>
+                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.1.1</span>
                             </div>
-                            <script>
-                                // 动态加载 package.json 并更新版本号
-                                fetch('../package.json')
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        document.getElementById('app-version').textContent = 'v' + data.version;
-                                    })
-                                    .catch(error => {
-                                        // console.error('无法加载 package.json:', error);
-                                    });
-                            </script>
                             <!-- <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">检查更新</span>
