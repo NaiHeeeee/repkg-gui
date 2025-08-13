@@ -32,6 +32,8 @@
 ### User Experience
 - **Modern Interface**: Responsive design using Tailwind CSS
 - **Theme Switching**: Support for light/dark/follow system themes
+- **Language Switching**: Support for English/Chinese language switching
+- **Custom Background**: Support for setting network images as app background with adjustable opacity
 - **Custom Paths**: Customizable Steam Workshop path and extraction directory
 - **Batch Operations**: Support for batch unpacking and file management
 
