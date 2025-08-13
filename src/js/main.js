@@ -383,11 +383,17 @@ document.addEventListener('DOMContentLoaded', function () {
           wallpapers.length = 0;
           wallpapers.push(...loadedWallpapers);
           
+          // 应用当前排序设置
+          applyCurrentSort();
+          
           // 隐藏加载动画
           hideLoadingAnimation();
           
           // 重新渲染壁纸网格
           renderWallpaperGrid();
+          
+          // 更新排序箭头显示
+          updateSortArrows();
           
           // 预加载前几张图片
           preloadFirstImages(6);
@@ -426,7 +432,15 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
     wallpapers.length = 0;
     wallpapers.push(...mockWallpapers);
+    
+    // 应用当前排序设置
+    applyCurrentSort();
+    
+    // 重新渲染壁纸网格
     renderWallpaperGrid();
+    
+    // 更新排序箭头显示
+    updateSortArrows();
   }
 
   // --- 页面导航逻辑 ---
@@ -665,21 +679,21 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   
   function sortWallpapers(method) {
-    // 如果切换了排序方法，重置新方法的排序顺序为正序
+    // 如果切换了排序方法，重置新方法的排序顺序为升序
     if (currentSortMethod !== method) {
       sortOrders[method] = 'asc';
+    } else {
+      // 如果点击的是当前排序方法，切换排序方向
+      sortOrders[method] = sortOrders[method] === 'asc' ? 'desc' : 'asc';
     }
     
     currentSortMethod = method;
     
-    // 切换当前排序方法的排序顺序
-    sortOrders[method] = sortOrders[method] === 'asc' ? 'desc' : 'asc';
-    
     if (method === 'name') {
       if (sortOrders.name === 'asc') {
-        wallpapers.sort((a, b) => b.name.localeCompare(a.name));
-      } else {
         wallpapers.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        wallpapers.sort((a, b) => b.name.localeCompare(a.name));
       }
     } else if (method === 'date') {
       if (sortOrders.date === 'asc') {
@@ -706,6 +720,31 @@ document.addEventListener('DOMContentLoaded', function () {
     renderWallpaperGrid();
   }
   
+  function applyCurrentSort() {
+    // 根据当前排序方法应用排序
+    if (currentSortMethod === 'name') {
+      if (sortOrders.name === 'asc') {
+        wallpapers.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        wallpapers.sort((a, b) => b.name.localeCompare(a.name));
+      }
+    } else if (currentSortMethod === 'date') {
+      if (sortOrders.date === 'asc') {
+        // 按文件夹修改日期正序排序（最旧的在前）
+        wallpapers.sort((a, b) => {
+          if (!a.modifiedDate || !b.modifiedDate) return 0;
+          return new Date(a.modifiedDate) - new Date(b.modifiedDate);
+        });
+      } else {
+        // 按文件夹修改日期倒序排序（最新的在前）
+        wallpapers.sort((a, b) => {
+          if (!a.modifiedDate || !b.modifiedDate) return 0;
+          return new Date(b.modifiedDate) - new Date(a.modifiedDate);
+        });
+      }
+    }
+  }
+
   function updateSortArrows() {
     // 首先隐藏所有箭头
     const arrows = document.querySelectorAll('.sort-arrow');
