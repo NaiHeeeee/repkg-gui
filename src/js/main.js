@@ -1,3 +1,45 @@
+window.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); // 阻止浏览器默认右键菜单
+});
+  
+document.addEventListener('dragstart', (event) => {
+  if (event.target.tagName === 'IMG') {
+    event.preventDefault();
+  }
+});
+
+
+// 全局变量声明
+let wallpapers = [];
+let currentSortMethod = 'date'; // 默认按时间排序
+let sortOrders = {
+  name: 'desc', // 'asc' 表示正序，'desc' 表示倒序
+  date: 'asc' // 默认时间正序（最旧的在前）
+};
+
+// 设置默认提取路径函数（移到全局作用域）
+async function setDefaultExtractPath() {
+  const extractPathInput = document.getElementById('extract-path');
+  if (extractPathInput) {
+    try {
+      if (typeof window.__TAURI__ !== 'undefined') {
+        const { invoke } = window.__TAURI__.core;
+        const homeDir = await invoke('get_home_dir');
+        // 确保homeDir末尾没有反斜杠，然后拼接路径
+        const normalizedHomeDir = homeDir.replace(/\\$/, '');
+        const desktopPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
+        extractPathInput.value = desktopPath;
+      } else {
+        // Fallback for non-Tauri environment
+        extractPathInput.value = 'C:\\RePKG-GUI';
+      }
+    } catch (error) {
+      console.error('无法获取用户桌面路径:', error);
+      extractPathInput.value = 'C:\\RePKG-GUI';
+    }
+  }
+}
+
 // 防止FOUC的核心逻辑
 (function preventFOUC() {
     // 检测样式是否加载完成
@@ -43,12 +85,6 @@
         document.documentElement.classList.remove('dark');
     }
 })();
-
-// 原有的contextmenu阻止代码
-// window.addEventListener("contextmenu", (e) => {
-//   e.preventDefault(); // 阻止浏览器默认右键菜单
-//   });
-
 
   // 存储手动提取的文件列表
   let manualFiles = [];
@@ -136,19 +172,78 @@ document.addEventListener('DOMContentLoaded', function () {
   
   // 初始化语言选择器
   function initLanguageSelector() {
-    const languageSelect = document.getElementById('language-select');
-    if (languageSelect && window.i18n) {
-      // 设置当前选中的语言
-      languageSelect.value = window.i18n.currentLanguage;
+    const languageToggleBtn = document.getElementById('language-toggle-btn');
+    const languageOptions = document.getElementById('language-options');
+    const languageButtons = document.querySelectorAll('.language-option');
+    
+    if (window.i18n) {
+      // 更新按钮文本显示当前语言
+      function updateLanguageButtonText() {
+        const currentLang = window.i18n.currentLanguage;
+        const langMap = {
+          'zh-CN': '简体中文',
+          'en-US': 'English'
+        };
+        if (languageToggleBtn) {
+          languageToggleBtn.textContent = langMap[currentLang] || '选择语言';
+        }
+      }
       
-      // 监听语言变化
-      languageSelect.addEventListener('change', (e) => {
-        window.i18n.setLanguage(e.target.value);
+      // 初始化按钮文本
+      updateLanguageButtonText();
+      
+      // 更新语言选项的选中状态
+      function updateLanguageSelection() {
+        const currentLang = window.i18n.currentLanguage;
+        languageButtons.forEach(button => {
+          const lang = button.dataset.lang;
+          const checkIcon = button.querySelector('.check-icon');
+          
+          if (lang === currentLang) {
+            button.classList.add('bg-[var(--accent-color)]', 'text-[var(--accent-text)]');
+            button.classList.remove('bg-[var(--bg-tertiary)]');
+            checkIcon.classList.remove('opacity-0');
+            checkIcon.classList.add('opacity-100');
+          } else {
+            button.classList.remove('bg-[var(--accent-color)]', 'text-[var(--accent-text)]');
+            button.classList.add('bg-[var(--bg-tertiary)]');
+            checkIcon.classList.remove('opacity-100');
+            checkIcon.classList.add('opacity-0');
+          }
+        });
+      }
+      
+      // 初始化语言选择状态
+      updateLanguageSelection();
+      
+      // 切换语言选项区域的显示/隐藏
+      if (languageToggleBtn) {
+        languageToggleBtn.addEventListener('click', () => {
+          languageOptions.classList.toggle('hidden');
+        });
+      }
+      
+      // 为语言选项按钮添加点击事件
+      languageButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const lang = button.dataset.lang;
+          window.i18n.setLanguage(lang);
+          languageOptions.classList.add('hidden'); // 选择后隐藏选项区域
+          updateLanguageButtonText();
+          updateLanguageSelection(); // 更新选中状态
+        });
       });
       
-      // 监听语言变化事件，更新选择器
-      window.addEventListener('languageChanged', (e) => {
-        languageSelect.value = e.detail.language;
+      // 监听语言变化事件，更新按钮文本
+      window.addEventListener('languageChanged', () => {
+        updateLanguageButtonText();
+      });
+      
+      // 点击其他地方关闭语言选项
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#language-toggle-btn') && !e.target.closest('#language-options')) {
+          languageOptions.classList.add('hidden');
+        }
       });
     }
   }
@@ -161,32 +256,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
   initTranslations();
   // --- 设置默认提取路径 ---
-  async function setDefaultExtractPath() {
-    const extractPathInput = document.getElementById('extract-path');
-    if (extractPathInput) {
-      try {
-        if (typeof window.__TAURI__ !== 'undefined') {
-          const { invoke } = window.__TAURI__.core;
-          const homeDir = await invoke('get_home_dir');
-          // 确保homeDir末尾没有反斜杠，然后拼接路径
-          const normalizedHomeDir = homeDir.replace(/\\$/, '');
-          const desktopPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
-          extractPathInput.value = desktopPath;
-        } else {
-          // Fallback for non-Tauri environment
-          extractPathInput.value = 'C:\\RePKG-GUI';
-        }
-      } catch (error) {
-        console.error('无法获取用户桌面路径:', error);
-        extractPathInput.value = 'C:\\RePKG-GUI';
-      }
-    }
-  }
-  
-  // --- 读取本地Steam创意工坊数据 ---
-  const wallpapers = [];
-  
-  // Call this function to set the default extract path
   setDefaultExtractPath();
   
   // 使用Tauri的API读取本地文件系统
@@ -719,13 +788,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // --- 排序功能 ---
-  let currentSortMethod = 'date'; // 默认按时间排序
-
-  // 跟踪每个排序方法的排序顺序
-  const sortOrders = {
-    name: 'desc', // 'asc' 表示正序，'desc' 表示倒序
-    date: 'asc' // 默认时间正序（最旧的在前）
-  };
   
   function sortWallpapers(method) {
     // 如果切换了排序方法，重置新方法的排序顺序为升序

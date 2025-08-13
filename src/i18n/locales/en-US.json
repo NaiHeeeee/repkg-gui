@@ -124,6 +124,7 @@
     "title": "Workshop Path",
     "custom_path": "Custom Path",
     "current_path": "Current path: {path}",
-    "hint": "Tip: You can enter a basic path like D:/Steam, or a partial path like E:/Game/Steam/steamapps, and the system will automatically complete it to the full path"
+    "hint": "Tip: You can enter a basic path like D:/Steam, or a partial path like E:/Game/Steam/steamapps, and the system will automatically complete it to the full path",
+    "placeholder": "You can enter a basic path like D:/Steam, auto-complete full path"
   }
 }

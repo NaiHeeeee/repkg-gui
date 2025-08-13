@@ -123,6 +123,7 @@
     "title": "创意工坊路径",
     "custom_path": "自定义路径",
     "current_path": "当前路径: {path}",
-    "hint": "提示: 可输入基础路径如 D:/Steam，或部分路径如 E:/Game/Steam/steamapps，系统会自动补全为完整路径"
+    "hint": "提示: 可输入基础路径如 D:/Steam，或部分路径如 E:/Game/Steam/steamapps，系统会自动补全为完整路径",
+    "placeholder": "可输入基础路径如 D:/Steam，自动补全完整路径"
   }
 }
