@@ -126,5 +126,18 @@
     "current_path": "Current path: {path}",
     "hint": "Tip: You can enter a basic path like D:/Steam, or a partial path like E:/Game/Steam/steamapps, and the system will automatically complete it to the full path",
     "placeholder": "You can enter a basic path like D:/Steam, auto-complete full path"
+  },
+  "background": {
+    "title": "Custom Background",
+    "enable": "Enable Custom Background",
+    "network_url": "Network URL",
+    "enter_url": "Please enter image URL",
+    "apply": "Apply",
+    "clear": "Clear Background",
+    "preview": "Preview",
+    "opacity": "Opacity",
+    "opacity_value": "{value}%",
+    "invalid_url": "Please enter a valid image or video URL",
+    "load_failed": "Background loading failed, please check if the URL is correct"
   }
 }
