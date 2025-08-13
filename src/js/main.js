@@ -169,10 +169,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const customPath = localStorage.getItem('repkg-workshop-path');
         if (customPath) {
           try {
-            const exists = await invoke('check_file_exists', { path: customPath });
+            // 使用自动补全功能
+            const completedPath = await autoCompleteWorkshopPath(customPath);
+            if (completedPath !== customPath) {
+              // 如果路径被补全，更新存储的路径
+              localStorage.setItem('repkg-workshop-path', completedPath);
+              const workshopPathInput = document.getElementById('workshop-path');
+              if (workshopPathInput) {
+                workshopPathInput.value = completedPath;
+              }
+            }
+            
+            const exists = await invoke('check_file_exists', { path: completedPath });
             if (exists) {
-              workshopPath = customPath;
-              wallpaperFolders = await invoke('read_workshop_directory', { path: customPath });
+              workshopPath = completedPath;
+              wallpaperFolders = await invoke('read_workshop_directory', { path: completedPath });
               // console.log('使用用户设置的自定义路径:', workshopPath);
             }
           } catch (e) {
@@ -187,7 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
             'C:/Program Files (x86)/Steam/steamapps/workshop/content/431960',
             'D:/Steam/steamapps/workshop/content/431960',
             'D:/SteamLibrary/steamapps/workshop/content/431960',
+            'E:/Steam/steamapps/workshop/content/431960',
             'E:/SteamLibrary/steamapps/workshop/content/431960',
+            'F:/Steam/steamapps/workshop/content/431960',
             'F:/SteamLibrary/steamapps/workshop/content/431960'
           ];
           
@@ -1229,11 +1242,128 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   
+  // 自动补全创意工坊路径
+  async function autoCompleteWorkshopPath(basePath) {
+    if (!basePath) return null;
+    
+    // 定义标准的创意工坊子路径
+    const workshopSubPath = 'steamapps/workshop/content/431960';
+    
+    try {
+      // 检查是否在Tauri环境中运行
+      if (typeof window.__TAURI__ !== 'undefined') {
+        const { invoke } = window.__TAURI__.core;
+        
+        // 标准化路径分隔符
+        let normalizedBasePath = basePath.replace(/\\/g, '/').replace(/\/$/, '');
+        
+        // 如果基础路径本身已经是完整路径，直接返回
+        if (basePath.includes('workshop/content/431960')) {
+          return basePath;
+        }
+        
+        // 检查用户输入的路径是否包含steamapps，但缺少后续部分
+        if (normalizedBasePath.includes('steamapps')) {
+          // 如果路径已经包含steamapps，尝试直接补全剩余部分
+          const workshopFullPath = `${normalizedBasePath}/workshop/content/431960`;
+          const exists = await invoke('check_file_exists', { path: workshopFullPath });
+          if (exists) {
+            return workshopFullPath;
+          }
+          
+          // 如果steamapps后面还有内容，尝试清理并重新构建
+          const steamappsIndex = normalizedBasePath.indexOf('steamapps');
+          if (steamappsIndex !== -1) {
+            const steamappsBase = normalizedBasePath.substring(0, steamappsIndex + 'steamapps'.length);
+            const potentialPath = `${steamappsBase}/workshop/content/431960`;
+            const potentialExists = await invoke('check_file_exists', { path: potentialPath });
+            if (potentialExists) {
+              return potentialPath;
+            }
+          }
+        }
+        
+        // 尝试直接拼接的完整路径
+        const fullPath = `${normalizedBasePath}/${workshopSubPath}`;
+        const exists = await invoke('check_file_exists', { path: fullPath });
+        if (exists) {
+          return fullPath;
+        }
+        
+        // 处理常见的Steam安装路径模式
+        const pathPatterns = [
+          // 直接路径
+          `${normalizedBasePath}/${workshopSubPath}`,
+          // SteamLibrary路径
+          `${normalizedBasePath}/SteamLibrary/${workshopSubPath}`,
+          `${normalizedBasePath}/steamapps/common/SteamLibrary/${workshopSubPath}`,
+          // Program Files路径
+          `${normalizedBasePath}/Program Files (x86)/Steam/${workshopSubPath}`,
+          `${normalizedBasePath}/Program Files/Steam/${workshopSubPath}`,
+          // 驱动器根目录下的Steam
+          `${normalizedBasePath}/Steam/${workshopSubPath}`,
+          // 如果输入的是驱动器字母，如C:、D:
+          `${normalizedBasePath}/Steam/${workshopSubPath}`,
+          `${normalizedBasePath}/Program Files (x86)/Steam/${workshopSubPath}`,
+          // 检查SteamLibrary在其他驱动器
+          `${normalizedBasePath}/SteamLibrary/steamapps/workshop/content/431960`
+        ];
+        
+        // 去重路径
+        const uniquePaths = [...new Set(pathPatterns)];
+        
+        for (const testPath of uniquePaths) {
+          try {
+            const exists = await invoke('check_file_exists', { path: testPath });
+            if (exists) {
+              return testPath;
+            }
+          } catch (e) {
+            // 路径不存在，继续尝试下一个
+            continue;
+          }
+        }
+        
+        // 特殊处理：如果用户输入了部分steamapps路径
+        const steamappsVariants = [
+          `${normalizedBasePath}/workshop/content/431960`,
+          `${normalizedBasePath.replace(/steamapps.*$/, 'steamapps')}/workshop/content/431960`,
+          `${normalizedBasePath.replace(/steamapps.*$/, 'steamapps/common')}/SteamLibrary/workshop/content/431960`
+        ];
+        
+        for (const variantPath of steamappsVariants) {
+          try {
+            const exists = await invoke('check_file_exists', { path: variantPath });
+            if (exists) {
+              return variantPath;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+        
+        // 如果没有找到，返回原始输入（保持兼容性）
+        return basePath;
+      }
+    } catch (error) {
+      console.error('路径检测失败:', error);
+    }
+    
+    return basePath;
+  }
+
   // 保存路径按钮事件
   if (saveWorkshopPathBtn) {
-    saveWorkshopPathBtn.addEventListener('click', () => {
-      const path = workshopPathInput.value.trim();
+    saveWorkshopPathBtn.addEventListener('click', async () => {
+      let path = workshopPathInput.value.trim();
       if (path) {
+        // 自动补全路径（静默补全，不弹窗）
+        const completedPath = await autoCompleteWorkshopPath(path);
+        if (completedPath !== path) {
+          path = completedPath;
+          workshopPathInput.value = path;
+        }
+        
         localStorage.setItem('repkg-workshop-path', path);
         if (currentWorkshopPath) {
           currentWorkshopPath.textContent = `当前路径: ${path}`;
