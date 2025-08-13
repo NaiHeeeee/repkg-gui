@@ -45,9 +45,9 @@
 })();
 
 // 原有的contextmenu阻止代码
-window.addEventListener("contextmenu", (e) => {
-  e.preventDefault(); // 阻止浏览器默认右键菜单
-  });
+// window.addEventListener("contextmenu", (e) => {
+//   e.preventDefault(); // 阻止浏览器默认右键菜单
+//   });
 
 
   // 存储手动提取的文件列表
@@ -123,6 +123,43 @@ async function updateMaximizeButton() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  // 等待i18n加载完成
+  function waitForI18n() {
+    return new Promise((resolve) => {
+      if (window.i18n && window.i18n.translations) {
+        resolve();
+      } else {
+        window.addEventListener('languageChanged', resolve, { once: true });
+      }
+    });
+  }
+  
+  // 初始化语言选择器
+  function initLanguageSelector() {
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect && window.i18n) {
+      // 设置当前选中的语言
+      languageSelect.value = window.i18n.currentLanguage;
+      
+      // 监听语言变化
+      languageSelect.addEventListener('change', (e) => {
+        window.i18n.setLanguage(e.target.value);
+      });
+      
+      // 监听语言变化事件，更新选择器
+      window.addEventListener('languageChanged', (e) => {
+        languageSelect.value = e.detail.language;
+      });
+    }
+  }
+  
+  // 初始化翻译
+  async function initTranslations() {
+    await waitForI18n();
+    initLanguageSelector();
+  }
+  
+  initTranslations();
   // --- 设置默认提取路径 ---
   async function setDefaultExtractPath() {
     const extractPathInput = document.getElementById('extract-path');
@@ -133,15 +170,15 @@ document.addEventListener('DOMContentLoaded', function () {
           const homeDir = await invoke('get_home_dir');
           // 确保homeDir末尾没有反斜杠，然后拼接路径
           const normalizedHomeDir = homeDir.replace(/\\$/, '');
-          const desktopPath = `${normalizedHomeDir}\\Desktop\\REPKG-GUI提取壁纸`;
+          const desktopPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
           extractPathInput.value = desktopPath;
         } else {
           // Fallback for non-Tauri environment
-          extractPathInput.value = 'C:\\REPKG-GUI提取壁纸';
+          extractPathInput.value = 'C:\\RePKG-GUI';
         }
       } catch (error) {
         console.error('无法获取用户桌面路径:', error);
-        extractPathInput.value = 'C:\\REPKG-GUI提取壁纸';
+        extractPathInput.value = 'C:\\RePKG-GUI';
       }
     }
   }
@@ -418,9 +455,9 @@ document.addEventListener('DOMContentLoaded', function () {
               <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <h3 class="text-lg font-semibold text-red-600 mb-2">加载失败</h3>
+              <h3 class="text-lg font-semibold text-red-600 mb-2" data-i18n="extract.load_failed">加载失败</h3>
               <p class="text-sm text-gray-500 mb-4">${error.message}</p>
-              <button onclick="loadSteamWorkshopWallpapers()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+              <button onclick="loadSteamWorkshopWallpapers()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" data-i18n="buttons.reload">
                 重新加载
               </button>
             </div>`;
@@ -512,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>
           <div class="mt-8">
             <br>
-            <h3 class="text-xl font-semibold text-[var(--text-primary)] mb-2">正在加载壁纸</h3>
           </div>
         </div>
       </div>
@@ -541,8 +577,8 @@ document.addEventListener('DOMContentLoaded', function () {
           <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-[var(--text-primary)]">未找到壁纸</h3>
-          <p class="mt-1 text-sm text-[var(--text-secondary)]">请确保Steam创意工坊路径存在且包含壁纸文件</p>
+          <h3 class="mt-2 text-sm font-medium text-[var(--text-primary)]" data-i18n="extract.no_wallpapers">未找到壁纸</h3>
+          <p class="mt-1 text-sm text-[var(--text-secondary)]" data-i18n="extract.ensure_path">请确保Steam创意工坊路径存在且包含壁纸文件</p>
         </div>
       `;
       return;
@@ -833,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function () {
           await invoke('open_folder', { path: normalizedPath });
         } catch (error) {
           // console.error('打开文件夹失败:', error);
-          alert('无法打开文件夹: ' + error);
+          alert(window.i18n.t('messages.open_folder_error') + error);
         }
       };
     }
@@ -850,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // 显示提取进度或加载状态
       const extractBtn = document.getElementById('extract-btn');
       const originalText = extractBtn.textContent;
-      extractBtn.textContent = '提取中...';
+      extractBtn.textContent = window.i18n.t('messages.extracting');
       extractBtn.disabled = true;
       
       // 调用 Rust 后端的提取功能
@@ -931,7 +967,7 @@ document.addEventListener('DOMContentLoaded', function () {
       extractBtn.disabled = false;
       
       // 显示成功消息
-      alert('提取完成!');
+      alert(window.i18n.t('messages.extract_success'));
       
       // 返回结果
       return result;
@@ -939,13 +975,13 @@ document.addEventListener('DOMContentLoaded', function () {
       // 恢复按钮状态
       const extractBtn = document.getElementById('extract-btn');
       if (extractBtn) {
-        extractBtn.textContent = '开始提取';
+        extractBtn.textContent = window.i18n.t('buttons.extract_start');
         extractBtn.disabled = false;
       }
       
       // 显示错误消息
       console.error('提取失败:', error);
-      alert('提取失败: ' + error);
+      alert(window.i18n.t('messages.extract_failed') + error);
       
       throw error;
     }
@@ -958,7 +994,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const extractPathInput = document.getElementById('extract-path');
     
     if (!detailsName || !extractPathInput) {
-      alert('无法获取壁纸信息或提取路径');
+      alert(window.i18n.t('messages.cannot_get_info'));
       return;
     }
     
@@ -966,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 这里我们假设在 openDrawer 函数中将壁纸路径存储在某个地方
     const currentWallpaper = window.currentlySelectedWallpaper;
     if (!currentWallpaper) {
-      alert('未选择壁纸');
+      alert(window.i18n.t('messages.no_wallpaper_selected'));
       return;
     }
     
@@ -975,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const extractPath = extractPathInput.value.replace(/\\/g, '/');
     
     if (!wallpaperPath || !extractPath) {
-      alert('壁纸路径或提取路径为空');
+      alert(window.i18n.t('messages.empty_path'));
       return;
     }
     
@@ -1002,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const extractPath = extractPathInput.value;
     
     if (!extractPath) {
-      alert('请先设置提取路径');
+      alert(window.i18n.t('messages.set_extract_path_first'));
       return;
     }
     
@@ -1015,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } catch (error) {
       console.error('打开文件夹失败:', error);
-      alert('打开文件夹失败: ' + error);
+      alert(window.i18n.t('messages.open_folder_error') + error);
     }
   });
 
@@ -1238,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (savedWorkshopPath && workshopPathInput) {
     workshopPathInput.value = savedWorkshopPath;
     if (currentWorkshopPath) {
-      currentWorkshopPath.textContent = `当前路径: ${savedWorkshopPath}`;
+      currentWorkshopPath.textContent = window.i18n.t('workshop.current_path') + savedWorkshopPath;
     }
   }
   
@@ -1366,13 +1402,13 @@ document.addEventListener('DOMContentLoaded', function () {
         
         localStorage.setItem('repkg-workshop-path', path);
         if (currentWorkshopPath) {
-          currentWorkshopPath.textContent = `当前路径: ${path}`;
+          currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: path });
         }
-        alert('路径已保存');
+        alert(window.i18n.t('messages.path_saved'));
         // 重新加载壁纸
         loadSteamWorkshopWallpapers();
       } else {
-        alert('请输入有效的路径');
+        alert(window.i18n.t('messages.enter_valid_path'));
       }
     });
   }
@@ -1388,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (error) {
         console.error('选择文件夹失败:', error);
-        alert('选择文件夹失败: ' + error);
+        alert(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1401,9 +1437,9 @@ document.addEventListener('DOMContentLoaded', function () {
       workshopPathInput.value = defaultPath;
       localStorage.setItem('repkg-workshop-path', defaultPath);
       if (currentWorkshopPath) {
-        currentWorkshopPath.textContent = `当前路径: ${defaultPath}`;
+        currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: defaultPath });
       }
-      alert('已恢复默认路径');
+      alert(window.i18n.t('messages.path_restored'));
       // 重新加载壁纸
       loadSteamWorkshopWallpapers();
     });
@@ -1618,15 +1654,15 @@ async function setDefaultManualExtractPath() {
       const homeDir = await invoke('get_home_dir');
       // 确保homeDir末尾没有反斜杠，然后拼接路径
       const normalizedHomeDir = homeDir.replace(/\\$/, '');
-      const defaultPath = `${normalizedHomeDir}\\Desktop\\REPKG-GUI手动提取壁纸`;
+      const defaultPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
       extractPathInputManual.value = defaultPath;
       saveManualExtractPath(defaultPath);
     } else {
-      extractPathInputManual.value = 'C:\\REPKG-GUI手动提取壁纸';
+      extractPathInputManual.value = 'C:\\RePKG-GUI';
     }
   } catch (error) {
     console.error('设置默认路径失败:', error);
-    extractPathInputManual.value = 'C:\\REPKG-GUI手动提取壁纸';
+    extractPathInputManual.value = 'C:\\RePKG-GUI';
   }
 }
 
@@ -1666,7 +1702,7 @@ function initManualExtractFunction() {
   if (manualExtractBtn) {
     manualExtractBtn.addEventListener('click', async () => {
       if (manualFiles.length === 0) {
-        alert('请先选择要提取的 .pkg 文件');
+        alert(window.i18n.t('messages.select_pkg_files'));
         return;
       }
 
@@ -1674,13 +1710,13 @@ function initManualExtractFunction() {
       const extractPath = extractPathInput.value.trim();
       
       if (!extractPath) {
-        alert('请输入提取路径');
+        alert(window.i18n.t('messages.enter_extract_path'));
         return;
       }
 
       try {
         // 显示提取进度
-        manualExtractBtn.textContent = '提取中...';
+        manualExtractBtn.textContent = window.i18n.t('messages.extracting');
         manualExtractBtn.disabled = true;
 
         const { invoke } = window.__TAURI__.core;
@@ -1741,11 +1777,11 @@ function initManualExtractFunction() {
         }
 
         // 恢复按钮状态
-        manualExtractBtn.textContent = '开始提取';
+        manualExtractBtn.textContent = window.i18n.t('buttons.extract_start');
         manualExtractBtn.disabled = false;
 
         // 显示结果
-        let message = `提取完成！成功: ${successCount} 个，失败: ${errorCount} 个`;
+        let message = window.i18n.t('messages.extract_complete', { success: successCount, error: errorCount });
         if (errorCount > 0) {
           message += '\n请检查控制台获取详细错误信息';
         }
@@ -1760,10 +1796,10 @@ function initManualExtractFunction() {
 
       } catch (error) {
         console.error('提取过程出错:', error);
-        alert('提取失败: ' + error);
+        alert(window.i18n.t('messages.extract_failed') + error);
         
         // 恢复按钮状态
-        manualExtractBtn.textContent = '开始提取';
+        manualExtractBtn.textContent = window.i18n.t('buttons.extract_start');
         manualExtractBtn.disabled = false;
       }
     });
@@ -1775,7 +1811,7 @@ function initManualExtractFunction() {
       const extractPath = extractPathInput.value;
       
       if (!extractPath) {
-        alert('请先设置提取路径');
+        alert(window.i18n.t('messages.set_extract_path_first'));
         return;
       }
 
@@ -1787,7 +1823,7 @@ function initManualExtractFunction() {
         }
       } catch (error) {
         console.error('打开文件夹失败:', error);
-        alert('打开文件夹失败: ' + error);
+        alert(window.i18n.t('messages.open_folder_error') + error);
       }
     });
   }

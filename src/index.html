@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>repkg - GUI</title>
+    <title data-i18n-document-title="title.main">RePKG GUI</title>
     
     <!-- 预加载关键样式资源 -->
     <link rel="stylesheet" href="css/styles.css">
@@ -150,7 +150,7 @@
                         <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                     <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">首页</span>
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap" data-i18n="nav.home">首页</span>
                 </a>
                 <a href="#" class="nav-link flex items-center px-3 py-2 rounded-md text-base font-medium"
                     data-page="manual">
@@ -163,7 +163,7 @@
                         <line x1="12" y1="22.08" x2="12" y2="12" />
                     </svg>
                     <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">手动提取</span>
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap" data-i18n="nav.manual">手动提取</span>
                 </a>
             </nav>
             <div class="mt-auto">
@@ -173,7 +173,7 @@
                         <path d="M449.194667 82.346667a128 128 0 0 1 125.610666 0l284.16 160a128 128 0 0 1 65.194667 111.530666v316.245334a128 128 0 0 1-65.194667 111.530666l-284.16 160a128 128 0 0 1-125.610666 0l-284.16-160a128 128 0 0 1-65.194667-111.530666V353.877333A128 128 0 0 1 165.034667 242.346667z m83.754666 74.410666a42.666667 42.666667 0 0 0-41.898666 0L206.933333 316.714667a42.666667 42.666667 0 0 0-21.76 37.162666v316.245334a42.666667 42.666667 0 0 0 21.76 37.162666l284.16 160a42.666667 42.666667 0 0 0 41.898667 0l284.16-160a42.666667 42.666667 0 0 0 21.76-37.162666V353.877333a42.666667 42.666667 0 0 0-21.76-37.162666zM512 341.333333a170.666667 170.666667 0 1 1 0 341.333334 170.666667 170.666667 0 0 1 0-341.333334z m0 85.333334a85.333333 85.333333 0 1 0 0 170.666666 85.333333 85.333333 0 0 0 0-170.666666z" fill="currentColor" p-id="6833"></path>
                     </svg>
                     <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap">设置</span>
+                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap" data-i18n="nav.settings">设置</span>
                 </a>
             </div>
         </aside>
@@ -183,10 +183,10 @@
             <!-- 首页 -->
             <div id="home" class="page active p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">本地壁纸</h2>
+                    <h2 class="text-2xl font-bold" data-i18n="extract.local_wallpapers">本地壁纸</h2>
                     <div class="flex space-x-2">
                         <button id="refresh-wallpapers"
-                            class="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md transition-colors" title="刷新">
+                            class="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md transition-colors" data-i18n-title="buttons.refresh">
                             <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
@@ -195,13 +195,13 @@
                         <div class="flex items-center">
                             <span id="name-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
                             <button id="sort-by-name"
-                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm">名称</button>
+                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm" data-i18n="buttons.sort_by_name">名称</button>
                         </div>
                         <div class="flex items-center">
-                            <span id="date-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
-                            <button id="sort-by-date"
-                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm">日期</button>
-                        </div>
+                                <span id="date-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
+                                <button id="sort-by-date"
+                                    class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm" data-i18n="buttons.sort_by_date">日期</button>
+                            </div>
                     </div>
                 </div>
 
@@ -212,7 +212,7 @@
 
             <!-- 手动提取页 -->
             <div id="manual" class="page p-8">
-                <h2 class="text-2xl font-bold mb-6">手动提取</h2>
+                <h2 class="text-2xl font-bold mb-6" data-i18n="extract.manual_extract">手动提取</h2>
                 <div class="max-w-xl mx-auto mt-10">
                     <div id="dropzone"
                         class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer bg-[var(--bg-secondary)] hover:border-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
@@ -221,7 +221,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M17.25 8.25L21 12m-18 0l3.75-3.75M3 12h18" />
                         </svg>
-                        <p class="mt-4 text-lg font-medium text-[var(--text-primary)]">点击此处批量选择 .pkg 文件</p>
+                        <p class="mt-4 text-lg font-medium text-[var(--text-primary)]" data-i18n="extract.drag_drop">点击此处批量选择.pkg文件</p>
                         <input type="file" id="file-input" class="hidden" multiple accept=".pkg">
                     </div>
                     <div id="file-list" class="mt-4 space-y-2"></div>
@@ -229,12 +229,12 @@
                     <!-- 提取目录选择组件 -->
                     <div class="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="font-medium">提取到</p>
+                            <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                             <div class="flex gap-2">
                                 <button id="change-extract-path-manual"
-                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">更改</button>
+                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.change">更改</button>
                                 <button id="restore-default-extract-path-manual"
-                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.restore_default">恢复默认</button>
                             </div>
                         </div>
                         <input type="text" id="extract-path-manual"
@@ -244,61 +244,70 @@
 
                     <!-- 手动提取按钮 -->
                     <button id="manual-extract-btn"
-                        class="mt-4 w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity">开始提取</button>
+                        class="mt-4 w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity" data-i18n="extract.extract_btn">开始提取</button>
                     <button id="open-manual-extract-folder-btn"
-                        class="mt-2 w-full py-3 rounded-lg btn-green">打开提取文件夹</button>
+                        class="mt-2 w-full py-3 rounded-lg btn-green" data-i18n="buttons.open_extract_folder">打开提取文件夹</button>
                 </div>
             </div>
 
             <!-- 设置页 -->
             <div id="settings" class="page p-8">
-                <h2 class="text-2xl font-bold mb-8">设置</h2>
+                <h2 class="text-2xl font-bold mb-8" data-i18n="settings.title">设置</h2>
                 <div class="max-w-2xl mx-auto space-y-8">
                     <!-- 外观设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">外观</h3>
-                        <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
-                            <span class="font-medium">主题</span>
-                            <div class="flex items-center gap-2 p-1 bg-[var(--bg-tertiary)] rounded-md">
-                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="system">跟随系统</button>
-                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="light">亮色</button>
-                                <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="dark">暗色</button>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.appearance">外观</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <span class="font-medium" data-i18n="settings.theme">主题</span>
+                                <div class="flex items-center gap-2 p-1 bg-[var(--bg-tertiary)] rounded-md">
+                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="system" data-i18n="settings.system">跟随系统</button>
+                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="light" data-i18n="settings.light">亮色</button>
+                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="dark" data-i18n="settings.dark">暗色</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                                <span class="font-medium" data-i18n="settings.language">语言</span>
+                                <select id="language-select" class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="en-US">English</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
                     <!-- 创意工坊路径设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">创意工坊路径</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="workshop.title">创意工坊路径设置</h3>
                         <div class="space-y-2">
                             <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div class="flex items-center justify-between mb-2">
-                                    <p class="font-medium">自定义路径</p>
+                                    <p class="font-medium" data-i18n="workshop.custom_path">自定义路径</p>
                                     <div class="flex gap-2">
                                         <button id="browse-workshop-path"
-                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">浏览</button>
+                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.browse">浏览</button>
                                         <button id="restore-default-path"
-                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.restore_default">恢复默认</button>
                                         <button id="save-workshop-path"
-                                            class="px-3 py-1 text-sm bg-[var(--accent-color)] text-[var(--accent-text)] rounded-md">保存</button>
+                                            class="px-3 py-1 text-sm bg-[var(--accent-color)] text-[var(--accent-text)] rounded-md" data-i18n="buttons.save">保存</button>
                                     </div>
                                 </div>
                                 <input type="text" id="workshop-path"
                                     class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
                                     placeholder="可输入基础路径如 D:/Steam，自动补全完整路径">
-                                <p class="text-xs text-[var(--text-secondary)] mt-1">提示: 可输入基础路径如 <code class="text-[var(--accent-color)]">D:/Steam</code>，或部分路径如 <code class="text-[var(--accent-color)]">E:/Game/Steam/steamapps</code>，系统会自动补全为完整路径</p>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1" data-i18n="workshop.hint">提示: 可输入基础路径如 <code class="text-[var(--accent-color)]">D:/Steam</code>，或部分路径如 <code class="text-[var(--accent-color)]">E:/Game/Steam/steamapps</code>，系统会自动补全为完整路径</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- 系统设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">系统设置</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.system">系统设置</h3>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div>
-                                    <p class="font-medium">提取完成后自动打开提取文件夹</p>
-                                    <p class="text-sm text-[var(--text-secondary)]">解包完成后自动打开提取文件夹</p>
+                                    <p class="font-medium" data-i18n="settings.open_after_extract">提取完成后自动打开提取文件夹</p>
+                                <p class="text-sm text-[var(--text-secondary)]" data-i18n="settings.open_after_extract_desc">解包完成后自动打开提取文件夹</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="auto-open-extract-folder"><span
                                         class="toggle-slider"></span></label>
@@ -308,36 +317,36 @@
 
                     <!-- 解包设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">解包设置</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.extract_settings">解包设置</h3>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div>
-                                    <p class="font-medium">仅保留图像文件</p>
-                                    <p class="text-sm text-[var(--text-secondary)]">只提取图片和视频，忽略其他文件</p>
+                                    <p class="font-medium" data-i18n="settings.image_only">仅保留图像文件</p>
+                                <p class="text-sm text-[var(--text-secondary)]" data-i18n="settings.image_only_desc">只提取图片和视频，忽略其他文件</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"
                                         checked><span class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div>
-                                    <p class="font-medium">不把Tex文件转换为图像</p>
-                                    <p class="text-sm text-[var(--text-secondary)]">保留原始的 .tex 文件</p>
+                                    <p class="font-medium" data-i18n="settings.no_convert">不把Tex文件转换为图像</p>
+                                    <p class="text-sm text-[var(--text-secondary)]" data-i18n="settings.no_convert_desc">保留原始的 .tex 文件</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="no-tex-convert-checkbox"><span
                                         class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div>
-                                    <p class="font-medium">忽略原有目录结构</p>
-                                    <p class="text-sm text-[var(--text-secondary)]">将所有文件放在同一级目录中</p>
+                                    <p class="font-medium" data-i18n="settings.flatten_structure">忽略原有目录结构</p>
+                                    <p class="text-sm text-[var(--text-secondary)]" data-i18n="settings.flatten_structure_desc">将所有文件放在同一级目录中</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox"
                                         id="ignore-dir-structure-checkbox"><span class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
                                 <div>
-                                    <p class="font-medium">覆盖所有现有文件</p>
-                                    <p class="text-sm text-[var(--text-secondary)]">如果目标文件夹中存在同名文件则覆盖</p>
+                                    <p class="font-medium" data-i18n="settings.overwrite_existing">覆盖所有现有文件</p>
+                                <p class="text-sm text-[var(--text-secondary)]" data-i18n="settings.overwrite_existing_desc">如果目标文件夹中存在同名文件则覆盖</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="overwrite-files-checkbox"><span
                                         class="toggle-slider"></span></label>
@@ -347,7 +356,7 @@
 
                     <!-- 关于 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">关于</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="about.title">关于</h3>
                         <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG-GUI</span>
@@ -361,13 +370,13 @@
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
-                                <span class="font-medium">RePKG-GUI版本</span>
+                                <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
                                 <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.1.2</span>
                             </div>
                             <!-- <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
-                                <span class="font-medium">检查更新</span>
-                                <button class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">检查更新</button>
+                                <span class="font-medium" data-i18n="about.check_update">检查更新</span>
+          <button class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="about.check_update_btn">检查更新</button>
                             </div> -->
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
@@ -381,7 +390,7 @@
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
-                                <span class="font-medium">RePKG 版本</span>
+                                <span class="font-medium" data-i18n="about.version">RePKG 版本</span>
                                 <span class="text-sm text-[var(--text-secondary)]" id="repkg-version">RePKG
                                     0.4.0+e69a76dcdb461f5bdeba01a8a7fa5131a09bcefe</span>
                             </div>
@@ -408,12 +417,12 @@
             <div class="flex-grow space-y-6">
                 <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="flex items-center justify-between mb-2">
-                        <p class="font-medium">提取到</p>
+                        <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                         <div class="flex gap-2">
                             <button id="change-extract-path"
-                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">更改</button>
+                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.change">更改</button>
                             <button id="restore-default-extract-path"
-                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md">恢复默认</button>
+                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="buttons.restore_default">恢复默认</button>
                         </div>
                     </div>
                     <input type="text" id="extract-path"
@@ -421,14 +430,15 @@
                         placeholder="请输入提取路径">
                 </div>
                 <button id="open-folder-btn"
-                    class="w-full py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-semibold hover:bg-[var(--bg-tertiary)] transition-colors">打开壁纸所在文件夹</button>
+                    class="w-full py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-semibold hover:bg-[var(--bg-tertiary)] transition-colors" data-i18n="buttons.open_wallpaper_folder">打开壁纸所在文件夹</button>
                 <button id="extract-btn"
-                    class="w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity">开始提取</button>
-                <button id="open-extract-folder-btn" class="w-full py-3 rounded-lg btn-green">打开提取文件夹</button>
+                    class="w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity" data-i18n="extract.extract_btn">开始提取</button>
+                <button id="open-extract-folder-btn" class="w-full py-3 rounded-lg btn-green" data-i18n="buttons.open_extract_folder">打开提取文件夹</button>
             </div>
         </div>
     </div>
 
+    <script type="module" src="./i18n/i18n.js"></script>
     <script src="js/tailwindcss.js"></script>
     <script src="js/main.js"></script>
 </body>

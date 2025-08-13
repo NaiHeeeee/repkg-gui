@@ -102,9 +102,9 @@ repkg-gui/
 
 ### 路径配置
 - **Steam 创意工坊路径**: 默认自动检测，支持自定义
-- **提取目录**: 默认为 `C:\Users\xxx\Desktop\RePKG-UI提取壁纸` 和 `C:\Users\xxx\Desktop\RePKG-UI手动提取壁纸`
+- **提取目录**: 默认为 `C:\Users\xxx\Desktop\RePKG-UI`
 
-### 主题配置
+### 主题配
 支持三种主题模式：
 - `system` - 跟随系统主题 (默认)
 - `light` - 亮色主题

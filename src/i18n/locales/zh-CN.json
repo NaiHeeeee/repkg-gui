@@ -1,0 +1,128 @@
+{
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "close": "关闭",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告"
+  },
+  "title": {
+    "main": "RePKG GUI - 壁纸引擎包提取工具",
+    "settings": "设置",
+    "about": "关于"
+  },
+  "sidebar": {
+    "extract": "提取",
+    "settings": "设置",
+    "about": "关于"
+  },
+  "extract": {
+    "title": "壁纸提取",
+    "local_wallpapers": "本地壁纸",
+    "manual_extract": "手动提取",
+    "select_pkg": "选择.pkg文件",
+    "select_output": "提取到",
+    "extract_btn": "开始提取",
+    "extracting": "提取中...",
+    "extract_success": "提取完成！",
+    "extract_error": "提取失败：",
+    "no_file_selected": "未选择文件",
+    "no_output_selected": "未选择输出目录",
+    "drag_drop": "点击此处批量选择.pkg文件",
+    "load_failed": "加载失败",
+    "no_wallpapers": "未找到壁纸",
+    "ensure_path": "请确保Steam创意工坊路径存在且包含壁纸文件"
+  },
+  "settings": {
+    "title": "设置",
+    "appearance": "外观",
+    "theme": "主题",
+    "language": "语言",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "extract_settings": "提取设置",
+    "auto_create_folder": "自动创建文件夹",
+    "overwrite_existing": "覆盖已存在文件",
+    "open_after_extract": "提取完成后打开文件夹",
+    "open_after_extract_desc": "解包完成后自动打开提取文件夹",
+    "image_only": "仅保留图像文件",
+    "image_only_desc": "只提取图片和视频，忽略其他文件",
+    "no_convert": "不把Tex文件转换为图像",
+    "no_convert_desc": "保留原始的 .tex 文件",
+    "flatten_structure": "忽略原有目录结构",
+    "flatten_structure_desc": "将所有文件放在同一级目录中",
+    "overwrite_existing_desc": "如果目标文件夹中存在同名文件则覆盖"
+  },
+  "about": {
+    "title": "关于 RePKG GUI",
+    "description": "一个简单易用的壁纸引擎包提取工具",
+    "version": "版本",
+    "author": "作者",
+    "github": "GitHub",
+    "license": "许可证",
+    "check_update": "检查更新",
+    "check_update_btn": "检查更新"
+  },
+  "file": {
+    "select_pkg": "选择 PKG 文件",
+    "select_output": "选择输出文件夹",
+    "pkg_files": "PKG 文件",
+    "all_files": "所有文件",
+    "folders": "文件夹"
+  },
+  "messages": {
+    "extracting": "提取中...",
+    "extract_success": "提取完成!",
+    "extract_failed": "提取失败: ",
+    "select_files_first": "请先选择要提取的 .pkg 文件",
+    "set_extract_path": "请先设置提取路径",
+    "set_extract_path_first": "请先设置提取路径",
+    "invalid_path": "请输入有效的路径",
+    "enter_valid_path": "请输入有效的路径",
+    "enter_extract_path": "请输入提取路径",
+    "select_pkg_files": "请先选择要提取的 .pkg 文件",
+    "select_folder_error": "选择文件夹失败: ",
+    "open_folder_failed": "打开文件夹失败: ",
+    "open_folder_error": "打开文件夹失败: ",
+    "path_saved": "路径已保存",
+    "path_restored": "已恢复默认路径",
+    "restore_default": "已恢复默认路径",
+    "no_wallpaper_selected": "未选择壁纸",
+    "cannot_get_info": "无法获取壁纸信息或提取路径",
+    "empty_path": "壁纸路径或提取路径为空",
+    "path_empty": "壁纸路径或提取路径为空",
+    "extract_complete": "提取完成！成功: {success} 个，失败: {error} 个"
+  },
+  "buttons": {
+    "change": "更改",
+    "restore_default": "恢复默认",
+    "save": "保存",
+    "browse": "浏览",
+    "open_folder": "打开文件夹",
+    "refresh": "刷新",
+    "sort_by_name": "名称",
+    "sort_by_date": "日期",
+    "sort_by_size": "大小",
+    "extract_start": "开始提取",
+    "open_wallpaper_folder": "打开壁纸所在文件夹",
+    "open_extract_folder": "打开提取文件夹",
+    "reload": "重新加载"
+  },
+  "nav": {
+    "home": "首页",
+    "manual": "手动提取",
+    "settings": "设置"
+  },
+  "workshop": {
+    "title": "创意工坊路径",
+    "custom_path": "自定义路径",
+    "current_path": "当前路径: {path}",
+    "hint": "提示: 可输入基础路径如 D:/Steam，或部分路径如 E:/Game/Steam/steamapps，系统会自动补全为完整路径"
+  }
+}

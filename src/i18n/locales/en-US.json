@@ -1,0 +1,129 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning"
+  },
+  "title": {
+    "main": "RePKG GUI - Wallpaper Engine Package Extractor",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "sidebar": {
+    "extract": "Extract",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "extract": {
+    "title": "Wallpaper Extraction",
+    "local_wallpapers": "Local Wallpapers",
+    "manual_extract": "Manual Extraction",
+    "select_pkg": "Select .pkg file",
+    "select_output": "Extract to",
+    "extract_btn": "Start Extract",
+    "extracting": "Extracting...",
+    "extract_success": "Extraction completed successfully!",
+    "extract_error": "Extraction failed:",
+    "no_file_selected": "No file selected",
+    "no_output_selected": "No output directory selected",
+    "drag_drop": "Click here to batch select .pkg files",
+    "load_failed": "Loading failed",
+    "no_wallpapers": "No wallpapers found",
+    "ensure_path": "Please ensure Steam Workshop path exists and contains wallpaper files"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "language": "Language",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "extract_settings": "Extraction Settings",
+    "auto_create_folder": "Auto create folder",
+    "auto_create_folder_desc": "Automatically create a folder for each extracted package",
+    "image_only": "Keep image files only",
+    "image_only_desc": "Extract only images and videos, ignore other files",
+    "no_convert": "Don't convert Tex files to images",
+    "no_convert_desc": "Keep original .tex files",
+    "flatten_structure": "Ignore original directory structure",
+    "flatten_structure_desc": "Place all files in the same directory level",
+    "overwrite_existing": "Overwrite existing files",
+    "overwrite_existing_desc": "Overwrite files with the same name if they exist in the target folder",
+    "open_after_extract": "Open folder after extraction",
+    "open_after_extract_desc": "Automatically open the extraction folder after unpacking is complete"
+  },
+  "about": {
+    "title": "About RePKG GUI",
+    "description": "A simple and easy-to-use wallpaper engine package extraction tool",
+    "version": "Version",
+    "author": "Author",
+    "github": "GitHub",
+    "license": "License",
+    "check_update": "Check for Updates",
+    "check_update_btn": "Check for Updates"
+  },
+  "file": {
+    "select_pkg": "Select PKG File",
+    "select_output": "Select Output Folder",
+    "pkg_files": "PKG Files",
+    "all_files": "All Files",
+    "folders": "Folders"
+  },
+  "messages": {
+    "extracting": "Extracting...",
+    "extract_success": "Extraction completed!",
+    "extract_failed": "Extraction failed: ",
+    "select_files_first": "Please select .pkg files first",
+    "set_extract_path": "Please set extraction path first",
+    "set_extract_path_first": "Please set extraction path first",
+    "invalid_path": "Please enter a valid path",
+    "enter_valid_path": "Please enter a valid path",
+    "enter_extract_path": "Please enter extraction path",
+    "select_pkg_files": "Please select .pkg files first",
+    "select_folder_error": "Failed to select folder: ",
+    "open_folder_failed": "Failed to open folder: ",
+    "open_folder_error": "Failed to open folder: ",
+    "path_saved": "Path saved",
+    "path_restored": "Restored to default path",
+    "restore_default": "Restored to default path",
+    "no_wallpaper_selected": "No wallpaper selected",
+    "cannot_get_info": "Cannot get wallpaper info or extraction path",
+    "empty_path": "Wallpaper path or extraction path is empty",
+    "path_empty": "Wallpaper path or extraction path is empty",
+    "extract_complete": "Extraction completed! Success: {success} files, Failed: {error} files"
+  },
+  "buttons": {
+    "change": "Change",
+    "restore_default": "Restore Default",
+    "save": "Save",
+    "browse": "Browse",
+    "open_folder": "Open Folder",
+    "refresh": "Refresh",
+    "sort_by_name": "Name",
+    "sort_by_date": "Date",
+    "sort_by_size": "Size",
+    "extract_start": "Start Extract",
+    "open_wallpaper_folder": "Open Wallpaper Folder",
+    "open_extract_folder": "Open Extract Folder",
+    "reload": "Reload"
+  },
+  "nav": {
+    "home": "Home",
+    "manual": "Manual Extract",
+    "settings": "Settings"
+  },
+  "workshop": {
+    "title": "Workshop Path",
+    "custom_path": "Custom Path",
+    "current_path": "Current path: {path}",
+    "hint": "Tip: You can enter a basic path like D:/Steam, or a partial path like E:/Game/Steam/steamapps, and the system will automatically complete it to the full path"
+  }
+}
