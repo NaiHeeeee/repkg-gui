@@ -17,9 +17,9 @@
 
 *Modern interface design with light/dark theme support*
 
-![PixPin_2025-08-12_23-23-59](./assets/PixPin_2025-08-12_23-23-59.png)
+![Main Interface Preview - Light](./assets/preview-home-light-en.png)
 
-![PixPin_2025-08-12_23-42-03](./assets/PixPin_2025-08-12_23-42-03.png)
+![Main Interface Preview - Dark](./assets/preview-home-dark-en.png)
 
 ## 🌟 Features
 

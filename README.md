@@ -17,9 +17,9 @@
 
 *现代化界面设计，支持亮色/暗色主题*
 
-![PixPin_2025-08-12_23-23-59](./assets/PixPin_2025-08-12_23-23-59.png)
+![主界面预览-亮色](./assets/preview-home-light-cn.png)
 
-![PixPin_2025-08-12_23-42-03](./assets/PixPin_2025-08-12_23-42-03.png)
+![主界面预览-暗色](./assets/preview-home-dark-cn.png)
 
 
 
