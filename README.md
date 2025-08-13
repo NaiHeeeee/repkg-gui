@@ -1,6 +1,17 @@
 # RePKG-GUI
 
-一个基于 Tauri 的现代化 RePKG 图形界面工具，用于提取 Steam 壁纸引擎的 `.pkg` 文件。
+<div align="center">
+
+  <img src="./assets/icon.png" alt="RePKG-GUI" width="128" height="128"/>
+
+  **基于 Tauri 的现代化 RePKG 图形界面工具**
+
+  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+  [![Tauri](https://img.shields.io/badge/Tauri-2.6.0-orange.svg)](https://tauri.app/)
+  [![Rust](https://img.shields.io/badge/Rust-2024-red.svg)](https://www.rust-lang.org/)
+
+  [English](./README_en.md) | [中文](./README.md)
+</div>
 
 ## 👀 预览
 
@@ -19,7 +30,6 @@
 - **本地壁纸管理**：自动扫描并展示 Steam 创意工坊壁纸
 - **手动解包**：支持拖拽或选择文件进行手动解包
 - **预览功能**：显示壁纸缩略图和详细信息
-- **文件清理**：自动清理非媒体文件，保持目录整洁
 
 ### 用户体验
 - **现代化界面**：采用 Tailwind CSS 设计的响应式界面
@@ -94,41 +104,6 @@ repkg-gui/
 
 ### 核心依赖
 - **RePKG** - 壁纸引擎 `.pkg` 文件解包工具
-- **Serde** - JSON 序列化/反序列化
-- **Base64** - 图片编码
-- **Chrono** - 时间日期处理
-
-## 🔧 配置说明
-
-### 路径配置
-- **Steam 创意工坊路径**: 默认自动检测，支持自定义
-- **提取目录**: 默认为 `C:\Users\xxx\Desktop\RePKG-UI`
-
-### 主题配
-支持三种主题模式：
-- `system` - 跟随系统主题 (默认)
-- `light` - 亮色主题
-- `dark` - 暗色主题
-
-## 📋 使用方法
-
-### 1. 本地壁纸管理
-1. 启动应用后自动扫描 Steam 创意工坊场景壁纸
-2. 在首页查看所有已安装的壁纸
-3. 点击壁纸卡片查看详情
-4. 使用排序功能按名称或日期排序
-
-### 2. 手动解包
-1. 点击左侧导航栏的"手动提取"
-2. 点击选择 `.pkg` 文件
-3. 设置提取目录（可选）
-4. 点击"开始提取"按钮
-
-### 3. 设置配置
-1. 点击左侧导航栏的"设置"
-2. 配置外观主题
-3. 设置自定义 Steam 创意工坊路径
-4. 设置默认提取目录
 
 ## 🙏 致谢
 
