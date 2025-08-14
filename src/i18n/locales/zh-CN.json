@@ -90,6 +90,7 @@
     "select_folder_error": "选择文件夹失败: ",
     "open_folder_failed": "打开文件夹失败: ",
     "open_folder_error": "打开文件夹失败: ",
+    "select_file_error": "选择文件失败: ",
     "path_saved": "路径已保存",
     "path_restored": "已恢复默认路径",
     "restore_default": "已恢复默认路径",

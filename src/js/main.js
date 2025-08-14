@@ -34,7 +34,7 @@ async function setDefaultExtractPath() {
         extractPathInput.value = 'C:\\RePKG-GUI';
       }
     } catch (error) {
-      console.error('无法获取用户桌面路径:', error);
+      // console.error('无法获取用户桌面路径:', error);
       extractPathInput.value = 'C:\\RePKG-GUI';
     }
   }
@@ -1002,13 +1002,13 @@ document.addEventListener('DOMContentLoaded', function () {
       };
       
       // 添加调试日志
-      console.log('提取参数:', { input: scenePkgPath, options: options });
+      // console.log('提取参数:', { input: scenePkgPath, options: options });
       
       // 执行提取
       const result = await invoke('extract_pkg', { input: scenePkgPath, options: options });
       
       // 添加调试日志
-      console.log('提取结果:', result);
+      // console.log('提取结果:', result);
       
       // 如果是仅保留图像文件，清理非媒体文件
       if (onlyImages) {
@@ -1018,9 +1018,9 @@ document.addEventListener('DOMContentLoaded', function () {
             path: extractPath,
             allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
           });
-          console.log('已清理非媒体文件');
+          // console.log('已清理非媒体文件');
         } catch (cleanupError) {
-          console.warn('清理非媒体文件时出错:', cleanupError);
+          // console.warn('清理非媒体文件时出错:', cleanupError);
         }
       }
       
@@ -1042,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       
       // 显示错误消息
-      console.error('提取失败:', error);
+      // console.error('提取失败:', error);
       alert(window.i18n.t('messages.extract_failed') + error);
       
       throw error;
@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await invoke('open_folder', { path: normalizedPath });
       }
     } catch (error) {
-      console.error('提取过程出错:', error);
+      // console.error('提取过程出错:', error);
     }
   });
 
@@ -1112,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await invoke('open_folder', { path: normalizedPath });
       }
     } catch (error) {
-      console.error('打开文件夹失败:', error);
+      // console.error('打开文件夹失败:', error);
       alert(window.i18n.t('messages.open_folder_error') + error);
     }
   });
@@ -1240,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 size: stats.size
               });
             } catch (error) {
-              console.warn('获取文件信息失败:', path, error);
+              // console.warn('获取文件信息失败:', path, error);
               // 如果无法获取文件大小，使用默认值
               files.push({
                 name: path.split('/').pop().split('\\').pop(),
@@ -1268,8 +1268,8 @@ document.addEventListener('DOMContentLoaded', function () {
         originalInput.click();
       }
     } catch (error) {
-      console.error('选择文件失败:', error);
-      alert('选择文件失败: ' + error);
+      // console.error('选择文件失败:', error);
+      alert(window.i18n.t('messages.select_file_error') + error);
     }
   });
 
@@ -1444,7 +1444,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return basePath;
       }
     } catch (error) {
-      console.error('路径检测失败:', error);
+      // console.error('路径检测失败:', error);
     }
     
     return basePath;
@@ -1485,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', function () {
           workshopPathInput.value = selectedPath;
         }
       } catch (error) {
-        console.error('选择文件夹失败:', error);
+        // console.error('选择文件夹失败:', error);
         alert(window.i18n.t('messages.select_folder_error') + error);
       }
     });
@@ -1647,8 +1647,8 @@ function initExtractPathEvents() {
           saveExtractPath(selectedPath);
         }
       } catch (error) {
-        console.error('选择文件夹失败:', error);
-        alert('选择文件夹失败: ' + error);
+        // console.error('选择文件夹失败:', error);
+        alert(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1686,8 +1686,8 @@ function initManualExtractPathEvents() {
           saveManualExtractPath(selectedPath);
         }
       } catch (error) {
-        console.error('选择文件夹失败:', error);
-        alert('选择文件夹失败: ' + error);
+        // console.error('选择文件夹失败:', error);
+        alert(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1723,7 +1723,7 @@ async function setDefaultManualExtractPath() {
       extractPathInputManual.value = 'C:\\RePKG-GUI';
     }
   } catch (error) {
-    console.error('设置默认路径失败:', error);
+    // console.error('设置默认路径失败:', error);
     extractPathInputManual.value = 'C:\\RePKG-GUI';
   }
 }
@@ -1812,16 +1812,16 @@ function initManualExtractFunction() {
         // 逐个处理文件
         for (const file of manualFiles) {
           try {
-            console.log('正在提取文件:', file.name);
+            // console.log('正在提取文件:', file.name);
             const result = await invoke('extract_pkg', { 
               input: file.path, 
               options: options 
             });
             successCount++;
-            console.log(`文件 ${file.name} 提取成功`);
+            // console.log(`文件 ${file.name} 提取成功`);
           } catch (error) {
             errorCount++;
-            console.error(`文件 ${file.name} 提取失败:`, error);
+            // console.error(`文件 ${file.name} 提取失败:`, error);
           }
         }
 
@@ -1832,9 +1832,9 @@ function initManualExtractFunction() {
               path: extractPath,
               allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
             });
-            console.log('已清理非媒体文件');
+            // console.log('已清理非媒体文件');
           } catch (cleanupError) {
-            console.warn('清理非媒体文件时出错:', cleanupError);
+            // console.warn('清理非媒体文件时出错:', cleanupError);
           }
         }
 
@@ -1857,7 +1857,7 @@ function initManualExtractFunction() {
         }
 
       } catch (error) {
-        console.error('提取过程出错:', error);
+        // console.error('提取过程出错:', error);
         alert(window.i18n.t('messages.extract_failed') + error);
         
         // 恢复按钮状态
@@ -1884,7 +1884,7 @@ function initManualExtractFunction() {
           await invoke('open_folder', { path: normalizedPath });
         }
       } catch (error) {
-        console.error('打开文件夹失败:', error);
+        // console.error('打开文件夹失败:', error);
         alert(window.i18n.t('messages.open_folder_error') + error);
       }
     });

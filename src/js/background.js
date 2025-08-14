@@ -80,7 +80,7 @@ class BackgroundManager {
     toggleControls() {
         const controls = document.getElementById('custom-bg-controls');
         const toggle = document.getElementById('custom-bg-toggle');
-        
+
         if (this.isEnabled) {
             controls.classList.remove('hidden');
             if (this.currentUrl) {
@@ -103,7 +103,7 @@ class BackgroundManager {
         this.currentUrl = url;
         this.currentType = this.getUrlType(url);
         this.previewUrl = null; // 清除预览状态
-        
+
         // 预加载并验证资源
         this.preloadResource(url, this.currentType)
             .then(() => {
@@ -130,7 +130,7 @@ class BackgroundManager {
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         const videoExtensions = ['mp4', 'webm', 'mov', 'avi'];
         const extension = url.split('.').pop().toLowerCase();
-        
+
         if (imageExtensions.includes(extension)) return 'image';
         if (videoExtensions.includes(extension)) return 'video';
         return 'image'; // 默认
@@ -269,7 +269,7 @@ class BackgroundManager {
     updateOpacityDisplay() {
         const opacityValue = Math.round(this.opacity * 100);
         const opacityElement = document.getElementById('opacity-value');
-        
+
         if (window.i18n && window.i18n.t) {
             opacityElement.textContent = window.i18n.t('background.opacity_value', { value: opacityValue });
         } else {
@@ -298,7 +298,7 @@ class BackgroundManager {
                 this.updateOpacityDisplay();
 
                 this.toggleControls();
-                
+
                 if (this.currentUrl) {
                     this.showPreview();
                 }

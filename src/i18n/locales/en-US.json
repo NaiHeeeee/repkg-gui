@@ -91,6 +91,7 @@
     "select_folder_error": "Failed to select folder: ",
     "open_folder_failed": "Failed to open folder: ",
     "open_folder_error": "Failed to open folder: ",
+    "select_file_error": "Failed to select file: ",
     "path_saved": "Path saved",
     "path_restored": "Restored to default path",
     "restore_default": "Restored to default path",

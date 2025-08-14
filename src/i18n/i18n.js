@@ -14,7 +14,7 @@ class I18n {
       this.translations = await response.json();
       this.updateDOM();
     } catch (error) {
-      console.error('Failed to load translations:', error);
+      // console.error('Failed to load translations:', error);
       // Fallback to English
       if (this.currentLanguage !== 'en-US') {
         this.currentLanguage = 'en-US';
@@ -25,7 +25,7 @@ class I18n {
 
   getBrowserLanguage() {
     const browserLang = navigator.language || navigator.userLanguage;
-    
+
     // Map browser language to our supported languages
     const languageMap = {
       'zh': 'zh-CN',
@@ -45,7 +45,7 @@ class I18n {
 
   setLanguage(language) {
     if (this.currentLanguage === language) return;
-    
+
     this.currentLanguage = language;
     localStorage.setItem('repkg-language', language);
     this.loadTranslations();
@@ -66,7 +66,7 @@ class I18n {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        console.warn(`Translation key not found: ${key}`);
+        // console.warn(`Translation key not found: ${key}`);
         return key; // Return key if translation not found
       }
     }
@@ -87,7 +87,7 @@ class I18n {
     elements.forEach(element => {
       const key = element.getAttribute('data-i18n');
       const text = this.t(key);
-      
+
       if (element.tagName === 'INPUT' && element.type === 'placeholder') {
         element.placeholder = text;
       } else {
@@ -116,8 +116,8 @@ class I18n {
     }
 
     // Trigger custom event for other components
-    window.dispatchEvent(new CustomEvent('languageChanged', { 
-      detail: { language: this.currentLanguage } 
+    window.dispatchEvent(new CustomEvent('languageChanged', {
+      detail: { language: this.currentLanguage }
     }));
   }
 
