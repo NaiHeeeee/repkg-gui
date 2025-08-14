@@ -6,6 +6,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n-document-title="title.main">RePKG GUI</title>
 
+    <!-- 内联关键样式防止FOUC -->
+    <style>
+        /* 基础主题变量和关键样式 */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f7;
+            --border-color: #e5e5e5;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent-color: #3b82f6;
+            --accent-text: #ffffff;
+        }
+
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --border-color: #3f3f46;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 防止内容闪烁的关键样式 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 确保标题栏正确显示 */
+        .drag-region {
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+
+        .no-drag {
+            -webkit-app-region: no-drag;
+        }
+    </style>
+
     <link rel="stylesheet" href="css/styles.css">
 
 </head>
@@ -115,7 +191,7 @@
                     <h2 class="text-2xl font-bold" data-i18n="extract.local_wallpapers">本地壁纸</h2>
                     <div class="flex space-x-2">
                         <button id="refresh-wallpapers"
-                            class="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md transition-colors"
+                            class="p-2 glass-effect hover:bg-[var(--border-color)] rounded-md transition-colors"
                             data-i18n-title="buttons.refresh">
                             <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -127,13 +203,13 @@
                         <div class="flex items-center">
                             <span id="name-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
                             <button id="sort-by-name"
-                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm"
+                                class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm"
                                 data-i18n="buttons.sort_by_name">名称</button>
                         </div>
                         <div class="flex items-center">
                             <span id="date-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
                             <button id="sort-by-date"
-                                class="px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] rounded-md text-sm"
+                                class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm"
                                 data-i18n="buttons.sort_by_date">日期</button>
                         </div>
                     </div>
@@ -149,7 +225,7 @@
                 <h2 class="text-2xl font-bold mb-6" data-i18n="extract.manual_extract">手动提取</h2>
                 <div class="max-w-xl mx-auto mt-10">
                     <div id="dropzone"
-                        class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer bg-[var(--bg-secondary)] hover:border-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                        class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer settings-glass hover:border-[var(--accent-color)] hover:bg-[var(--border-color)] transition-colors">
                         <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -162,26 +238,26 @@
                     <div id="file-list" class="mt-4 space-y-2"></div>
 
                     <!-- 提取目录选择组件 -->
-                    <div class="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
+                    <div class="mt-6 p-4 settings-glass rounded-lg">
                         <div class="flex items-center justify-between mb-2">
                             <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                             <div class="flex gap-2">
                                 <button id="change-extract-path-manual"
-                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                     data-i18n="buttons.change">更改</button>
                                 <button id="restore-default-extract-path-manual"
-                                    class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                     data-i18n="buttons.restore_default">恢复默认</button>
                             </div>
                         </div>
                         <input type="text" id="extract-path-manual"
-                            class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                            class="w-full p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm mb-2"
                             placeholder="请输入提取路径" data-i18n-placeholder="messages.enter_extract_path">
                     </div>
 
                     <!-- 手动提取按钮 -->
                     <button id="manual-extract-btn"
-                        class="mt-4 w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                        class="mt-4 w-full py-3 rounded-lg btn-blue"
                         data-i18n="extract.extract_btn">开始提取</button>
                     <button id="open-manual-extract-folder-btn" class="mt-2 w-full py-3 rounded-lg btn-green"
                         data-i18n="buttons.open_extract_folder">打开提取文件夹</button>
@@ -196,9 +272,9 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="settings.appearance">外观</h3>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <span class="font-medium" data-i18n="settings.theme">主题</span>
-                                <div class="flex items-center gap-2 p-1 bg-[var(--bg-tertiary)] rounded-md">
+                                <div class="flex items-center gap-2 p-1 glass-effect rounded-md">
                                     <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="system"
                                         data-i18n="settings.system">跟随系统</button>
                                     <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="light"
@@ -207,25 +283,25 @@
                                         data-i18n="settings.dark">暗色</button>
                                 </div>
                             </div>
-                            <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="p-4 settings-glass rounded-lg">
                                 <div class="flex items-center justify-between">
                                     <span class="font-medium" data-i18n="settings.language">语言</span>
                                     <button id="language-toggle-btn"
-                                        class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                        class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                         data-i18n="settings.select_language">
                                         选择语言
                                     </button>
                                 </div>
                                 <div id="language-options" class="hidden mt-3 space-y-2">
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="zh-CN">
                                         <span>简体中文</span>
                                         <span
                                             class="check-icon opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
                                     </button>
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="en-US">
                                         <span>English</span>
                                         <span
@@ -234,7 +310,7 @@
                                 </div>
                             </div>
                             <!-- 背景设置 -->
-                            <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="p-4 settings-glass rounded-lg">
                                 <div class="flex items-center justify-between mb-3">
                                     <span class="font-medium" data-i18n="background.title">自定义背景</span>
                                     <label class="toggle-switch">
@@ -251,10 +327,10 @@
                                             data-i18n="background.network_url">网络地址</label>
                                         <div class="flex gap-2">
                                             <input type="text" id="bg-url-input"
-                                                class="flex-1 p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm"
+                                                class="flex-1 p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm"
                                                 data-i18n-placeholder="background.enter_url" placeholder="请输入图片的URL">
                                             <button id="apply-bg-url"
-                                                class="px-3 py-1 text-sm bg-[var(--accent-color)] text-[var(--accent-text)] rounded-md"
+                                                class="px-3 py-1 text-sm btn-blue rounded-md"
                                                 data-i18n="background.apply">应用</button>
                                             <button id="clear-bg-btn"
                                                 class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 transition-colors rounded-md"
@@ -264,9 +340,9 @@
 
                                     <div id="bg-preview-container" class="hidden">
                                         <label class="block text-sm font-medium mb-2"
-                                            data-i18n="background.preview">预览</label>
+                                            data-i18n="background.preview">背景预览</label>
                                         <div
-                                            class="relative aspect-video bg-[var(--bg-tertiary)] rounded-md overflow-hidden">
+                                            class="relative aspect-video glass-effect rounded-md overflow-hidden">
                                             <img id="bg-image-preview" class="w-full h-full object-cover"
                                                 style="display: none;">
                                             <video id="bg-video-preview" class="w-full h-full object-cover"
@@ -292,23 +368,23 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="workshop.title">创意工坊路径设置</h3>
                         <div class="space-y-2">
-                            <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="p-4 settings-glass rounded-lg">
                                 <div class="flex items-center justify-between mb-2">
                                     <p class="font-medium" data-i18n="workshop.custom_path">自定义路径</p>
                                     <div class="flex gap-2">
                                         <button id="browse-workshop-path"
-                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                            class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                             data-i18n="buttons.browse">浏览</button>
                                         <button id="restore-default-path"
-                                            class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                            class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                             data-i18n="buttons.restore_default">恢复默认</button>
                                         <button id="save-workshop-path"
-                                            class="px-3 py-1 text-sm bg-[var(--accent-color)] text-[var(--accent-text)] rounded-md"
+                                            class="px-3 py-1 text-sm btn-blue rounded-md"
                                             data-i18n="buttons.save">保存</button>
                                     </div>
                                 </div>
                                 <input type="text" id="workshop-path"
-                                    class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                                    class="w-full p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm mb-2"
                                     placeholder="可输入基础路径如 D:/Steam，自动补全完整路径"
                                     data-i18n-placeholder="workshop.placeholder">
                                 <p class="text-xs text-[var(--text-secondary)] mt-1" data-i18n="workshop.hint">提示:
@@ -323,7 +399,7 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="settings.system">系统设置</h3>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
                                     <p class="font-medium" data-i18n="settings.open_after_extract">提取完成后自动打开提取文件夹</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
@@ -339,7 +415,7 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="settings.extract_settings">解包设置</h3>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
                                     <p class="font-medium" data-i18n="settings.image_only">仅保留图像文件</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
@@ -348,7 +424,7 @@
                                 <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"
                                         checked><span class="toggle-slider"></span></label>
                             </div>
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
                                     <p class="font-medium" data-i18n="settings.no_convert">不把Tex文件转换为图像</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
@@ -357,7 +433,7 @@
                                 <label class="toggle-switch"><input type="checkbox" id="no-tex-convert-checkbox"><span
                                         class="toggle-slider"></span></label>
                             </div>
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
                                     <p class="font-medium" data-i18n="settings.flatten_structure">忽略原有目录结构</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
@@ -366,7 +442,7 @@
                                 <label class="toggle-switch"><input type="checkbox"
                                         id="ignore-dir-structure-checkbox"><span class="toggle-slider"></span></label>
                             </div>
-                            <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
                                     <p class="font-medium" data-i18n="settings.overwrite_existing">覆盖所有现有文件</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
@@ -381,7 +457,7 @@
                     <!-- 关于 -->
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="about.title">关于</h3>
-                        <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                        <div class="p-4 settings-glass rounded-lg">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG-GUI</span>
                                 <a href="https://github.com/naiheeeee/repkg-gui" target="_blank"
@@ -396,13 +472,8 @@
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
-                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.3.0</span>
+                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.4.0</span>
                             </div>
-                            <!-- <hr class="border-[var(--border-color)] my-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium" data-i18n="about.check_update">检查更新</span>
-          <button class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md" data-i18n="about.check_update_btn">检查更新</button>
-                            </div> -->
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG</span>
@@ -441,27 +512,27 @@
                 <div class="h-8"></div>
             </div>
             <div class="flex-grow space-y-6">
-                <div class="p-4 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="p-4 settings-glass rounded-lg border border-[var(--border-color)]">
                     <div class="flex items-center justify-between mb-2">
                         <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                         <div class="flex gap-2">
                             <button id="change-extract-path"
-                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                 data-i18n="buttons.change">更改</button>
                             <button id="restore-default-extract-path"
-                                class="px-3 py-1 text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                 data-i18n="buttons.restore_default">恢复默认</button>
                         </div>
                     </div>
                     <input type="text" id="extract-path"
-                        class="w-full p-2 rounded-md bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm mb-2"
+                        class="w-full p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm mb-2"
                         placeholder="请输入提取路径">
                 </div>
                 <button id="open-folder-btn"
                     class="w-full py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-semibold hover:bg-[var(--bg-tertiary)] transition-colors"
                     data-i18n="buttons.open_wallpaper_folder">打开壁纸所在文件夹</button>
                 <button id="extract-btn"
-                    class="w-full py-3 bg-[var(--accent-color)] text-[var(--accent-text)] rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                    class="w-full py-3 rounded-lg btn-blue"
                     data-i18n="extract.extract_btn">开始提取</button>
                 <button id="open-extract-folder-btn" class="w-full py-3 rounded-lg btn-green"
                     data-i18n="buttons.open_extract_folder">打开提取文件夹</button>

@@ -1196,15 +1196,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dropzone.classList.add('border-[var(--accent-color)]', 'bg-[var(--bg-tertiary)]');
+    dropzone.classList.add('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
   });
   dropzone.addEventListener('dragleave', (e) => {
     e.preventDefault();
-    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--bg-tertiary)]');
+    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
   });
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
-    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--bg-tertiary)]');
+    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
     const files = e.dataTransfer.files;
     handleFiles(files);
   });
@@ -1288,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 重新渲染所有文件
     for (const file of manualFiles) {
       const fileItem = document.createElement('div');
-      fileItem.className = 'flex items-center justify-between p-2 bg-[var(--bg-secondary)] rounded-md text-sm';
+      fileItem.className = 'flex items-center justify-between p-2 settings-glass rounded-md text-sm';
       fileItem.innerHTML = `
         <div class="flex items-center">
           <button class="remove-file-btn mr-2 text-red-500 hover:text-red-700" data-filename="${file.name}">

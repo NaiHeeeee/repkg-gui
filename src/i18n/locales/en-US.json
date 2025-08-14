@@ -135,7 +135,7 @@
     "enter_url": "Please enter image URL",
     "apply": "Apply",
     "clear": "Clear Background",
-    "preview": "Preview",
+    "preview": "Background Preview",
     "opacity": "Opacity",
     "opacity_value": "{value}%",
     "invalid_url": "Please enter a valid image or video URL",

@@ -47,14 +47,20 @@ class BackgroundManager {
             }
         });
 
-        // 输入框变化时预览
-        urlInput.addEventListener('input', (e) => {
+        // 监听URL输入框获得焦点事件
+        urlInput.addEventListener('focus', (e) => {
             const url = e.target.value.trim();
-            if (url && this.isValidUrl(url)) {
+            if (url) {
                 this.showPreview(url);
             } else {
                 this.hidePreview();
             }
+        });
+
+        // 监听URL输入框失去焦点事件
+        urlInput.addEventListener('blur', () => {
+            // 快速隐藏，减少延迟
+            this.hidePreview();
         });
 
         // 清除背景
@@ -238,22 +244,49 @@ class BackgroundManager {
         const displayType = url ? this.getUrlType(url) : this.currentType;
         this.previewUrl = displayUrl;
 
+        // 添加淡入动画
         previewContainer.classList.remove('hidden');
+        
+        // 强制重排以确保动画效果
+        previewContainer.offsetHeight;
+        
+        previewContainer.classList.add('show');
 
         if (displayType === 'image') {
             imgPreview.src = displayUrl;
             imgPreview.style.display = 'block';
+            imgPreview.classList.add('fade-in');
+            imgPreview.classList.remove('fade-out');
             videoPreview.style.display = 'none';
+            videoPreview.classList.remove('fade-in');
+            videoPreview.classList.add('fade-out');
         } else if (displayType === 'video') {
             videoPreview.src = displayUrl;
             videoPreview.style.display = 'block';
+            videoPreview.classList.add('fade-in');
+            videoPreview.classList.remove('fade-out');
             imgPreview.style.display = 'none';
+            imgPreview.classList.remove('fade-in');
+            imgPreview.classList.add('fade-out');
         }
     }
 
     hidePreview() {
         const previewContainer = document.getElementById('bg-preview-container');
-        previewContainer.classList.add('hidden');
+        
+        // 添加淡出动画
+        previewContainer.classList.remove('show');
+        
+        // 动画结束后隐藏
+            setTimeout(() => {
+                previewContainer.classList.add('hidden');
+                
+                // 重置图片和视频状态
+                const imgPreview = document.getElementById('bg-image-preview');
+                const videoPreview = document.getElementById('bg-video-preview');
+                imgPreview.classList.remove('fade-in', 'fade-out');
+                videoPreview.classList.remove('fade-in', 'fade-out');
+            }, 200);
     }
 
     saveSettings() {
@@ -299,9 +332,8 @@ class BackgroundManager {
 
                 this.toggleControls();
 
-                if (this.currentUrl) {
-                    this.showPreview();
-                }
+                // 不再自动显示预览，只在用户交互时显示
+                this.hidePreview();
             } else {
                 // 默认关闭自定义背景
                 const toggle = document.getElementById('custom-bg-toggle');

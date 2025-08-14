@@ -186,6 +186,26 @@ html.dark .btn-green:hover {
   background-color: rgb(22, 163, 74);
 }
 
+/* 蓝色按钮样式 */
+.btn-blue {
+  background-color: rgb(59, 130, 246);
+  color: white;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-blue:hover {
+  background-color: rgb(37, 99, 235);
+}
+
+html.dark .btn-blue {
+  background-color: rgb(59, 130, 246);
+}
+
+html.dark .btn-blue:hover {
+  background-color: rgb(37, 99, 235);
+}
+
 /* 刷新图标旋转动画 */
 @keyframes spin {
   from {
@@ -202,84 +222,289 @@ html.dark .btn-green:hover {
 }
 
 
-/* 内联关键样式防止FOUC */
-
-/* 防止FOUC的关键样式 */
-html,
-body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
+/* 毛玻璃效果样式 */
+.glass-effect {
+  background: rgba(var(--bg-secondary-rgb), 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(0, 0, 0, 0.15); /* 灰色偏黑的颜色 */
 }
 
-/* 初始隐藏内容直到样式加载完成 */
-body {
-  opacity: 0;
-  transition: opacity 0.1s ease-in-out;
+html.dark .glass-effect {
+  background: rgba(var(--bg-secondary-rgb), 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.15); /* 灰色偏白的颜色 */
 }
 
-/* 样式加载完成后的显示状态 */
-body.styles-loaded {
-  opacity: 1;
+/* 设置页背景透明效果 */
+.settings-glass {
+  background: rgba(var(--bg-secondary-rgb), 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 2px solid rgba(0, 0, 0, 0.12); /* 灰色偏黑的颜色 */
 }
 
-/* 基础主题变量 - 防止初始渲染时的样式缺失 */
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f7;
-  --bg-tertiary: #efefef;
-  --border-color: #e5e5e5;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --accent-color: #3b82f6;
-  --accent-text: #ffffff;
+html.dark .settings-glass {
+  background: rgba(var(--bg-secondary-rgb), 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.12); /* 灰色偏白的颜色 */
 }
 
-html.dark {
-  --bg-primary: #18181b;
-  --bg-secondary: #27272a;
-  --bg-tertiary: #3f3f46;
-  --border-color: #3f3f46;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
+/* 导航链接悬停效果 */
+.nav-link {
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* 加载动画 */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--bg-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity 0.3s ease-out;
+.nav-link:not(.active):hover {
+  color: var(--accent-color) !important; /* 鼠标移入时字体变为蓝色 */
+  background-color: rgba(128, 128, 128, 0.1) !important; /* 灰色背景 */
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-color);
-  border-top: 3px solid var(--accent-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+html.dark .nav-link:not(.active):hover {
+  color: var(--accent-color) !important; /* 暗色主题下也变为蓝色 */
+  background-color: rgba(128, 128, 128, 0.15) !important; /* 暗色主题下稍深的灰色背景 */
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+.nav-link.active {
+  /* 已选择的区域保持不变 */
+  color: var(--text-primary);
+  background-color: var(--accent-color) !important; /* 蓝色选中背景 */
 }
 
-.loading-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
+html.dark .nav-link.active {
+  background-color: var(--accent-color) !important; /* 暗色主题下蓝色选中背景 */
+}
+
+
+
+/* 统一按钮悬停效果 */
+/* 首页按钮 */
+#refresh-wallpapers:hover,
+#sort-by-name:hover,
+#sort-by-date:hover,
+#change-extract-path-manual:hover,
+#restore-default-extract-path-manual:hover,
+#browse-workshop-path:hover,
+#restore-default-path:hover,
+#change-extract-path:hover,
+#restore-default-extract-path:hover,
+#open-extract-folder:hover,
+#open-workshop-folder:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+html.dark #refresh-wallpapers:hover,
+html.dark #sort-by-name:hover,
+html.dark #sort-by-date:hover,
+html.dark #change-extract-path-manual:hover,
+html.dark #restore-default-extract-path-manual:hover,
+html.dark #browse-workshop-path:hover,
+html.dark #restore-default-path:hover,
+html.dark #change-extract-path:hover,
+html.dark #restore-default-extract-path:hover,
+html.dark #open-extract-folder:hover,
+html.dark #open-workshop-folder:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.15) !important;
+}
+
+/* 统一的主题和语言按钮悬停效果 */
+#language-toggle-btn:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+html.dark #language-toggle-btn:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.15) !important;
+}
+
+/* 语言选项按钮悬停效果 */
+.language-option:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+html.dark .language-option:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.15) !important;
+}
+
+.language-option:hover .check-icon {
+    color: var(--accent-color) !important;
+    transition: color 0.2s ease-in-out;
+}
+
+/* 主题设置按钮悬停效果 */
+.theme-btn:hover:not([style*="background-color: var(--accent-color)"]) {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+html.dark .theme-btn:hover:not([style*="background-color: var(--accent-color)"]) {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.15) !important;
+}
+
+/* 已选中的主题按钮保持原样 */
+.theme-btn[style*="background-color: var(--accent-color)"] {
+    color: var(--accent-text) !important;
+    background-color: var(--accent-color) !important;
+}
+
+/* 手动提取页拖放区域统一悬停效果 */
+#dropzone:hover {
+    color: var(--accent-color) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+html.dark #dropzone:hover {
+    background-color: rgba(128, 128, 128, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+#dropzone:hover p {
+    color: var(--accent-color) !important;
+    transition: color 0.2s ease-in-out;
+}
+
+/* 背景预览容器动效 */
+#bg-preview-container {
+    transition: all 0.2s ease-out;
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+    overflow: hidden;
+}
+
+#bg-preview-container.show {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+}
+
+#bg-preview-container .aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+#bg-preview-container .glass-effect {
+    transition: none;
+}
+
+#bg-preview-container:hover .glass-effect {
+    transform: none;
+}
+
+#bg-image-preview, #bg-video-preview {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#bg-image-preview.fade-in, #bg-video-preview.fade-in {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#bg-image-preview.fade-out, #bg-video-preview.fade-out {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* 修复不可点击区域的鼠标样式 */
+p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
+    cursor: default;
+}
+
+/* 详情页提取路径输入框统一悬停效果 */
+#details-drawer #extract-path {
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+#details-drawer #extract-path:hover {
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+html.dark #details-drawer #extract-path:hover {
+    background-color: rgba(128, 128, 128, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* 保持可点击元素的鼠标样式 */
+button, a, [role="button"], [role="link"], select, .cursor-pointer {
+    cursor: pointer;
+}
+
+/* 输入框和文本区域保持文本光标 */
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], 
+input[type="url"], input[type="search"], textarea {
+    cursor: text;
+}
+
+/* 左侧标签栏和顶部窗口栏的边框样式 */
+#titlebar {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15) !important; /* 灰色偏黑的颜色 */
+}
+
+html.dark #titlebar {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important; /* 灰色偏白的颜色 */
+}
+
+aside {
+    border-right: 2px solid rgba(0, 0, 0, 0.15) !important; /* 灰色偏黑的颜色 */
+}
+
+html.dark aside {
+    border-right: 2px solid rgba(255, 255, 255, 0.15) !important; /* 灰色偏白的颜色 */
+}
+
+/* 网络地址和自定义路径输入框的毛玻璃边框效果 */
+input[type="text"].glass-effect, input[type="url"].glass-effect, textarea.glass-effect {
+    border: 2px solid rgba(0, 0, 0, 0.12); /* 灰色偏黑的颜色 */
+    background: rgba(var(--bg-secondary-rgb), 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+html.dark input[type="text"].glass-effect,
+html.dark input[type="url"].glass-effect,
+html.dark textarea.glass-effect {
+    border: 2px solid rgba(255, 255, 255, 0.12); /* 灰色偏白的颜色 */
+    background: rgba(var(--bg-secondary-rgb), 0.2);
+}
+
+/* 输入框鼠标移入效果 */
+input[type="text"].glass-effect:hover,
+input[type="url"].glass-effect:hover,
+textarea.glass-effect:hover {
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+html.dark input[type="text"].glass-effect:hover,
+html.dark input[type="url"].glass-effect:hover,
+html.dark textarea.glass-effect:hover {
+    background-color: rgba(128, 128, 128, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* 输入框聚焦时的效果 */
+input[type="text"].glass-effect:focus,
+input[type="url"].glass-effect:focus,
+textarea.glass-effect:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5); /* 聚焦时显示主题色边框 */
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+html.dark input[type="text"].glass-effect:focus,
+html.dark input[type="url"].glass-effect:focus,
+html.dark textarea.glass-effect:focus {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }

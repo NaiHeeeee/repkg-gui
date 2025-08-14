@@ -134,7 +134,7 @@
     "enter_url": "请输入图片的URL",
     "apply": "应用",
     "clear": "清除背景",
-    "preview": "预览",
+    "preview": "背景预览",
     "opacity": "透明度",
     "opacity_value": "{value}%",
     "invalid_url": "请输入有效的图片或视频地址",
