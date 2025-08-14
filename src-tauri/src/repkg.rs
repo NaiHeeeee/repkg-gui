@@ -200,7 +200,7 @@ pub fn get_file_info(path: String) -> Result<FileInfo, String> {
 async fn run_repkg_command(repkg_path: &str, args: &[&str]) -> Result<String, String> {
     // 检查 RePKG 可执行文件是否存在
     if !Path::new(repkg_path).exists() {
-        return Err(format!("RePKG 可执行文件未找到: {}", repkg_path));
+        return Err(format!("RePKG Not Found: {}", repkg_path));
     }
 
     // 执行命令
