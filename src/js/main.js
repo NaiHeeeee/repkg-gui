@@ -971,9 +971,10 @@ document.addEventListener('DOMContentLoaded', function () {
       // 构造正确的scene.pkg文件路径
       const scenePkgPath = `${wallpaperPath}/scene.pkg`;
       
-      // 获取解包设置 - 导入壁纸编辑器功能只考虑覆盖现有文件设置
+      // 获取解包设置
       await settingsManager.init();
       const overwriteFiles = settingsManager.get('overwrite-files') === true;
+      const onlyImages = settingsManager.get('only-images') === true;
       
       const options = {
         output: extractPath,
@@ -986,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function () {
         copy_project: false,
         use_name: false,
         no_tex_convert: false,  // 始终转换 tex 文件
-        overwrite: overwriteFiles  // 只考虑覆盖现有文件设置
+        overwrite: overwriteFiles  // 覆盖现有文件设置
       };
       
       // 添加调试日志
@@ -998,7 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // 添加调试日志
       // console.log('提取结果:', result);
       
-      // 如果是仅保留图像文件，清理非媒体文件
+      // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
       if (onlyImages) {
         try {
           const { invoke } = window.__TAURI__.core;
@@ -1007,6 +1008,13 @@ document.addEventListener('DOMContentLoaded', function () {
             allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
           });
           // console.log('已清理非媒体文件');
+          
+          // 将所有媒体文件移动到根目录并删除文件夹
+          await invoke('flatten_media_files', { 
+            path: extractPath,
+            allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
+          });
+          // console.log('已将所有媒体文件移动到根目录');
         } catch (cleanupError) {
           // console.warn('清理非媒体文件时出错:', cleanupError);
         }
@@ -1887,7 +1895,7 @@ async function initManualExtractFunction() {
           }
         }
 
-        // 如果是仅保留图像文件，清理非媒体文件
+        // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
         if (onlyImages && successCount > 0) {
           try {
             await invoke('cleanup_non_media_files', { 
@@ -1895,6 +1903,13 @@ async function initManualExtractFunction() {
               allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
             });
             // console.log('已清理非媒体文件');
+            
+            // 将所有媒体文件移动到根目录并删除文件夹
+            await invoke('flatten_media_files', { 
+              path: extractPath,
+              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
+            });
+            // console.log('已将所有媒体文件移动到根目录');
           } catch (cleanupError) {
             // console.warn('清理非媒体文件时出错:', cleanupError);
           }

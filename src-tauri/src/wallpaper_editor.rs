@@ -127,7 +127,7 @@ pub async fn import_to_wallpaper_editor(options: ImportToEditorOptions) -> Resul
     }
     
     Ok(format!(
-        "成功导入到壁纸编辑器: {}",
+        "{}",
         target_folder.to_string_lossy()
     ))
 }
@@ -281,8 +281,18 @@ fn extract_pkg_to_folder(pkg_path: &str, output_path: &str) -> Result<(), String
     let mut args = vec!["extract", "-o", output_path, "--overwrite"];
     args.push(pkg_path);
     
-    let output = Command::new(&repkg_path)
-        .args(&args)
+    let mut command = Command::new(&repkg_path);
+    command.args(&args);
+    
+    // 在 Windows 上隐藏终端窗口
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    
+    let output = command
         .output()
         .map_err(|e| format!("无法启动RePKG: {}", e))?;
     

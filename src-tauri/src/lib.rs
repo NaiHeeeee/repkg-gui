@@ -246,6 +246,113 @@ async fn cleanup_non_media_files(
     Ok(())
 }
 
+#[tauri::command]
+async fn flatten_media_files(
+    path: String,
+    allowed_extensions: Vec<String>,
+) -> Result<(), String> {
+    let path = Path::new(&path);
+    if !path.exists() {
+        return Err("路径不存在".to_string());
+    }
+
+    let allowed_extensions: Vec<String> = allowed_extensions
+        .iter()
+        .map(|ext| {
+            let mut ext = ext.clone();
+            if !ext.starts_with('.') {
+                ext.insert(0, '.');
+            }
+            ext.to_lowercase()
+        })
+        .collect();
+
+    // 收集所有需要移动的文件
+    let mut files_to_move = Vec::new();
+    
+    fn collect_media_files(
+        dir_path: &Path,
+        allowed: &[String],
+        files: &mut Vec<std::path::PathBuf>,
+    ) -> Result<(), String> {
+        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension() {
+                    let ext_str = format!(".{}", ext.to_string_lossy().to_lowercase());
+                    if allowed.contains(&ext_str) {
+                        files.push(path);
+                    }
+                }
+            } else if path.is_dir() {
+                // 递归收集子目录中的文件
+                collect_media_files(&path, allowed, files)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    collect_media_files(path, &allowed_extensions, &mut files_to_move)?;
+
+    // 移动所有文件到根目录
+    for file_path in files_to_move {
+        if let Some(file_name) = file_path.file_name() {
+            let target_path = path.join(file_name);
+            
+            // 如果目标路径已存在，添加数字后缀
+            let final_target_path = if target_path.exists() {
+                let stem = file_path.file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("file");
+                let extension = file_path.extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("");
+                
+                let mut counter = 1;
+                loop {
+                    let new_name = if extension.is_empty() {
+                        format!("{}_{}", stem, counter)
+                    } else {
+                        format!("{}_{}.{}", stem, counter, extension)
+                    };
+                    let new_path = path.join(new_name);
+                    if !new_path.exists() {
+                        break new_path;
+                    }
+                    counter += 1;
+                }
+            } else {
+                target_path
+            };
+            
+            fs::rename(&file_path, &final_target_path)
+                .map_err(|e| format!("无法移动文件 {}: {}", file_path.display(), e))?;
+        }
+    }
+
+    // 删除所有子目录
+    fn remove_all_subdirs(dir_path: &Path) -> Result<(), String> {
+        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                // 递归删除子目录
+                fs::remove_dir_all(&path)
+                    .map_err(|e| format!("无法删除目录 {}: {}", path.display(), e))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    remove_all_subdirs(path)?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -274,6 +381,7 @@ pub fn run() {
             extract_pkg,
             info_pkg,
             cleanup_non_media_files,
+            flatten_media_files,
             get_file_info,
             import_to_wallpaper_editor,
             get_steamapps_paths,
