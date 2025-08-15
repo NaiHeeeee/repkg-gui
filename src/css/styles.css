@@ -313,6 +313,11 @@ html.dark .nav-link.active {
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
+#refresh-wallpapers:hover svg {
+    color: var(--accent-color) !important;
+    transition: color 0.2s ease-in-out;
+}
+
 html.dark #refresh-wallpapers:hover,
 html.dark #sort-by-name:hover,
 html.dark #sort-by-date:hover,
@@ -326,6 +331,11 @@ html.dark #open-extract-folder:hover,
 html.dark #open-workshop-folder:hover {
     color: var(--accent-color) !important;
     background-color: rgba(128, 128, 128, 0.15) !important;
+}
+
+html.dark #refresh-wallpapers:hover svg {
+    color: var(--accent-color) !important;
+    transition: color 0.2s ease-in-out;
 }
 
 /* 统一的主题和语言按钮悬停效果 */

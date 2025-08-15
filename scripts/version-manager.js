@@ -121,7 +121,9 @@ async function getNewVersion(currentVersion) {
   return new Promise((resolve) => {
     function ask() {
       rl.question(`${colors.cyan}请输入新版本号${colors.reset} (当前: ${colors.yellow}v${currentVersion}${colors.reset}, 直接回车取消): `, (input) => {
-        const newVersion = input.trim();
+        // 清理输入，移除重复字符和空格
+        const cleanInput = input.replace(/[^\d.]/g, '').replace(/\.{2,}/g, '.');
+        const newVersion = cleanInput.trim();
         
         if (newVersion === '') {
           console.log(`${colors.gray}❌ 已取消版本更新${colors.reset}`);
@@ -131,7 +133,8 @@ async function getNewVersion(currentVersion) {
         }
         
         if (!isValidVersion(newVersion)) {
-          console.log(`${colors.red}❌ 无效的版本号格式！请使用 x.y.z 格式（如 1.2.3）${colors.reset}`);
+          console.log(`${colors.red}❌ 无效的版本号格式！${colors.reset}`);
+          console.log(`${colors.yellow}💡 提示：请使用 x.y.z 格式（如 1.2.3），只能包含数字和点${colors.reset}`);
           ask();
           return;
         }
@@ -143,8 +146,8 @@ async function getNewVersion(currentVersion) {
         }
         
         // 二次确认
-        rl.question(`${colors.yellow}⚠️  确认将版本从 ${colors.cyan}v${currentVersion}${colors.reset} ${colors.yellow}更新为 ${colors.green}v${newVersion}${colors.reset} ${colors.yellow}？(y/N): ${colors.reset}`, (confirm) => {
-          if (confirm.toLowerCase() === 'y' || confirm.toLowerCase() === 'yes') {
+        rl.question(`${colors.yellow}⚠️  确认将版本从 ${colors.cyan}v${currentVersion}${colors.reset} ${colors.yellow}更新为 ${colors.green}v${newVersion}${colors.reset} ${colors.yellow}？(Y/n): ${colors.reset}`, (confirm) => {
+          if (confirm.toLowerCase() === 'y' || confirm.toLowerCase() === 'yes' || confirm === '') {
             rl.close();
             resolve(newVersion);
           } else {
@@ -247,14 +250,23 @@ function checkBuildCommand() {
       output: process.stdout
     });
     
-    rl.question(`${colors.cyan}是否更新版本号？(y/N): ${colors.reset}`, async (answer) => {
-      if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-        const newVersion = await getNewVersion(currentVersion);
-        await updateAllVersions(newVersion);
-        console.log(`\n${colors.green}🎉 版本号已更新为 v${newVersion}${colors.reset}`);
-        console.log(`${colors.green}✅ 可以继续执行构建命令${colors.reset}`);
-      } else {
+    console.log(`${colors.cyan}💡 构建模式下版本更新${colors.reset}`);
+    console.log(`${colors.gray}  直接输入新版本号即可更新${colors.reset}`);
+    console.log(`${colors.gray}  直接回车保持当前版本${colors.reset}\n`);
+    
+    rl.question(`${colors.cyan}请输入新版本号${colors.reset} (当前: ${colors.yellow}v${currentVersion}${colors.reset}, 直接回车跳过): `, async (input) => {
+      const cleanInput = input.replace(/[^\d.]/g, '').replace(/\.{2,}/g, '.').trim();
+      
+      if (cleanInput === '') {
         console.log(`${colors.green}✅ 保持当前版本，继续执行构建命令${colors.reset}`);
+      } else if (!isValidVersion(cleanInput)) {
+        console.log(`${colors.red}❌ 无效的版本号格式，保持当前版本${colors.reset}`);
+      } else if (compareVersions(cleanInput, currentVersion) <= 0) {
+        console.log(`${colors.red}❌ 新版本号必须大于当前版本，保持当前版本${colors.reset}`);
+      } else {
+        await updateAllVersions(cleanInput);
+        console.log(`\n${colors.green}🎉 版本号已更新为 v${cleanInput}${colors.reset}`);
+        console.log(`${colors.green}✅ 可以继续执行构建命令${colors.reset}`);
       }
       
       rl.close();
