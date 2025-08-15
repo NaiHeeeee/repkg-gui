@@ -78,6 +78,7 @@
   },
   "messages": {
     "extracting": "提取中...",
+    "importing": "导入中...",
     "extract_success": "提取完成!",
     "extract_failed": "提取失败: ",
     "select_files_first": "请先选择要提取的 .pkg 文件",
@@ -98,7 +99,20 @@
     "cannot_get_info": "无法获取壁纸信息或提取路径",
     "empty_path": "壁纸路径或提取路径为空",
     "path_empty": "壁纸路径或提取路径为空",
-    "extract_complete": "提取完成！成功: {success} 个，失败: {error} 个"
+    "extract_complete": "提取完成！成功: {success} 个，失败: {error} 个",
+    "import_success": "导入成功",
+    "import_failed": "导入失败",
+    "steam_not_found": "无法找到Steam或Wallpaper Engine安装路径，请确保已安装Wallpaper Engine",
+    "enter_workshop_id": "请输入壁纸的Workshop ID（数字）：",
+    "invalid_workshop_id": "请输入有效的Workshop ID",
+    "scene_pkg_not_found": "未找到scene.pkg文件",
+    "project_json_copy_failed": "复制project.json失败",
+    "project_json_read_failed": "读取project.json失败",
+    "project_json_parse_failed": "解析project.json失败",
+    "project_json_write_failed": "写入project.json失败",
+    "preview_copy_failed": "复制预览文件失败",
+    "wallpaper_editor_not_loaded": "壁纸编辑器导入功能未加载",
+    "desktop_only": "此功能仅在桌面应用中可用"
   },
   "buttons": {
     "change": "更改",
@@ -113,6 +127,7 @@
     "extract_start": "开始提取",
     "open_wallpaper_folder": "打开壁纸所在文件夹",
     "open_extract_folder": "打开提取文件夹",
+    "import_wallpaper_editor": "导入壁纸编辑器",
     "reload": "重新加载"
   },
   "nav": {

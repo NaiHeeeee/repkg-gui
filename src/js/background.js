@@ -23,10 +23,10 @@ class BackgroundManager {
         const controls = document.getElementById('custom-bg-controls');
 
         // 切换开关
-        toggle.addEventListener('change', (e) => {
+        toggle.addEventListener('change', async (e) => {
             this.isEnabled = e.target.checked;
             this.toggleControls();
-            this.saveSettings();
+            await this.saveSettings();
         });
 
         // 应用背景
@@ -47,10 +47,30 @@ class BackgroundManager {
             }
         });
 
+        // 自动预览功能 - 使用防抖处理输入
+        let previewTimeout;
+        urlInput.addEventListener('input', (e) => {
+            clearTimeout(previewTimeout);
+            const url = e.target.value.trim();
+            
+            if (url && this.isValidUrl(url)) {
+                // 延迟500ms后显示预览，避免频繁请求
+                previewTimeout = setTimeout(() => {
+                    this.showPreview(url);
+                }, 500);
+            } else if (url === '') {
+                // 清空时立即隐藏预览
+                this.hidePreview();
+            } else {
+                // 无效URL时隐藏预览
+                this.hidePreview();
+            }
+        });
+
         // 监听URL输入框获得焦点事件
         urlInput.addEventListener('focus', (e) => {
             const url = e.target.value.trim();
-            if (url) {
+            if (url && this.isValidUrl(url)) {
                 this.showPreview(url);
             } else {
                 this.hidePreview();
@@ -59,8 +79,10 @@ class BackgroundManager {
 
         // 监听URL输入框失去焦点事件
         urlInput.addEventListener('blur', () => {
-            // 快速隐藏，减少延迟
-            this.hidePreview();
+            // 延迟隐藏，给用户时间点击应用按钮
+            setTimeout(() => {
+                this.hidePreview();
+            }, 200);
         });
 
         // 清除背景
@@ -70,11 +92,11 @@ class BackgroundManager {
         });
 
         // 透明度调节
-        opacitySlider.addEventListener('input', (e) => {
+        opacitySlider.addEventListener('input', async (e) => {
             this.opacity = parseFloat(e.target.value);
             this.updateOpacityDisplay();
             this.applyOpacity();
-            this.saveSettings();
+            await this.saveSettings();
         });
 
         // 监听语言变化
@@ -112,12 +134,12 @@ class BackgroundManager {
 
         // 预加载并验证资源
         this.preloadResource(url, this.currentType)
-            .then(() => {
+            .then(async () => {
                 this.applyBackground();
-                this.saveSettings();
+                await this.saveSettings();
             })
             .catch((error) => {
-                // console.error('背景加载失败:', error);
+//                 console.error('背景加载失败:', error);
                 const message = window.i18n && window.i18n.t ? window.i18n.t('background.load_failed') : '背景加载失败，请检查地址是否正确';
                 alert(message);
             });
@@ -214,13 +236,13 @@ class BackgroundManager {
         }
     }
 
-    clearBackground() {
+    async clearBackground() {
         this.currentUrl = null;
         this.currentType = null;
         this.previewUrl = null;
         this.removeBackground();
         this.hidePreview();
-        this.saveSettings();
+        await this.saveSettings();
     }
 
     applyOpacity() {
@@ -236,7 +258,7 @@ class BackgroundManager {
         const videoPreview = document.getElementById('bg-video-preview');
 
         const displayUrl = url || this.currentUrl;
-        if (!displayUrl) {
+        if (!displayUrl || !this.isValidUrl(displayUrl)) {
             this.hidePreview();
             return;
         }
@@ -244,31 +266,40 @@ class BackgroundManager {
         const displayType = url ? this.getUrlType(url) : this.currentType;
         this.previewUrl = displayUrl;
 
-        // 添加淡入动画
+        // 显示加载状态
         previewContainer.classList.remove('hidden');
-        
-        // 强制重排以确保动画效果
-        previewContainer.offsetHeight;
-        
         previewContainer.classList.add('show');
 
-        if (displayType === 'image') {
-            imgPreview.src = displayUrl;
-            imgPreview.style.display = 'block';
-            imgPreview.classList.add('fade-in');
-            imgPreview.classList.remove('fade-out');
-            videoPreview.style.display = 'none';
-            videoPreview.classList.remove('fade-in');
-            videoPreview.classList.add('fade-out');
-        } else if (displayType === 'video') {
-            videoPreview.src = displayUrl;
-            videoPreview.style.display = 'block';
-            videoPreview.classList.add('fade-in');
-            videoPreview.classList.remove('fade-out');
-            imgPreview.style.display = 'none';
-            imgPreview.classList.remove('fade-in');
-            imgPreview.classList.add('fade-out');
-        }
+        // 预加载资源以避免显示破损图片
+        this.preloadResource(displayUrl, displayType)
+            .then(() => {
+                // 强制重排以确保动画效果
+                previewContainer.offsetHeight;
+                
+                if (displayType === 'image') {
+                    imgPreview.src = displayUrl;
+                    imgPreview.style.display = 'block';
+                    imgPreview.classList.add('fade-in');
+                    imgPreview.classList.remove('fade-out');
+                    videoPreview.style.display = 'none';
+                    videoPreview.classList.remove('fade-in');
+                    videoPreview.classList.add('fade-out');
+                } else if (displayType === 'video') {
+                    videoPreview.src = displayUrl;
+                    videoPreview.style.display = 'block';
+                    videoPreview.classList.add('fade-in');
+                    videoPreview.classList.remove('fade-out');
+                    imgPreview.style.display = 'none';
+                    imgPreview.classList.remove('fade-in');
+                    imgPreview.classList.add('fade-out');
+                }
+            })
+            .catch((error) => {
+                // console.warn('预览加载失败:', error);
+                // 加载失败时不显示预览，但保持容器可见
+                imgPreview.style.display = 'none';
+                videoPreview.style.display = 'none';
+            });
     }
 
     hidePreview() {
@@ -289,14 +320,15 @@ class BackgroundManager {
             }, 200);
     }
 
-    saveSettings() {
+    async saveSettings() {
         const settings = {
             enabled: this.isEnabled,
             url: this.currentUrl,
             type: this.currentType,
             opacity: this.opacity
         };
-        localStorage.setItem('customBackground', JSON.stringify(settings));
+        await settingsManager.init();
+        settingsManager.set('custom-background', settings);
     }
 
     updateOpacityDisplay() {
@@ -310,11 +342,11 @@ class BackgroundManager {
         }
     }
 
-    loadSavedSettings() {
+    async loadSavedSettings() {
         try {
-            const saved = localStorage.getItem('customBackground');
-            if (saved) {
-                const settings = JSON.parse(saved);
+            await settingsManager.init();
+            const settings = settingsManager.get('custom-background');
+            if (settings) {
                 this.isEnabled = settings.enabled || false;
                 this.currentUrl = settings.url || null;
                 this.currentType = settings.type || null;
@@ -353,8 +385,9 @@ class BackgroundManager {
 }
 
 // 初始化背景管理器
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     window.backgroundManager = new BackgroundManager();
+    await window.backgroundManager.loadSavedSettings();
 });
 
 // 导出供其他模块使用

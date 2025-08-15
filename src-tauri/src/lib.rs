@@ -7,6 +7,10 @@ use std::process::Command;
 mod repkg;
 use repkg::{extract_pkg, get_file_info, info_pkg};
 
+// 引入壁纸编辑器模块
+mod wallpaper_editor;
+use wallpaper_editor::{import_to_wallpaper_editor, get_steamapps_paths, find_workshop_path_from_extract_path, check_wallpaper_exists_in_editor, remove_wallpaper_from_editor};
+
 // 使用Tauri v2的dialog插件
 use tauri_plugin_dialog::DialogExt;
 
@@ -112,6 +116,21 @@ async fn read_image_as_base64(path: String) -> Result<String, String> {
     let image_data = fs::read(&path).map_err(|e| format!("无法读取图片文件: {}", e))?;
 
     Ok(base64::engine::general_purpose::STANDARD.encode(image_data))
+}
+
+#[tauri::command]
+async fn file_exists(path: String) -> Result<bool, String> {
+    Ok(Path::new(&path).exists())
+}
+
+#[tauri::command]
+async fn read_text_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path).map_err(|e| format!("无法读取文件: {}", e))
+}
+
+#[tauri::command]
+async fn write_text_file(path: String, contents: String) -> Result<(), String> {
+    fs::write(&path, contents).map_err(|e| format!("无法写入文件: {}", e))
 }
 
 #[tauri::command]
@@ -243,6 +262,9 @@ pub fn run() {
             check_file_exists,
             read_directory_files,
             read_image_as_base64,
+            file_exists,
+            read_text_file,
+            write_text_file,
             open_folder,
             minimize_window,
             maximize_window,
@@ -252,7 +274,12 @@ pub fn run() {
             extract_pkg,
             info_pkg,
             cleanup_non_media_files,
-            get_file_info
+            get_file_info,
+            import_to_wallpaper_editor,
+            get_steamapps_paths,
+            find_workshop_path_from_extract_path,
+            check_wallpaper_exists_in_editor,
+            remove_wallpaper_from_editor
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

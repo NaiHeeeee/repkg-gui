@@ -29,13 +29,19 @@ async function setDefaultExtractPath() {
         const normalizedHomeDir = homeDir.replace(/\\$/, '');
         const desktopPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
         extractPathInput.value = desktopPath;
+        await settingsManager.init();
+        settingsManager.set('extract-path', desktopPath);
       } else {
         // Fallback for non-Tauri environment
         extractPathInput.value = 'C:\\RePKG-GUI';
+        await settingsManager.init();
+        settingsManager.set('extract-path', 'C:\\RePKG-GUI');
       }
     } catch (error) {
       // console.error('无法获取用户桌面路径:', error);
       extractPathInput.value = 'C:\\RePKG-GUI';
+      await settingsManager.init();
+      settingsManager.set('extract-path', 'C:\\RePKG-GUI');
     }
   }
 }
@@ -75,8 +81,9 @@ async function setDefaultExtractPath() {
 })();
 
 // 主题切换优化 - 在样式加载前设置主题
-(function initializeTheme() {
-    const savedTheme = localStorage.getItem('repkg-theme');
+async function initializeTheme() {
+    await settingsManager.init();
+    const savedTheme = settingsManager.get('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
@@ -84,7 +91,7 @@ async function setDefaultExtractPath() {
     } else if (savedTheme === 'light') {
         document.documentElement.classList.remove('dark');
     }
-})();
+}
 
   // 存储手动提取的文件列表
   let manualFiles = [];
@@ -255,8 +262,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   
   initTranslations();
-  // --- 设置默认提取路径 ---
-  setDefaultExtractPath();
+  // --- 初始化主题和设置默认提取路径 ---
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initializeTheme();
+    await setDefaultExtractPath();
+  });
   
   // 使用Tauri的API读取本地文件系统
   async function loadSteamWorkshopWallpapers() {
@@ -272,14 +282,16 @@ document.addEventListener('DOMContentLoaded', function () {
         let wallpaperFolders = [];
         
         // 检查用户设置的自定义路径
-        const customPath = localStorage.getItem('repkg-workshop-path');
+        await settingsManager.init();
+        const customPath = settingsManager.get('workshop-path');
         if (customPath) {
           try {
             // 使用自动补全功能
             const completedPath = await autoCompleteWorkshopPath(customPath);
             if (completedPath !== customPath) {
               // 如果路径被补全，更新存储的路径
-              localStorage.setItem('repkg-workshop-path', completedPath);
+              await settingsManager.init();
+              settingsManager.set('workshop-path', completedPath);
               const workshopPathInput = document.getElementById('workshop-path');
               if (workshopPathInput) {
                 workshopPathInput.value = completedPath;
@@ -469,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const folderInfo = await invoke('get_file_info', { path: folderPath });
                 modifiedDate = folderInfo.modified;
               } catch (error) {
-                console.warn(`无法获取文件夹信息: ${folderPath}`, error);
+//                 console.warn(`无法获取文件夹信息: ${folderPath}`, error);
               }
               
               loadedWallpapers.push({
@@ -477,6 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 name: name,
                 image: imageUrl,
                 path: folderPath,
+                scenePkgPath: scenePkgPath,
                 previewFound: !!imagePath,
                 previewType: foundPreviewType,
                 modifiedDate: modifiedDate
@@ -658,6 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
       card.className = 'wallpaper-card group cursor-pointer';
       card.dataset.wallpaperId = wallpaper.id;
       card.dataset.index = index;
+      card.dataset.scenePkgPath = wallpaper.scenePkgPath;
       
       const mediaContainer = document.createElement('div');
       mediaContainer.className = 'aspect-square bg-[var(--bg-tertiary)] rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-105 relative';
@@ -957,48 +971,22 @@ document.addEventListener('DOMContentLoaded', function () {
       // 构造正确的scene.pkg文件路径
       const scenePkgPath = `${wallpaperPath}/scene.pkg`;
       
-      // 获取解包设置
-      // 获取解包设置
-      const onlyImagesCheckbox = document.getElementById('only-images-checkbox');
-      const noTexConvertCheckbox = document.getElementById('no-tex-convert-checkbox');
-      const ignoreDirStructureCheckbox = document.getElementById('ignore-dir-structure-checkbox');
-      const overwriteFilesCheckbox = document.getElementById('overwrite-files-checkbox');
-      
-      // 如果通过nth-child选择器无法获取到元素，尝试通过文本内容查找
-      if (!onlyImagesCheckbox || !noTexConvertCheckbox || !ignoreDirStructureCheckbox || !overwriteFilesCheckbox) {
-        const settingItems = document.querySelectorAll('#settings .space-y-2 > div');
-        settingItems.forEach(item => {
-          const text = item.textContent.trim();
-          const checkbox = item.querySelector('input[type="checkbox"]');
-          
-          if (text.includes('仅保留图像文件')) {
-            onlyImagesCheckbox = checkbox;
-          } else if (text.includes('不把Tex文件转换为图像')) {
-            noTexConvertCheckbox = checkbox;
-          } else if (text.includes('忽略原有目录结构')) {
-            ignoreDirStructureCheckbox = checkbox;
-          } else if (text.includes('覆盖所有现有文件')) {
-            overwriteFilesCheckbox = checkbox;
-          }
-        });
-      }
-      
-      // 构造提取选项
-      const onlyImages = onlyImagesCheckbox && onlyImagesCheckbox.checked;
-      const ignoreDirStructure = ignoreDirStructureCheckbox && ignoreDirStructureCheckbox.checked;
+      // 获取解包设置 - 导入壁纸编辑器功能只考虑覆盖现有文件设置
+      await settingsManager.init();
+      const overwriteFiles = settingsManager.get('overwrite-files') === true;
       
       const options = {
         output: extractPath,
         ignore_exts: null,
         only_exts: null,  // 不移除-e参数，让清理逻辑处理
         debug_info: false,
-        tex: !(noTexConvertCheckbox && noTexConvertCheckbox.checked),  // 转换 tex 文件为图像
-        single_dir: ignoreDirStructure || onlyImages,  // 使用单层目录（仅保留图像时强制单层）
+        tex: true,  // 始终转换 tex 文件为图像
+        single_dir: false,  // 保持原有目录结构
         recursive: true,  // 递归提取
         copy_project: false,
         use_name: false,
-        no_tex_convert: (noTexConvertCheckbox && noTexConvertCheckbox.checked) || false,
-        overwrite: (overwriteFilesCheckbox && overwriteFilesCheckbox.checked) || false  // 覆盖现有文件
+        no_tex_convert: false,  // 始终转换 tex 文件
+        overwrite: overwriteFiles  // 只考虑覆盖现有文件设置
       };
       
       // 添加调试日志
@@ -1082,7 +1070,8 @@ document.addEventListener('DOMContentLoaded', function () {
       await extractWallpaper(wallpaperPath, extractPath);
       
       // 提取成功后，根据设置决定是否自动打开提取文件夹
-      const autoOpenExtractFolder = localStorage.getItem('repkg-auto-open-extract-folder') === 'true';
+      await settingsManager.init();
+      const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
       if (autoOpenExtractFolder && window.__TAURI__) {
         const { invoke } = window.__TAURI__.core;
         // 确保路径格式正确（使用反斜杠）
@@ -1090,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await invoke('open_folder', { path: normalizedPath });
       }
     } catch (error) {
-      // console.error('提取过程出错:', error);
+//       console.error('提取过程出错:', error);
     }
   });
 
@@ -1117,14 +1106,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // 为详情页的导入壁纸编辑器按钮添加事件监听器
+  document.getElementById('import-wallpaper-editor-btn').addEventListener('click', async () => {
+    if (typeof importToWallpaperEditor === 'function') {
+      await importToWallpaperEditor('detail');
+    } else {
+      alert(window.i18n.t('messages.wallpaper_editor_not_loaded'));
+    }
+  });
+
   // --- 主题切换逻辑 ---
   const themeButtons = document.querySelectorAll('.theme-btn');
   const rootHtml = document.documentElement;
 
-  function applyTheme(theme) {
+  async function applyTheme(theme) {
     rootHtml.classList.remove('system', 'light', 'dark');
     rootHtml.classList.add(theme);
-    localStorage.setItem('repkg-theme', theme);
+    await settingsManager.init();
+    settingsManager.set('theme', theme);
 
     themeButtons.forEach(btn => {
       if (btn.dataset.theme === theme) {
@@ -1163,12 +1162,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   themeButtons.forEach(button => {
-    button.addEventListener('click', () => applyTheme(button.dataset.theme));
+    button.addEventListener('click', async () => {
+      await applyTheme(button.dataset.theme);
+    });
   });
 
   // 初始化主题 - 延迟到样式加载完成后执行
-  function initializeThemeAfterLoad() {
-    const savedTheme = localStorage.getItem('repkg-theme') || 'system';
+  async function initializeThemeAfterLoad() {
+    await settingsManager.init();
+    const savedTheme = settingsManager.get('theme') || 'system';
     applyTheme(savedTheme);
     updateThemeIcons();
   }
@@ -1180,8 +1182,9 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeThemeAfterLoad();
   }
   
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (localStorage.getItem('repkg-theme') === 'system') {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+    await settingsManager.init();
+    if (settingsManager.get('theme') === 'system') {
       applyTheme('system');
     }
   });
@@ -1332,11 +1335,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const currentWorkshopPath = document.getElementById('current-workshop-path');
   
   // 读取保存的路径
-  const savedWorkshopPath = localStorage.getItem('repkg-workshop-path');
-  if (savedWorkshopPath && workshopPathInput) {
-    workshopPathInput.value = savedWorkshopPath;
-    if (currentWorkshopPath) {
-      currentWorkshopPath.textContent = window.i18n.t('workshop.current_path') + savedWorkshopPath;
+  async function loadWorkshopPath() {
+    await settingsManager.init();
+    const savedWorkshopPath = settingsManager.get('workshop-path');
+    if (savedWorkshopPath && workshopPathInput) {
+      workshopPathInput.value = savedWorkshopPath;
+      if (currentWorkshopPath) {
+        currentWorkshopPath.textContent = window.i18n.t('workshop.current_path') + savedWorkshopPath;
+      }
     }
   }
   
@@ -1462,7 +1468,8 @@ document.addEventListener('DOMContentLoaded', function () {
           workshopPathInput.value = path;
         }
         
-        localStorage.setItem('repkg-workshop-path', path);
+        await settingsManager.init();
+        settingsManager.set('workshop-path', path);
         if (currentWorkshopPath) {
           currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: path });
         }
@@ -1497,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', function () {
     restoreDefaultPathBtn.addEventListener('click', () => {
       const defaultPath = 'C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\431960';
       workshopPathInput.value = defaultPath;
-      localStorage.setItem('repkg-workshop-path', defaultPath);
+      settingsManager.set('workshop-path', defaultPath);
       if (currentWorkshopPath) {
         currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: defaultPath });
       }
@@ -1509,20 +1516,23 @@ document.addEventListener('DOMContentLoaded', function () {
   
   // --- 解包设置逻辑 ---
   // 初始化解包设置
-  function initUnpackSettings() {
-    // 获取所有解包设置的复选框
-    const onlyImagesCheckbox = document.querySelector('#settings .space-y-2 > div:nth-child(1) input[type="checkbox"]');
-    const noTexConvertCheckbox = document.querySelector('#settings .space-y-2 > div:nth-child(2) input[type="checkbox"]');
-    const ignoreDirStructureCheckbox = document.querySelector('#settings .space-y-2 > div:nth-child(3) input[type="checkbox"]');
-    const overwriteFilesCheckbox = document.querySelector('#settings .space-y-2 > div:nth-child(4) input[type="checkbox"]');
+  async function initUnpackSettings() {
+    // 获取所有解包设置的复选框 - 使用ID选择器避免冲突
+    const onlyImagesCheckbox = document.getElementById('only-images-checkbox');
+    const noTexConvertCheckbox = document.getElementById('no-tex-convert-checkbox');
+    const ignoreDirStructureCheckbox = document.getElementById('ignore-dir-structure-checkbox');
+    const overwriteFilesCheckbox = document.getElementById('overwrite-files-checkbox');
     const autoOpenExtractFolderCheckbox = document.getElementById('auto-open-extract-folder');
     
-    // 从localStorage读取保存的设置
-    const savedOnlyImages = localStorage.getItem('repkg-only-images') === 'true';
-    const savedNoTexConvert = localStorage.getItem('repkg-no-tex-convert') === 'true';
-    const savedIgnoreDirStructure = localStorage.getItem('repkg-ignore-dir-structure') === 'true';
-    const savedOverwriteFiles = localStorage.getItem('repkg-overwrite-files') === 'true';
-    const savedAutoOpenExtractFolder = localStorage.getItem('repkg-auto-open-extract-folder') === 'true';
+    // 等待settingsManager初始化完成
+    await settingsManager.init();
+    
+    // 从settings.json读取保存的设置
+    const savedOnlyImages = settingsManager.get('only-images');
+    const savedNoTexConvert = settingsManager.get('no-tex-convert');
+    const savedIgnoreDirStructure = settingsManager.get('ignore-dir-structure');
+    const savedOverwriteFiles = settingsManager.get('overwrite-files');
+    const savedAutoOpenExtractFolder = settingsManager.get('auto-open-extract-folder');
     
     // 设置复选框的初始状态
     if (onlyImagesCheckbox) onlyImagesCheckbox.checked = savedOnlyImages;
@@ -1534,37 +1544,81 @@ document.addEventListener('DOMContentLoaded', function () {
     // 为每个复选框添加事件监听器
     if (onlyImagesCheckbox) {
       onlyImagesCheckbox.addEventListener('change', () => {
-        localStorage.setItem('repkg-only-images', onlyImagesCheckbox.checked);
+        settingsManager.set('only-images', onlyImagesCheckbox.checked);
+        syncAllCheckboxes('only-images', onlyImagesCheckbox.checked);
       });
     }
     
     if (noTexConvertCheckbox) {
       noTexConvertCheckbox.addEventListener('change', () => {
-        localStorage.setItem('repkg-no-tex-convert', noTexConvertCheckbox.checked);
+        settingsManager.set('no-tex-convert', noTexConvertCheckbox.checked);
+        syncAllCheckboxes('no-tex-convert', noTexConvertCheckbox.checked);
       });
     }
     
     if (ignoreDirStructureCheckbox) {
       ignoreDirStructureCheckbox.addEventListener('change', () => {
-        localStorage.setItem('repkg-ignore-dir-structure', ignoreDirStructureCheckbox.checked);
+        settingsManager.set('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
+        syncAllCheckboxes('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
       });
     }
     
     if (overwriteFilesCheckbox) {
       overwriteFilesCheckbox.addEventListener('change', () => {
-        localStorage.setItem('repkg-overwrite-files', overwriteFilesCheckbox.checked);
+        settingsManager.set('overwrite-files', overwriteFilesCheckbox.checked);
+        syncAllCheckboxes('overwrite-files', overwriteFilesCheckbox.checked);
       });
     }
     
     if (autoOpenExtractFolderCheckbox) {
       autoOpenExtractFolderCheckbox.addEventListener('change', () => {
-        localStorage.setItem('repkg-auto-open-extract-folder', autoOpenExtractFolderCheckbox.checked);
+        settingsManager.set('auto-open-extract-folder', autoOpenExtractFolderCheckbox.checked);
+      });
+    }
+  }
+
+  // 同步所有复选框状态
+  function syncAllCheckboxes(settingName, value) {
+    const checkboxIds = {
+      'only-images': ['only-images-checkbox'],
+      'no-tex-convert': ['no-tex-convert-checkbox'],
+      'ignore-dir-structure': ['ignore-dir-structure-checkbox'],
+      'overwrite-files': ['overwrite-files-checkbox']
+    };
+    
+    const ids = checkboxIds[settingName];
+    if (ids) {
+      ids.forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) {
+          checkbox.checked = value;
+        }
       });
     }
   }
   
   // 初始化解包设置
   initUnpackSettings();
+  
+  // 同步所有复选框状态到页面
+  async function syncSettingsToCheckboxes() {
+    await settingsManager.init();
+    const settings = {
+      'only-images': settingsManager.get('only-images'),
+      'no-tex-convert': settingsManager.get('no-tex-convert'),
+      'ignore-dir-structure': settingsManager.get('ignore-dir-structure'),
+      'overwrite-files': settingsManager.get('overwrite-files')
+    };
+    
+    Object.keys(settings).forEach(settingName => {
+      syncAllCheckboxes(settingName, settings[settingName]);
+    });
+  }
+  
+  // 页面加载时同步所有复选框
+  document.addEventListener('DOMContentLoaded', async () => {
+    await syncSettingsToCheckboxes();
+  });
   
   // 添加刷新按钮事件监听器
   const refreshButton = document.getElementById('refresh-wallpapers');
@@ -1606,33 +1660,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // --- 提取路径相关功能 ---
 
-// 保存提取路径到localStorage
-function saveExtractPath(path) {
+// 保存提取路径到settings.json
+async function saveExtractPath(path) {
   if (path === undefined) {
     const extractPathInput = document.getElementById('extract-path');
     if (extractPathInput) {
       path = extractPathInput.value;
     }
   }
-  localStorage.setItem('repkg-extract-path', path);
+  await settingsManager.init();
+  settingsManager.set('extract-path', path);
 }
 
 // 加载保存的提取路径
-function loadExtractPath() {
+async function loadExtractPath() {
   const extractPathInput = document.getElementById('extract-path');
   if (extractPathInput) {
-    const savedPath = localStorage.getItem('repkg-extract-path');
+    await settingsManager.init();
+    const savedPath = settingsManager.get('extract-path');
     if (savedPath) {
       extractPathInput.value = savedPath;
     } else {
       // 如果没有保存的路径，使用默认路径
-      setDefaultExtractPath();
+      await setDefaultExtractPath();
     }
   }
 }
 
 // 初始化提取路径相关事件
-function initExtractPathEvents() {
+async function initExtractPathEvents() {
   const changeExtractPathBtn = document.getElementById('change-extract-path');
   const restoreDefaultExtractPathBtn = document.getElementById('restore-default-extract-path');
   const extractPathInput = document.getElementById('extract-path');
@@ -1644,7 +1700,7 @@ function initExtractPathEvents() {
         const selectedPath = await invoke('select_folder');
         if (selectedPath && extractPathInput) {
           extractPathInput.value = selectedPath;
-          saveExtractPath(selectedPath);
+          await saveExtractPath(selectedPath);
         }
       } catch (error) {
         // console.error('选择文件夹失败:', error);
@@ -1660,18 +1716,20 @@ function initExtractPathEvents() {
   }
 
   if (extractPathInput) {
-    extractPathInput.addEventListener('input', () => {
-      saveExtractPath();
+    extractPathInput.addEventListener('input', async () => {
+      await saveExtractPath();
     });
   }
 }
 
 // 在 DOMContentLoaded 后初始化提取路径
-initExtractPathEvents();
-loadExtractPath();
+document.addEventListener('DOMContentLoaded', async () => {
+  await initExtractPathEvents();
+  await loadExtractPath();
+});
 
 // 初始化手动提取页面的提取路径相关事件
-function initManualExtractPathEvents() {
+async function initManualExtractPathEvents() {
   const changeExtractPathBtnManual = document.getElementById('change-extract-path-manual');
   const restoreDefaultExtractPathBtnManual = document.getElementById('restore-default-extract-path-manual');
   const extractPathInputManual = document.getElementById('extract-path-manual');
@@ -1683,7 +1741,7 @@ function initManualExtractPathEvents() {
         const selectedPath = await invoke('select_folder');
         if (selectedPath && extractPathInputManual) {
           extractPathInputManual.value = selectedPath;
-          saveManualExtractPath(selectedPath);
+          await saveManualExtractPath(selectedPath);
         }
       } catch (error) {
         // console.error('选择文件夹失败:', error);
@@ -1699,8 +1757,8 @@ function initManualExtractPathEvents() {
   }
 
   if (extractPathInputManual) {
-    extractPathInputManual.addEventListener('input', () => {
-      saveManualExtractPath();
+    extractPathInputManual.addEventListener('input', async () => {
+      await saveManualExtractPath();
     });
   }
 }
@@ -1718,7 +1776,7 @@ async function setDefaultManualExtractPath() {
       const normalizedHomeDir = homeDir.replace(/\\$/, '');
       const defaultPath = `${normalizedHomeDir}\\Desktop\\RePKG-GUI`;
       extractPathInputManual.value = defaultPath;
-      saveManualExtractPath(defaultPath);
+      await saveManualExtractPath(defaultPath);
     } else {
       extractPathInputManual.value = 'C:\\RePKG-GUI';
     }
@@ -1729,35 +1787,41 @@ async function setDefaultManualExtractPath() {
 }
 
 // 保存手动提取路径到localStorage
-function saveManualExtractPath(path) {
+async function saveManualExtractPath(path) {
   if (path === undefined) {
     const extractPathInputManual = document.getElementById('extract-path-manual');
     if (extractPathInputManual) {
       path = extractPathInputManual.value;
     }
   }
-  localStorage.setItem('repkg-extract-path-manual', path);
+  await settingsManager.init();
+  await settingsManager.set('extract-path-manual', path);
 }
 
 // 加载保存的手动提取路径
-function loadManualExtractPath() {
+async function loadManualExtractPath() {
   const extractPathInputManual = document.getElementById('extract-path-manual');
   if (extractPathInputManual) {
-    const savedPath = localStorage.getItem('repkg-extract-path-manual');
+    await settingsManager.init();
+    const savedPath = await settingsManager.get('extract-path-manual');
     if (savedPath) {
       extractPathInputManual.value = savedPath;
     } else {
-      setDefaultManualExtractPath();
+      await setDefaultManualExtractPath();
     }
   }
 }
 
 // 在 DOMContentLoaded 后初始化手动提取页面的提取路径
-initManualExtractPathEvents();
-loadManualExtractPath();
+document.addEventListener('DOMContentLoaded', async () => {
+  await initManualExtractPathEvents();
+  await loadManualExtractPath();
+  
+  // 初始化手动提取页面的提取功能
+  await initManualExtractFunction();
+});
 
-// 初始化手动提取页面的提取功能
-function initManualExtractFunction() {
+async function initManualExtractFunction() {
   const manualExtractBtn = document.getElementById('manual-extract-btn');
   const openManualExtractFolderBtn = document.getElementById('open-manual-extract-folder-btn');
 
@@ -1786,27 +1850,25 @@ function initManualExtractFunction() {
         let errorCount = 0;
 
         // 获取解包设置
-        const onlyImagesCheckbox = document.getElementById('only-images-checkbox');
-        const noTexConvertCheckbox = document.getElementById('no-tex-convert-checkbox');
-        const ignoreDirStructureCheckbox = document.getElementById('ignore-dir-structure-checkbox');
-        const overwriteFilesCheckbox = document.getElementById('overwrite-files-checkbox');
+        await settingsManager.init();
+      const onlyImages = settingsManager.get('only-images') === true;
+      const noTexConvert = settingsManager.get('no-tex-convert') === true;
+      const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
+      const overwriteFiles = settingsManager.get('overwrite-files') === true;
 
         // 构造提取选项
-        const onlyImages = onlyImagesCheckbox && onlyImagesCheckbox.checked;
-        const ignoreDirStructure = ignoreDirStructureCheckbox && ignoreDirStructureCheckbox.checked;
-        
         const options = {
           output: extractPath.replace(/\\/g, '/'),
           ignore_exts: null,
           only_exts: null,  // 不移除-e参数，让清理逻辑处理
           debug_info: false,
-          tex: !(noTexConvertCheckbox && noTexConvertCheckbox.checked),
+          tex: !noTexConvert,
           single_dir: ignoreDirStructure || onlyImages,
           recursive: true,
           copy_project: false,
           use_name: false,
-          no_tex_convert: (noTexConvertCheckbox && noTexConvertCheckbox.checked) || false,
-          overwrite: (overwriteFilesCheckbox && overwriteFilesCheckbox.checked) || false  // 覆盖现有文件
+          no_tex_convert: noTexConvert,
+          overwrite: overwriteFiles  // 覆盖现有文件
         };
 
         // 逐个处理文件
@@ -1850,7 +1912,8 @@ function initManualExtractFunction() {
         alert(message);
 
         // 提取成功后，根据设置决定是否自动打开提取文件夹
-        const autoOpenExtractFolder = localStorage.getItem('repkg-auto-open-extract-folder') === 'true';
+        await settingsManager.init();
+      const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
         if (autoOpenExtractFolder && successCount > 0 && window.__TAURI__) {
           const normalizedPath = extractPath.replace(/\\/g, '\\');
           await invoke('open_folder', { path: normalizedPath });
@@ -1890,7 +1953,4 @@ function initManualExtractFunction() {
     });
   }
 }
-
-// 初始化手动提取功能
-initManualExtractFunction();
 

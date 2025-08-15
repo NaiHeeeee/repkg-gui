@@ -79,6 +79,7 @@
   },
   "messages": {
     "extracting": "Extracting...",
+    "importing": "Importing...",
     "extract_success": "Extraction completed!",
     "extract_failed": "Extraction failed: ",
     "select_files_first": "Please select .pkg files first",
@@ -99,7 +100,20 @@
     "cannot_get_info": "Cannot get wallpaper info or extraction path",
     "empty_path": "Wallpaper path or extraction path is empty",
     "path_empty": "Wallpaper path or extraction path is empty",
-    "extract_complete": "Extraction completed! Success: {success} files, Failed: {error} files"
+    "extract_complete": "Extraction completed! Success: {success} files, Failed: {error} files",
+    "import_success": "Import successful",
+    "import_failed": "Import failed",
+    "steam_not_found": "Cannot find Steam or Wallpaper Engine installation path, please ensure Wallpaper Engine is installed",
+    "enter_workshop_id": "Please enter the Workshop ID (number) of the wallpaper:",
+    "invalid_workshop_id": "Please enter a valid Workshop ID",
+    "scene_pkg_not_found": "scene.pkg file not found",
+    "project_json_copy_failed": "Failed to copy project.json",
+    "project_json_read_failed": "Failed to read project.json",
+    "project_json_parse_failed": "Failed to parse project.json",
+    "project_json_write_failed": "Failed to write project.json",
+    "preview_copy_failed": "Failed to copy preview file",
+    "wallpaper_editor_not_loaded": "Wallpaper Editor import function not loaded",
+    "desktop_only": "This feature is only available in the desktop application"
   },
   "buttons": {
     "change": "Change",
@@ -114,6 +128,7 @@
     "extract_start": "Start Extract",
     "open_wallpaper_folder": "Open Wallpaper Folder",
     "open_extract_folder": "Open Extract Folder",
+    "import_wallpaper_editor": "Import Wallpaper Editor",
     "reload": "Reload"
   },
   "nav": {

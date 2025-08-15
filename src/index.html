@@ -67,8 +67,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* 确保标题栏正确显示 */
@@ -256,8 +261,7 @@
                     </div>
 
                     <!-- 手动提取按钮 -->
-                    <button id="manual-extract-btn"
-                        class="mt-4 w-full py-3 rounded-lg btn-blue"
+                    <button id="manual-extract-btn" class="mt-4 w-full py-3 rounded-lg btn-blue"
                         data-i18n="extract.extract_btn">开始提取</button>
                     <button id="open-manual-extract-folder-btn" class="mt-2 w-full py-3 rounded-lg btn-green"
                         data-i18n="buttons.open_extract_folder">打开提取文件夹</button>
@@ -329,8 +333,7 @@
                                             <input type="text" id="bg-url-input"
                                                 class="flex-1 p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm"
                                                 data-i18n-placeholder="background.enter_url" placeholder="请输入图片的URL">
-                                            <button id="apply-bg-url"
-                                                class="px-3 py-1 text-sm btn-blue rounded-md"
+                                            <button id="apply-bg-url" class="px-3 py-1 text-sm btn-blue rounded-md"
                                                 data-i18n="background.apply">应用</button>
                                             <button id="clear-bg-btn"
                                                 class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 transition-colors rounded-md"
@@ -341,8 +344,7 @@
                                     <div id="bg-preview-container" class="hidden">
                                         <label class="block text-sm font-medium mb-2"
                                             data-i18n="background.preview">背景预览</label>
-                                        <div
-                                            class="relative aspect-video glass-effect rounded-md overflow-hidden">
+                                        <div class="relative aspect-video glass-effect rounded-md overflow-hidden">
                                             <img id="bg-image-preview" class="w-full h-full object-cover"
                                                 style="display: none;">
                                             <video id="bg-video-preview" class="w-full h-full object-cover"
@@ -378,8 +380,7 @@
                                         <button id="restore-default-path"
                                             class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
                                             data-i18n="buttons.restore_default">恢复默认</button>
-                                        <button id="save-workshop-path"
-                                            class="px-3 py-1 text-sm btn-blue rounded-md"
+                                        <button id="save-workshop-path" class="px-3 py-1 text-sm btn-blue rounded-md"
                                             data-i18n="buttons.save">保存</button>
                                     </div>
                                 </div>
@@ -421,8 +422,7 @@
                                     <p class="text-sm text-[var(--text-secondary)]"
                                         data-i18n="settings.image_only_desc">只提取图片和视频，忽略其他文件</p>
                                 </div>
-                                <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"
-                                        checked><span class="toggle-slider"></span></label>
+                                <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"><span class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
@@ -472,7 +472,7 @@
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
-                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.4.0</span>
+                                <span class="text-sm text-[var(--text-secondary)]" id="app-version">v0.5.0</span>
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex items-center justify-between">
@@ -531,17 +531,20 @@
                 <button id="open-folder-btn"
                     class="w-full py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-semibold hover:bg-[var(--bg-tertiary)] transition-colors"
                     data-i18n="buttons.open_wallpaper_folder">打开壁纸所在文件夹</button>
-                <button id="extract-btn"
-                    class="w-full py-3 rounded-lg btn-blue"
+                <button id="extract-btn" class="w-full py-3 rounded-lg btn-blue"
                     data-i18n="extract.extract_btn">开始提取</button>
                 <button id="open-extract-folder-btn" class="w-full py-3 rounded-lg btn-green"
                     data-i18n="buttons.open_extract_folder">打开提取文件夹</button>
+                <button id="import-wallpaper-editor-btn" class="w-full py-3 rounded-lg btn-purple"
+                    data-i18n="buttons.import_wallpaper_editor">导入壁纸编辑器</button>
             </div>
         </div>
     </div>
 
     <script type="module" src="./i18n/i18n.js"></script>
     <script src="js/tailwindcss.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/wallpaper-editor.js"></script>
     <script src="js/main.js"></script>
     <script src="js/background.js"></script>
 </body>

@@ -206,6 +206,26 @@ html.dark .btn-blue:hover {
   background-color: rgb(37, 99, 235);
 }
 
+/* 紫色按钮样式 */
+.btn-purple {
+  background-color: rgb(147, 51, 234);
+  color: white;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-purple:hover {
+  background-color: rgb(126, 34, 206);
+}
+
+html.dark .btn-purple {
+  background-color: rgb(147, 51, 234);
+}
+
+html.dark .btn-purple:hover {
+  background-color: rgb(126, 34, 206);
+}
+
 /* 刷新图标旋转动画 */
 @keyframes spin {
   from {
