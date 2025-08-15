@@ -46,6 +46,7 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System",
+    "system_settings": "System Settings",
     "extract_settings": "Extraction Settings",
     "auto_create_folder": "Auto create folder",
     "auto_create_folder_desc": "Automatically create a folder for each extracted package",

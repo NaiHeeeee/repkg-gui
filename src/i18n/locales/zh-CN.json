@@ -46,6 +46,7 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统",
+    "system_settings": "系统设置",
     "extract_settings": "提取设置",
     "auto_create_folder": "自动创建文件夹",
     "overwrite_existing": "覆盖已存在文件",
