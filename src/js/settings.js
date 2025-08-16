@@ -11,7 +11,8 @@ class SettingsManager {
       'extract-path': '',
       'extract-path-manual': '',
       'workshop-path': '',
-      'glass-effect': false
+      'glass-effect': false,
+      'language': 'zh-CN'
     };
     this.settings = { ...this.defaultSettings };
     this.initialized = false;

@@ -166,9 +166,20 @@ async function updateMaximizeButton() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  // 等待i18n加载完成
+  // 等待i18n和settingsManager加载完成
   function waitForI18n() {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+      // 等待settingsManager初始化完成
+      if (typeof settingsManager !== 'undefined') {
+        await settingsManager.init();
+      }
+      
+      // 初始化i18n
+      if (typeof window.initI18n !== 'undefined' && (!window.i18n || !window.i18n.translations)) {
+        await window.initI18n();
+      }
+      
+      // 等待i18n加载完成
       if (window.i18n && window.i18n.translations) {
         resolve();
       } else {

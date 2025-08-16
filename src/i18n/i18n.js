@@ -1,6 +1,6 @@
 class I18n {
   constructor() {
-    this.currentLanguage = this.getStoredLanguage() || 'zh-CN';
+    this.currentLanguage = this.getStoredLanguage() || this.getBrowserLanguage();
     this.translations = {};
     this.loadTranslations();
   }
@@ -40,6 +40,11 @@ class I18n {
   }
 
   getStoredLanguage() {
+    // 使用settingsManager获取语言设置
+    if (typeof window.settingsManager !== 'undefined') {
+      return window.settingsManager.get('language');
+    }
+    // 如果settingsManager不可用，回退到localStorage
     return localStorage.getItem('repkg-language');
   }
 
@@ -47,7 +52,13 @@ class I18n {
     if (this.currentLanguage === language) return;
 
     this.currentLanguage = language;
-    localStorage.setItem('repkg-language', language);
+    // 使用settingsManager保存语言设置
+    if (typeof window.settingsManager !== 'undefined') {
+      window.settingsManager.set('language', language);
+    } else {
+      // 如果settingsManager不可用，回退到localStorage
+      localStorage.setItem('repkg-language', language);
+    }
     this.loadTranslations();
   }
 
@@ -143,8 +154,17 @@ class I18n {
   }
 }
 
-// Create global instance
-window.i18n = new I18n();
+// 延迟初始化函数
+window.initI18n = async function() {
+  // 确保settingsManager已初始化
+  if (typeof window.settingsManager !== 'undefined') {
+    await window.settingsManager.init();
+  }
+  
+  // 创建全局实例
+  window.i18n = new I18n();
+  return window.i18n;
+};
 
 // Export for module usage
-export default window.i18n;
+export default window.initI18n;
