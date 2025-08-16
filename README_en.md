@@ -71,23 +71,75 @@ pnpm tauri build
 # Build results will be in src-tauri/target/release/bundle/ directory
 ```
 
+### Using RePKG GUI Development Command Manager
+
+```bash
+# Run from root directory
+npm run cmd
+```
+
+```
+╔══════════════════════════════════════╗
+║      RePKG GUI Development Command Manager     ║
+╚══════════════════════════════════════╝
+Current Version: vx.x.x
+
+Available Commands:
+
+  1  Development Mode   Start development server          [npm run tauri dev]
+  2  Build App          Build app with version management [npm run tauri:build:version]
+  3  Quick Build        Build app directly (skip version) [npm run tauri:build]
+  4  Version Manager    Manage project version numbers    [npm run version:manage]
+  5  Cargo Check        Check src-tauri code syntax       [cargo check]
+  6  Cargo Clean        Clean src-tauri build cache       [cargo clean]
+  7  Clean Console      Comment out console statements    [npm run remove-console]
+  8  Find Unused i18n   Find unused i18n text             [npm run find-unused-i18n]
+  0  Exit               Exit command manager
+
+Please select command to execute (enter number):
+```
+
 ## 📁 Project Structure
 
 ```
 repkg-gui/
-├── src/                    # Frontend code
-│   ├── index.html         # Main page
-│   ├── css/styles.css     # Styles
-│   └── js/                # JavaScript modules
-├── src-tauri/             # Tauri backend
-│   ├── src/
-│   │   ├── main.rs        # Entry point
-│   │   ├── lib.rs         # Main functionality
-│   │   └── repkg.rs       # RePKG core functionality
-│   ├── Cargo.toml         # Rust dependencies
-│   └── tauri.conf.json    # Tauri configuration
-├── bin/                   # RePKG executable
-└── README.md
+├── .gitattributes               # Git attributes configuration file
+├── .gitignore                   # Git ignore file configuration
+├── LICENSE                      # MIT license file
+├── README.md                    # Chinese documentation
+├── README_en.md                 # English documentation
+├── assets/                      # Project resource files
+├── package.json                 # Node.js project configuration file
+├── scripts/                     # Build scripts
+├── src/                         # Frontend code
+│   ├── assets/                  # Frontend resource files
+│   ├── css/                     # Style files
+│   │   └── styles.css           # Main style file
+│   ├── i18n/                    # Internationalization configuration
+│   │   ├── i18n.js              # Internationalization main file
+│   │   └── locales/             # Language pack directory
+│   ├── index.html               # Main page file
+│   └── js/                      # JavaScript files
+│       ├── background.js        # Background
+│       ├── main.js              # Main file
+│       ├── settings.js          # Settings
+│       ├── tailwindcss.js       # Tailwind CSS
+│       └── wallpaper-editor.js  # Wallpaper editor script
+├── src-tauri/                   # Tauri backend
+│   ├── .gitignore               # Rust project ignore file configuration
+│   ├── Cargo.toml               # Rust project configuration file
+│   ├── build.rs                 # Build script
+│   ├── capabilities/            # Tauri capabilities configuration
+│   ├── gen/                     # Tauri generated files
+│   ├── icons/                   # Application icons
+│   ├── src/                     # Rust source code
+│   │   ├── lib.rs               # Library file
+│   │   ├── main.rs              # Main entry file
+│   │   ├── repkg.rs             # RePKG related functionality
+│   │   └── wallpaper_editor.rs  # Wallpaper editor functionality
+│   ├── bin/                     # Executable files
+│   │   └── RePKG.exe            # RePKG executable file
+│   └── tauri.conf.json          # Tauri configuration file
 ```
 
 ## 🛠️ Tech Stack
