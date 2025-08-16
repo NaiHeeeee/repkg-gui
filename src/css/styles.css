@@ -245,27 +245,55 @@ html.dark .btn-purple:hover {
 /* 毛玻璃效果样式 */
 .glass-effect {
   background: rgba(var(--bg-secondary-rgb), 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
   border: 2px solid rgba(0, 0, 0, 0.15); /* 灰色偏黑的颜色 */
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.1), rgba(128, 128, 128, 0.1));
 }
 
 html.dark .glass-effect {
   background: rgba(var(--bg-secondary-rgb), 0.3);
   border: 2px solid rgba(255, 255, 255, 0.15); /* 灰色偏白的颜色 */
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.15), rgba(128, 128, 128, 0.15));
 }
 
 /* 设置页背景透明效果 */
 .settings-glass {
   background: rgba(var(--bg-secondary-rgb), 0.4);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   border: 2px solid rgba(0, 0, 0, 0.12); /* 灰色偏黑的颜色 */
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08));
 }
 
 html.dark .settings-glass {
   background: rgba(var(--bg-secondary-rgb), 0.2);
   border: 2px solid rgba(255, 255, 255, 0.12); /* 灰色偏白的颜色 */
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.12), rgba(128, 128, 128, 0.12));
+}
+
+/* 禁用毛玻璃效果时的样式 */
+.glass-effect.glass-disabled,
+.settings-glass.glass-disabled {
+  background: rgba(var(--bg-secondary-rgb), 0.8);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 2px solid rgba(0, 0, 0, 0.05);
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.2), rgba(128, 128, 128, 0.2));
+}
+
+html.dark .glass-effect.glass-disabled,
+html.dark .settings-glass.glass-disabled {
+  background: rgba(var(--bg-secondary-rgb), 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  /* 添加灰色背景提高对比度 */
+  background-image: linear-gradient(rgba(128, 128, 128, 0.25), rgba(128, 128, 128, 0.25));
 }
 
 /* 导航链接悬停效果 */
@@ -452,6 +480,8 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
 /* 详情页提取路径输入框统一悬停效果 */
 #details-drawer #extract-path {
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.1), rgba(128, 128, 128, 0.1));
 }
 
 #details-drawer #extract-path:hover {
@@ -459,9 +489,31 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
     border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
+html.dark #details-drawer #extract-path {
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.15), rgba(128, 128, 128, 0.15));
+}
+
 html.dark #details-drawer #extract-path:hover {
     background-color: rgba(128, 128, 128, 0.15) !important;
     border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* 详情页提取路径输入框禁用毛玻璃效果 */
+#details-drawer #extract-path.glass-disabled {
+    background: rgba(var(--bg-secondary-rgb), 0.8);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 2px solid rgba(0, 0, 0, 0.05);
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.2), rgba(128, 128, 128, 0.2));
+}
+
+html.dark #details-drawer #extract-path.glass-disabled {
+    background: rgba(var(--bg-secondary-rgb), 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.25), rgba(128, 128, 128, 0.25));
 }
 
 /* 保持可点击元素的鼠标样式 */
@@ -496,9 +548,11 @@ html.dark aside {
 input[type="text"].glass-effect, input[type="url"].glass-effect, textarea.glass-effect {
     border: 2px solid rgba(0, 0, 0, 0.12); /* 灰色偏黑的颜色 */
     background: rgba(var(--bg-secondary-rgb), 0.4);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08));
 }
 
 html.dark input[type="text"].glass-effect,
@@ -506,6 +560,27 @@ html.dark input[type="url"].glass-effect,
 html.dark textarea.glass-effect {
     border: 2px solid rgba(255, 255, 255, 0.12); /* 灰色偏白的颜色 */
     background: rgba(var(--bg-secondary-rgb), 0.2);
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.12), rgba(128, 128, 128, 0.12));
+}
+
+/* 网络地址和自定义路径输入框禁用毛玻璃效果 */
+input[type="text"].glass-effect.glass-disabled, input[type="url"].glass-effect.glass-disabled, textarea.glass-effect.glass-disabled {
+    background: rgba(var(--bg-secondary-rgb), 0.8);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 2px solid rgba(0, 0, 0, 0.05);
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.2), rgba(128, 128, 128, 0.2));
+}
+
+html.dark input[type="text"].glass-effect.glass-disabled,
+html.dark input[type="url"].glass-effect.glass-disabled,
+html.dark textarea.glass-effect.glass-disabled {
+    background: rgba(var(--bg-secondary-rgb), 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    /* 添加灰色背景提高对比度 */
+    background-image: linear-gradient(rgba(128, 128, 128, 0.25), rgba(128, 128, 128, 0.25));
 }
 
 /* 输入框鼠标移入效果 */

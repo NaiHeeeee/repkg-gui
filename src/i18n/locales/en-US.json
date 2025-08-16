@@ -59,7 +59,9 @@
     "overwrite_existing": "Overwrite existing files",
     "overwrite_existing_desc": "Overwrite files with the same name if they exist in the target folder",
     "open_after_extract": "Open folder after extraction",
-    "open_after_extract_desc": "Automatically open the extraction folder after unpacking is complete"
+    "open_after_extract_desc": "Automatically open the extraction folder after unpacking is complete",
+    "glass_effect": "Glass Effect",
+    "glass_effect_desc": "Enable or disable the glass effect for the interface"
   },
   "about": {
     "title": "About RePKG GUI",

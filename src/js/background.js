@@ -390,5 +390,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.backgroundManager.loadSavedSettings();
 });
 
+
+
+// 页面加载完成后初始化毛玻璃效果设置
+document.addEventListener('DOMContentLoaded', async () => {
+  await settingsManager.init();
+  const glassEffectEnabled = settingsManager.get('glass-effect');
+  const glassEffectToggle = document.getElementById('glass-effect-toggle');
+  
+  if (glassEffectToggle) {
+    glassEffectToggle.checked = glassEffectEnabled;
+    
+    glassEffectToggle.addEventListener('change', async (e) => {
+      const enabled = e.target.checked;
+      await settingsManager.set('glass-effect', enabled);
+      applyGlassEffect(enabled);
+    });
+  }
+  
+  // 应用初始毛玻璃效果设置
+  applyGlassEffect(glassEffectEnabled);
+});
+
+// 应用毛玻璃效果的函数
+function applyGlassEffect(enabled) {
+  const glassElements = document.querySelectorAll('.glass-effect, .settings-glass');
+  
+  if (enabled) {
+    // 启用毛玻璃效果
+    glassElements.forEach(element => {
+      element.classList.remove('glass-disabled');
+    });
+  } else {
+    // 禁用毛玻璃效果
+    glassElements.forEach(element => {
+      element.classList.add('glass-disabled');
+    });
+  }
+}
+
 // 导出供其他模块使用
 window.BackgroundManager = BackgroundManager;

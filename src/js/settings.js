@@ -10,7 +10,8 @@ class SettingsManager {
       'auto-open-extract-folder': false,
       'extract-path': '',
       'extract-path-manual': '',
-      'workshop-path': ''
+      'workshop-path': '',
+      'glass-effect': false
     };
     this.settings = { ...this.defaultSettings };
     this.initialized = false;

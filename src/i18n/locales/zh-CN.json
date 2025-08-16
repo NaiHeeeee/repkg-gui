@@ -58,7 +58,9 @@
     "no_convert_desc": "保留原始的 .tex 文件",
     "flatten_structure": "忽略原有目录结构",
     "flatten_structure_desc": "将所有文件放在同一级目录中",
-    "overwrite_existing_desc": "如果目标文件夹中存在同名文件则覆盖"
+    "overwrite_existing_desc": "如果目标文件夹中存在同名文件则覆盖",
+    "glass_effect": "毛玻璃效果",
+    "glass_effect_desc": "启用或禁用界面的毛玻璃效果"
   },
   "about": {
     "title": "关于 RePKG GUI",
