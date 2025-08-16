@@ -41,7 +41,7 @@ const VERSION_FILES = [
   },
   {
     path: 'src/index.html',
-    pattern: /<span[^>]*id="app-version"[^>]*>v([0-9]+\.[0-9]+\.[0-9]+)<\/span>/,
+    pattern: /<a[^>]*id="app-version"[^>]*>v([0-9]+\.[0-9]+\.[0-9]+)<\/a>/,
     type: 'html'
   }
 ];
@@ -171,27 +171,26 @@ function showCurrentVersion() {
   
   console.log(`${colors.cyan}📋 当前项目版本: ${colors.yellow}v${currentVersion}${colors.reset}\n`);
   
-  // 检查版本一致性（但不显示具体文件）
-  const versions = [];
+  // 检查版本一致性并显示具体文件的版本
+  const versionDetails = [];
   
   VERSION_FILES.forEach(fileConfig => {
     try {
       const content = fs.readFileSync(fileConfig.path, 'utf8');
       const match = content.match(fileConfig.pattern);
       const version = match ? match[1] : null;
-      if (version) versions.push(version);
+      versionDetails.push({ path: fileConfig.path, version });
     } catch (error) {
-      // 静默处理读取错误
+      versionDetails.push({ path: fileConfig.path, version: '读取失败' });
     }
   });
   
-  // 检查所有文件版本是否一致
-  const uniqueVersions = [...new Set(versions)];
-  if (uniqueVersions.length > 1) {
-    console.log(`${colors.yellow}⚠️  检测到版本不一致，建议统一版本${colors.reset}\n`);
-  }
+  // 显示所有文件的版本信息
+  versionDetails.forEach(detail => {
+    console.log(`  ${detail.path}: ${detail.version ? `${colors.yellow}v${detail.version}${colors.reset}` : `${colors.red}未找到${colors.reset}`}`);
+  });
   
-  return currentVersion;
+  return { currentVersion, versionDetails };
 }
 
 /**
@@ -212,13 +211,68 @@ async function updateAllVersions(newVersion) {
 }
 
 /**
+ * 提示用户输入统一版本号
+ */
+function promptForUnifiedVersion(versionDetails) {
+  const versions = versionDetails.map(detail => detail.version).filter(v => v !== null && v !== '读取失败');
+  const uniqueVersions = [...new Set(versions)];
+  
+  // 检查是否需要统一版本
+  if (uniqueVersions.length <= 1) {
+    return Promise.resolve(null);
+  }
+  
+  console.log(`${colors.yellow}⚠️  检测到版本不一致，建议统一版本${colors.reset}`);
+  
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    const ask = () => {
+      rl.question(`${colors.cyan}\n请输入要应用的统一版本号${colors.reset} (直接回车跳过): `, (input) => {
+        const cleanInput = input.replace(/[^\d.]/g, '').replace(/\.{2,}/g, '.').trim();
+        
+        if (cleanInput === '') {
+          console.log(`${colors.gray}跳过版本统一${colors.reset}`);
+          rl.close();
+          resolve(null);
+          return;
+        }
+        
+        if (!isValidVersion(cleanInput)) {
+          console.log(`${colors.red}❌ 无效的版本号格式！${colors.reset}`);
+          console.log(`${colors.yellow}💡 提示：请使用 x.y.z 格式（如 1.2.3），只能包含数字和点${colors.reset}`);
+          ask();
+          return;
+        }
+        
+        rl.close();
+        resolve(cleanInput);
+      });
+    };
+    
+    ask();
+  });
+}
+
+/**
  * 主函数
  */
 async function main() {
   console.log(`${colors.magenta}🔧 版本管理工具${colors.reset}\n`);
   
   // 显示当前版本
-  const currentVersion = showCurrentVersion();
+  const { currentVersion, versionDetails } = showCurrentVersion();
+  
+  // 检查并提示统一版本
+  const unifiedVersion = await promptForUnifiedVersion(versionDetails);
+  if (unifiedVersion) {
+    await updateAllVersions(unifiedVersion);
+    console.log(`\n${colors.green}🎉 所有文件版本号已统一为 v${unifiedVersion}${colors.reset}`);
+    return;
+  }
   
   // 获取新版本号
   const newVersion = await getNewVersion(currentVersion);
@@ -236,13 +290,21 @@ async function main() {
 /**
  * 检查是否在 build 命令中调用
  */
-function checkBuildCommand() {
+async function checkBuildCommand() {
   const args = process.argv.slice(2);
   
   if (args.includes('--build')) {
     console.log(`${colors.cyan}🔨 构建模式检测${colors.reset}\n`);
     
-    const currentVersion = showCurrentVersion();
+    const { currentVersion, versionDetails } = showCurrentVersion();
+    
+    // 检查并提示统一版本
+    const unifiedVersion = await promptForUnifiedVersion(versionDetails);
+    if (unifiedVersion) {
+      await updateAllVersions(unifiedVersion);
+      console.log(`\n${colors.green}🎉 所有文件版本号已统一为 v${unifiedVersion}${colors.reset}`);
+      return;
+    }
     
     // 在构建模式下直接提示版本更新
     const rl = readline.createInterface({
@@ -272,7 +334,10 @@ function checkBuildCommand() {
       rl.close();
     });
   } else {
-    main();
+    main().catch(error => {
+      console.error(`${colors.red}❌ 主函数执行出错:${colors.reset}`, error);
+      process.exit(1);
+    });
   }
 }
 
