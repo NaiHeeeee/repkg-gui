@@ -613,3 +613,28 @@ html.dark textarea.glass-effect:focus {
     border-color: rgba(59, 130, 246, 0.6);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
+
+/* 壁纸卡片悬停效果 */
+.wallpaper-card {
+    position: relative;
+    transition: transform 0.3s ease-in-out;
+}
+
+.wallpaper-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    transition: border-color 0.3s ease-in-out, transform 0.3s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.wallpaper-card:hover::before {
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}

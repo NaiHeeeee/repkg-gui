@@ -138,8 +138,10 @@
         <aside
             class="w-20 hover:w-60 bg-[var(--bg-secondary)] p-4 flex flex-col border-r border-[var(--border-color)] transition-all duration-300 ease-in-out group">
             <div class="flex items-center mb-8 px-3">
-                <img src="./assets/icon.svg" alt="repkg" width="23" height="23"
-                    class="text-[var(--accent-color)] flex-shrink-0">
+                <div class="w-[23px] h-[23px] flex-shrink-0">
+                    <img src="./assets/icon.svg" alt="repkg" width="23" height="23"
+                        class="text-[var(--accent-color)] w-full h-full object-contain">
+                </div>
                 <h1
                     class="text-xl font-bold w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-2 transition-all duration-200 whitespace-nowrap">
                     RePKG</h1>
@@ -196,8 +198,7 @@
                     <h2 class="text-2xl font-bold" data-i18n="extract.local_wallpapers">本地壁纸</h2>
                     <div class="flex space-x-2">
                         <button id="refresh-wallpapers"
-                            class="p-2 glass-effect hover:bg-[var(--border-color)] rounded-md transition-colors"
-                            data-i18n-title="buttons.refresh">
+                            class="p-2 glass-effect hover:bg-[var(--border-color)] rounded-md transition-colors">
                             <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -484,7 +485,7 @@
                             <div class="flex items-center justify-between">
                                 <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
                                 <a href="https://github.com/naiheeeee/repkg-gui/releases/latest" target="_blank" 
-                                class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline" id="app-version">v0.5.2</a>
+                                class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline" id="app-version">v0.5.3</a>
                             </div>
                         </div>
                         <div class="p-4 settings-glass rounded-lg mt-4">
