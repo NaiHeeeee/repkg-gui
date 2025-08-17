@@ -84,16 +84,18 @@
 
 ```json
 {
+  "language": "en-US",
+  "glass-effect": false,
+  "auto-open-extract-folder": false,
+  "auto-open-import-folder": false,
+  "create-folder-per-wallpaper": false,
   "only-images": false,
   "no-tex-convert": false,
   "ignore-dir-structure": false,
   "overwrite-files": false,
-  "auto-open-extract-folder": false,
   "extract-path": "C:\\Users\\xxx\\Desktop\\RePKG-GUI",
   "extract-path-manual": "C:\\Users\\xxx\\Desktop\\RePKG-GUI",
   "workshop-path": "",
-  "glass-effect": false,
-  "language": "en-US",
   "theme": "system",
   "custom-background": {
     "enabled": false,
