@@ -8,13 +8,26 @@
     "remove-console": "node scripts/remove-console.js",
     "version:manage": "node scripts/version-manager.js",
     "version:build": "node scripts/version-manager.js --build",
-    "tauri:build": "pnpm run remove-console && tauri build",
-    "tauri:build:version": "node scripts/build-with-version.js",
+    "build:frontend": "gulp buildIncremental",
+    "build:frontend:full": "gulp build",
+    "tauri:build": "pnpm run build:frontend && tauri build --config src-tauri/tauri.conf.json",
+    "tauri:build:version": "pnpm run build:frontend && node scripts/build-with-version.js",
     "find-unused-i18n": "node scripts/find-unused-i18n.js",
-    "cmd": "node scripts/command-manager.js"
+    "cmd": "node scripts/command-manager.js",
+    "dev": "gulp dev"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "^2",
+    "del": "^8.0.0",
+    "gulp": "^5.0.1",
+    "gulp-changed": "^5.0.2",
+    "gulp-clean-css": "^4.3.0",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-imagemin": "^9.1.0",
+    "gulp-newer": "^1.4.0",
+    "gulp-rev": "^11.0.0",
+    "gulp-rev-replace": "^0.4.4",
+    "gulp-terser": "^2.1.0"
   },
   "dependencies": {
     "@tauri-apps/plugin-shell": "^2.3.0",
