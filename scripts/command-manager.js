@@ -40,28 +40,28 @@ const commands = [
     id: 1,
     name: '开发模式',
     description: '启动开发服务器',
-    command: 'npm run tauri dev',
+    command: 'pnpm run tauri dev',
     color: colors.blue
   },
   {
     id: 2,
     name: '构建应用',
     description: '使用版本管理构建应用',
-    command: 'npm run tauri:build:version',
+    command: 'pnpm run tauri:build:version',
     color: colors.green
   },
   {
     id: 3,
     name: '快速构建',
     description: '直接构建应用(跳过版本管理)',
-    command: 'npm run tauri:build',
+    command: 'pnpm run tauri:build',
     color: colors.yellow
   },
   {
     id: 4,
     name: '版本管理',
     description: '管理项目版本号',
-    command: 'npm run version:manage',
+    command: 'pnpm run version:manage',
     color: colors.magenta
   },
   {
@@ -84,14 +84,14 @@ const commands = [
     id: 7,
     name: '清理控制台',
     description: '注释console',
-    command: 'npm run remove-console',
+    command: 'pnpm run remove-console',
     color: colors.white
   },
   {
     id: 8,
     name: '检查未用i18n',
     description: '查找未使用的国际化文本',
-    command: 'npm run find-unused-i18n',
+    command: 'pnpm run find-unused-i18n',
     color: colors.gray
   },
   {

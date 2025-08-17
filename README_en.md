@@ -15,88 +15,142 @@
 
 ## 👀 Preview
 
-*Modern interface design with light/dark theme support*
+*Modern interface design, supports light/dark themes, and custom backgrounds*
+
+<details>
+
+<summary>Light Theme</summary>
+
+### **Home**
 
 ![Main Interface Preview - Light](./assets/preview-home-light-en.png)
 
+### **Manual Extract**
+
+![Manual Extract Preview - Light](./assets/preview-manual-light-en.png)
+
+### **Settings**
+![Settings Preview - Light](./assets/preview-setting-light-en.png)
+
+</details>
+
+<details>
+
+<summary>Dark Theme</summary>
+
+### **Home**
+
 ![Main Interface Preview - Dark](./assets/preview-home-dark-en.png)
+
+### **Manual Extract**
+
+![Manual Extract Preview - Dark](./assets/preview-manual-dark-en.png)
+
+### **Settings**
+
+![Settings Preview - Dark](./assets/preview-setting-dark-en.png)
+
+</details>
+
+<details>
+<summary>Custom Background</summary>
+
+![Custom Background Preview](./assets/preview-setting-background-en.png)
+
+</details>
 
 ## 🌟 Features
 
 ### Core Features
-- **Smart Unpacking**: Batch extraction of `.pkg` files with automatic file structure handling
+- **Smart Unpacking**: Batch extract `.pkg` files and automatically handle file structure
 - **Local Wallpaper Management**: Automatically scan and display Steam Workshop wallpapers
-- **Manual Unpacking**: Support drag-and-drop or file selection for manual unpacking
+- **Import to Wallpaper Editor**: Import directly into Wallpaper Engine for editing
+- **Manual Unpacking**: Support selecting pkg files for manual unpacking
 - **Preview Function**: Display wallpaper thumbnails and detailed information
 
 ### User Experience
-- **Modern Interface**: Responsive design using Tailwind CSS
-- **Theme Switching**: Support for light/dark/follow system themes
-- **Language Switching**: Support for English/Chinese language switching
-- **Custom Background**: Support for setting network images as app background with adjustable opacity
-- **Custom Paths**: Customizable Steam Workshop path and extraction directory
-- **Batch Operations**: Support for batch unpacking and file management
+- **Modern Interface**: Responsive interface designed with Tailwind CSS
+- **Theme Switching**: Supports light/dark/system themes
+- **Language Switching**: Supports English/Chinese
+- **Custom Background**: Set a network image URL as the app background with adjustable opacity
+- **Custom Paths**: Customize Steam Workshop path and extraction directory
+- **Batch Operations**: Supports batch unpacking
+
+## ⚙️ Configuration
+
+### Application Settings
+
+*On the first launch of RePKG GUI, `settings.json` is automatically generated in the program's root directory.*
+
+```json
+{
+  "only-images": false,
+  "no-tex-convert": false,
+  "ignore-dir-structure": false,
+  "overwrite-files": false,
+  "auto-open-extract-folder": false,
+  "extract-path": "C:\\Users\\xxx\\Desktop\\RePKG-GUI",
+  "extract-path-manual": "C:\\Users\\xxx\\Desktop\\RePKG-GUI",
+  "workshop-path": "",
+  "glass-effect": false,
+  "language": "en-US",
+  "theme": "system",
+  "custom-background": {
+    "enabled": false,
+    "url": "https://example.com/img.webp",
+    "type": "image",
+    "opacity": 0.3
+  }
+}
+```
 
 ## 🚀 Quick Start
 
 ### Environment Requirements
 - **Rust**: Latest stable version
-- **Node.js**: 18.0 or higher
-- **pnpm**: Package manager (recommended)
+- **Node.js**: v22+ and pnpm
+- **Git**: Version control
 
-### Install Dependencies
+### Steps
 
 ```bash
-# Install frontend dependencies
+# Clone the repository
+git clone https://github.com/NaiHeeeee/repkg-gui.git
+cd repkg-gui
+
+# Install Node.js dependencies
 pnpm install
 
-# Install Rust dependencies
-cd src-tauri
-cargo build --release
-```
-
-### Run in Development Mode
-
-```bash
-# Start both frontend and backend development servers
+# Start the development server
 pnpm tauri dev
-```
-
-### Build Production Version
-
-```bash
-# Build production version
-pnpm tauri build
-
-# Build results will be in src-tauri/target/release/bundle/ directory
 ```
 
 ### Using RePKG GUI Development Command Manager
 
 ```bash
-# Run from root directory
-npm run cmd
+cd repkg-gui
+pnpm run cmd
 ```
 
 ```
 ╔══════════════════════════════════════╗
-║      RePKG GUI Development Command Manager     ║
+║    RePKG GUI Development Command Manager     ║
 ╚══════════════════════════════════════╝
 Current Version: vx.x.x
 
 Available Commands:
 
-  1  Development Mode   Start development server          [npm run tauri dev]
-  2  Build App          Build app with version management [npm run tauri:build:version]
-  3  Quick Build        Build app directly (skip version) [npm run tauri:build]
-  4  Version Manager    Manage project version numbers    [npm run version:manage]
-  5  Cargo Check        Check src-tauri code syntax       [cargo check]
-  6  Cargo Clean        Clean src-tauri build cache       [cargo clean]
-  7  Clean Console      Comment out console statements    [npm run remove-console]
-  8  Find Unused i18n   Find unused i18n text             [npm run find-unused-i18n]
-  0  Exit               Exit command manager
+  1  Development Mode   Start the development server         [pnpm run tauri dev]
+  2  Build App          Build the app with version management  [pnpm run tauri:build:version]
+  3  Quick Build        Build the app directly (skip version management) [pnpm run tauri:build]
+  4  Version Manager    Manage the project version number        [pnpm run version:manage]
+  5  Cargo Check        Check the code syntax of src-tauri   [cargo check]
+  6  Cargo Clean        Clean the build cache of src-tauri   [cargo clean]
+  7  Clean Console      Comment out console statements       [pnpm run remove-console]
+  8  Find Unused i18n   Find unused internationalization text [pnpm run find-unused-i18n]
+  0  Exit               Exit the command manager
 
-Please select command to execute (enter number):
+Please select the command to execute (enter the number):
 ```
 
 ## 📁 Project Structure
@@ -120,10 +174,10 @@ repkg-gui/
 │   │   └── locales/             # Language pack directory
 │   ├── index.html               # Main page file
 │   └── js/                      # JavaScript files
-│       ├── background.js        # Background
-│       ├── main.js              # Main file
-│       ├── settings.js          # Settings
-│       ├── tailwindcss.js       # Tailwind CSS
+│       ├── background.js        # Background script
+│       ├── main.js              # Main script
+│       ├── settings.js          # Settings script
+│       ├── tailwindcss.js       # Tailwind CSS script
 │       └── wallpaper-editor.js  # Wallpaper editor script
 ├── src-tauri/                   # Tauri backend
 │   ├── .gitignore               # Rust project ignore file configuration
