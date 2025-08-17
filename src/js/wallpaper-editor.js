@@ -107,6 +107,17 @@ class WallpaperEditorImporter {
             const successTitle = window.i18n?.t('messages.import_success') || '导入成功';
             alert(`${successTitle}\n${result}`);
 
+            // 检查是否启用自动打开导入文件夹
+            const autoOpenImportFolder = settingsManager.get('auto-open-import-folder');
+            if (autoOpenImportFolder) {
+                try {
+                    // 使用后端返回的实际文件夹路径
+                    await window.__TAURI__.core.invoke('open_folder', { path: result });
+                } catch (openError) {
+                    console.warn('无法自动打开壁纸文件夹:', openError);
+                }
+            }
+
         } catch (error) {
             this.hideImportProgress();
             // console.error('导入壁纸编辑器失败:', error);

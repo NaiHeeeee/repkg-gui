@@ -40,7 +40,7 @@ const commands = [
     id: 1,
     name: '开发模式',
     description: '启动开发服务器',
-    command: 'pnpm run tauri dev',
+    command: 'pnpm run tauri dev --config src-tauri/tauri-dev.conf.json',
     color: colors.blue
   },
   {

@@ -193,6 +193,41 @@ async fn is_window_maximized(window: tauri::Window) -> Result<bool, String> {
 }
 
 #[tauri::command]
+async fn create_directory(path: String) -> Result<(), String> {
+    let path = Path::new(&path);
+    fs::create_dir_all(path).map_err(|e| format!("无法创建目录 {}: {}", path.display(), e))
+}
+
+#[tauri::command]
+async fn cleanup_directory_before_extract(
+    path: String,
+) -> Result<(), String> {
+    let path = Path::new(&path);
+    if !path.exists() {
+        return Ok(()); // 如果目录不存在，无需清理
+    }
+    
+    // 只删除根目录下的文件，不删除子目录中的文件
+    // 这样可以确保在为每个壁纸单独生成文件夹时，不会影响其他壁纸文件夹
+    let entries = fs::read_dir(path).map_err(|e| e.to_string())?;
+    
+    for entry in entries.flatten() {
+        let file_path = entry.path();
+        // 只处理根目录下的文件，不处理子目录
+        if file_path.is_file() && file_path.parent() == Some(path) {
+            match fs::remove_file(&file_path) {
+                Ok(_) => {},
+                Err(e) => {
+                    eprintln!("警告：无法删除文件 {}: {}", file_path.display(), e);
+                }
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
 async fn cleanup_non_media_files(
     path: String,
     allowed_extensions: Vec<String>,
@@ -250,6 +285,7 @@ async fn cleanup_non_media_files(
 async fn flatten_media_files(
     path: String,
     allowed_extensions: Vec<String>,
+    overwrite: bool,
 ) -> Result<(), String> {
     let path = Path::new(&path);
     if !path.exists() {
@@ -298,58 +334,137 @@ async fn flatten_media_files(
     collect_media_files(path, &allowed_extensions, &mut files_to_move)?;
 
     // 移动所有文件到根目录
+    let mut successfully_moved = 0;
+    let mut failed_moves = 0;
+    
     for file_path in files_to_move {
         if let Some(file_name) = file_path.file_name() {
             let target_path = path.join(file_name);
             
-            // 如果目标路径已存在，添加数字后缀
+            // 如果目标路径已存在，根据overwrite参数决定是否覆盖
             let final_target_path = if target_path.exists() {
-                let stem = file_path.file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("file");
-                let extension = file_path.extension()
-                    .and_then(|e| e.to_str())
-                    .unwrap_or("");
-                
-                let mut counter = 1;
-                loop {
-                    let new_name = if extension.is_empty() {
-                        format!("{}_{}", stem, counter)
-                    } else {
-                        format!("{}_{}.{}", stem, counter, extension)
-                    };
-                    let new_path = path.join(new_name);
-                    if !new_path.exists() {
-                        break new_path;
+                if overwrite {
+                    // 如果启用覆盖，先删除现有文件
+                    fs::remove_file(&target_path)
+                        .map_err(|e| format!("无法删除现有文件 {}: {}", target_path.display(), e))?;
+                    target_path
+                } else {
+                    // 如果未启用覆盖，添加数字后缀
+                    let stem = file_path.file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("file");
+                    let extension = file_path.extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("");
+                    
+                    let mut counter = 1;
+                    loop {
+                        let new_name = if extension.is_empty() {
+                            format!("{}_{}", stem, counter)
+                        } else {
+                            format!("{}_{}.{}", stem, counter, extension)
+                        };
+                        let new_path = path.join(new_name);
+                        if !new_path.exists() {
+                            break new_path;
+                        }
+                        counter += 1;
                     }
-                    counter += 1;
                 }
             } else {
                 target_path
             };
             
-            fs::rename(&file_path, &final_target_path)
-                .map_err(|e| format!("无法移动文件 {}: {}", file_path.display(), e))?;
+            // 尝试移动文件
+            match fs::rename(&file_path, &final_target_path) {
+                Ok(_) => {
+                    // 验证文件是否成功移动
+                    if final_target_path.exists() {
+                        successfully_moved += 1;
+                    } else {
+                        failed_moves += 1;
+                        eprintln!("警告：文件移动后验证失败: {}", file_path.display());
+                    }
+                }
+                Err(e) => {
+                    failed_moves += 1;
+                    eprintln!("警告：无法移动文件 {}: {}", file_path.display(), e);
+                }
+            }
         }
+    }
+    
+    // 如果有文件移动失败，记录警告
+    if failed_moves > 0 {
+        eprintln!("警告：共移动 {} 个文件，其中 {} 个失败", successfully_moved, failed_moves);
     }
 
     // 删除所有子目录
     fn remove_all_subdirs(dir_path: &Path) -> Result<(), String> {
         let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
+        let mut removed_dirs = 0;
+        let mut failed_dirs = 0;
 
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                // 递归删除子目录
-                fs::remove_dir_all(&path)
-                    .map_err(|e| format!("无法删除目录 {}: {}", path.display(), e))?;
+                // 尝试删除子目录及其所有内容
+                match fs::remove_dir_all(&path) {
+                    Ok(_) => {
+                        removed_dirs += 1;
+                    }
+                    Err(e) => {
+                        failed_dirs += 1;
+                        eprintln!("警告：无法删除目录 {}: {}", path.display(), e);
+                    }
+                }
             }
+        }
+        
+        if failed_dirs > 0 {
+            eprintln!("警告：共尝试删除 {} 个目录，其中 {} 个失败", removed_dirs + failed_dirs, failed_dirs);
         }
 
         Ok(())
     }
-
+    
+    // 检查子目录中是否有残留文件
+    fn check_remaining_files(dir_path: &Path) -> Result<bool, String> {
+        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
+        
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                // 检查子目录中是否还有文件
+                let sub_entries = fs::read_dir(&path).map_err(|e| e.to_string())?;
+                for sub_entry in sub_entries.flatten() {
+                    let sub_path = sub_entry.path();
+                    if sub_path.is_file() {
+                        return Ok(true); // 在子目录中找到残留文件
+                    }
+                }
+                // 递归检查更深层的子目录
+                if check_remaining_files(&path)? {
+                    return Ok(true);
+                }
+            }
+        }
+        
+        Ok(false)
+    }
+    
+    // 在删除子目录之前，检查是否还有文件残留在子目录中
+    if check_remaining_files(path)? {
+        eprintln!("警告：子目录中仍有残留文件，但将继续尝试删除子目录");
+    }
+    
+    // 删除所有子目录，确保目录结构被完全扁平化
     remove_all_subdirs(path)?;
+    
+    // 再次检查是否还有残留文件，如果有则记录更详细的警告
+    if check_remaining_files(path)? {
+        eprintln!("警告：删除子目录后仍有残留文件存在，这可能影响下次提取");
+    }
     Ok(())
 }
 
@@ -378,8 +493,10 @@ pub fn run() {
             unmaximize_window,
             close_window,
             is_window_maximized,
+            create_directory,
             extract_pkg,
             info_pkg,
+            cleanup_directory_before_extract,
             cleanup_non_media_files,
             flatten_media_files,
             get_file_info,

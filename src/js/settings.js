@@ -3,16 +3,25 @@ class SettingsManager {
   constructor() {
     this.settingsPath = 'settings.json';
     this.defaultSettings = {
+      // 界面设置
+      'language': 'zh-CN',
+      'glass-effect': false,
+      
+      // 系统设置 - 自动打开文件夹
+      'auto-open-extract-folder': false,
+      'auto-open-import-folder': false,
+      'create-folder-per-wallpaper': false,
+      
+      // 解包设置 - 提取选项
       'only-images': false,
       'no-tex-convert': false,
       'ignore-dir-structure': false,
       'overwrite-files': false,
-      'auto-open-extract-folder': false,
+      
+      // 路径设置
       'extract-path': '',
       'extract-path-manual': '',
-      'workshop-path': '',
-      'glass-effect': false,
-      'language': 'zh-CN'
+      'workshop-path': ''
     };
     this.settings = { ...this.defaultSettings };
     this.initialized = false;

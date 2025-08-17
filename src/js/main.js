@@ -979,6 +979,47 @@ document.addEventListener('DOMContentLoaded', function () {
       // 调用 Rust 后端的提取功能
       const { invoke } = window.__TAURI__.core;
       
+      // 检查是否为每个壁纸单独生成文件夹
+      await settingsManager.init();
+      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
+      
+      // 如果启用为每个壁纸单独生成文件夹，创建以壁纸名命名的文件夹
+      if (createFolderPerWallpaper) {
+        // 获取壁纸文件夹名称
+        const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
+        if (wallpaperFolderName) {
+          // 构造新的提取路径
+          extractPath = `${extractPath}/${wallpaperFolderName}`;
+          
+          // 创建文件夹
+          try {
+            await invoke('create_directory', { path: extractPath });
+          } catch (createError) {
+            // 如果文件夹已存在
+            if (!overwriteFiles) {
+              // 如果未启用覆盖设置，添加后缀
+              const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
+              if (wallpaperFolderName) {
+                let suffix = 1;
+                let newPath;
+                do {
+                  newPath = `${extractPath.replace('/' + wallpaperFolderName, '')}/${wallpaperFolderName}_${suffix}`;
+                  try {
+                    await invoke('create_directory', { path: newPath });
+                    extractPath = newPath;
+                    break;
+                  } catch (e) {
+                    suffix++;
+                  }
+                } while (suffix <= 100); // 最多尝试100次
+              }
+            }
+            // 如果启用了覆盖设置，直接使用现有文件夹
+            // console.log('文件夹已存在，使用现有文件夹（覆盖模式）');
+          }
+        }
+      }
+      
       // 构造正确的scene.pkg文件路径
       const scenePkgPath = `${wallpaperPath}/scene.pkg`;
       
@@ -986,23 +1027,33 @@ document.addEventListener('DOMContentLoaded', function () {
       await settingsManager.init();
       const overwriteFiles = settingsManager.get('overwrite-files') === true;
       const onlyImages = settingsManager.get('only-images') === true;
+      const noTexConvert = settingsManager.get('no-tex-convert') === true;
+      const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
       
       const options = {
         output: extractPath,
         ignore_exts: null,
         only_exts: null,  // 不移除-e参数，让清理逻辑处理
         debug_info: false,
-        tex: true,  // 始终转换 tex 文件为图像
-        single_dir: false,  // 保持原有目录结构
+        tex: !noTexConvert,  // 根据设置决定是否转换 tex 文件为图像
+        single_dir: ignoreDirStructure,  // 根据设置决定是否忽略目录结构
         recursive: true,  // 递归提取
         copy_project: false,
         use_name: false,
-        no_tex_convert: false,  // 始终转换 tex 文件
+        no_tex_convert: noTexConvert,  // 根据设置决定是否保留原始 .tex 文件
         overwrite: overwriteFiles  // 覆盖现有文件设置
       };
       
       // 添加调试日志
       // console.log('提取参数:', { input: scenePkgPath, options: options });
+      
+      // 在提取前先清理目标目录
+      try {
+        await invoke('cleanup_directory_before_extract', { path: extractPath });
+        // console.log('已清理目标目录');
+      } catch (cleanupError) {
+        // console.warn('清理目标目录时出错:', cleanupError);
+      }
       
       // 执行提取
       const result = await invoke('extract_pkg', { input: scenePkgPath, options: options });
@@ -1014,18 +1065,31 @@ document.addEventListener('DOMContentLoaded', function () {
       if (onlyImages) {
         try {
           const { invoke } = window.__TAURI__.core;
+          
+          // 根据设置确定允许的文件扩展名
+          let allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'];
+          
+          // 如果启用不转换Tex文件，添加.tex扩展名到允许列表
+          if (noTexConvert) {
+            allowedExtensions.push('.tex');
+          }
+          
           await invoke('cleanup_non_media_files', { 
             path: extractPath,
-            allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
+            allowedExtensions: allowedExtensions
           });
           // console.log('已清理非媒体文件');
           
-          // 将所有媒体文件移动到根目录并删除文件夹
-          await invoke('flatten_media_files', { 
-            path: extractPath,
-            allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
-          });
-          // console.log('已将所有媒体文件移动到根目录');
+          // 如果没有启用忽略目录结构，将所有媒体文件移动到根目录并删除文件夹
+          // 如果启用了忽略目录结构，RePKG已经将所有文件放在同一级目录中，无需额外处理
+          if (!ignoreDirStructure) {
+            await invoke('flatten_media_files', { 
+              path: extractPath,
+              allowedExtensions: allowedExtensions,
+              overwrite: overwriteFiles
+            });
+            // console.log('已将所有媒体文件移动到根目录');
+          }
         } catch (cleanupError) {
           // console.warn('清理非媒体文件时出错:', cleanupError);
         }
@@ -1091,10 +1155,20 @@ document.addEventListener('DOMContentLoaded', function () {
       // 提取成功后，根据设置决定是否自动打开提取文件夹
       await settingsManager.init();
       const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
+      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
       if (autoOpenExtractFolder && window.__TAURI__) {
         const { invoke } = window.__TAURI__.core;
+        // 确定要打开的路径
+        let pathToOpen = extractPath;
+        if (createFolderPerWallpaper) {
+          // 如果启用了为每个壁纸单独生成文件夹，打开壁纸文件夹
+          const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
+          if (wallpaperFolderName) {
+            pathToOpen = `${extractPath}/${wallpaperFolderName}`;
+          }
+        }
         // 确保路径格式正确（使用反斜杠）
-        const normalizedPath = extractPath.replace(/\//g, '\\');
+        const normalizedPath = pathToOpen.replace(/\//g, '\\');
         await invoke('open_folder', { path: normalizedPath });
       }
     } catch (error) {
@@ -1541,7 +1615,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const noTexConvertCheckbox = document.getElementById('no-tex-convert-checkbox');
     const ignoreDirStructureCheckbox = document.getElementById('ignore-dir-structure-checkbox');
     const overwriteFilesCheckbox = document.getElementById('overwrite-files-checkbox');
+    const createFolderPerWallpaperCheckbox = document.getElementById('create-folder-per-wallpaper-checkbox');
     const autoOpenExtractFolderCheckbox = document.getElementById('auto-open-extract-folder');
+    const autoOpenImportFolderCheckbox = document.getElementById('auto-open-import-folder');
     
     // 等待settingsManager初始化完成
     await settingsManager.init();
@@ -1551,14 +1627,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedNoTexConvert = settingsManager.get('no-tex-convert');
     const savedIgnoreDirStructure = settingsManager.get('ignore-dir-structure');
     const savedOverwriteFiles = settingsManager.get('overwrite-files');
+    const savedCreateFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper');
     const savedAutoOpenExtractFolder = settingsManager.get('auto-open-extract-folder');
+    const savedAutoOpenImportFolder = settingsManager.get('auto-open-import-folder');
     
     // 设置复选框的初始状态
     if (onlyImagesCheckbox) onlyImagesCheckbox.checked = savedOnlyImages;
     if (noTexConvertCheckbox) noTexConvertCheckbox.checked = savedNoTexConvert;
     if (ignoreDirStructureCheckbox) ignoreDirStructureCheckbox.checked = savedIgnoreDirStructure;
     if (overwriteFilesCheckbox) overwriteFilesCheckbox.checked = savedOverwriteFiles;
+    if (createFolderPerWallpaperCheckbox) createFolderPerWallpaperCheckbox.checked = savedCreateFolderPerWallpaper;
     if (autoOpenExtractFolderCheckbox) autoOpenExtractFolderCheckbox.checked = savedAutoOpenExtractFolder;
+    if (autoOpenImportFolderCheckbox) autoOpenImportFolderCheckbox.checked = savedAutoOpenImportFolder;
     
     // 为每个复选框添加事件监听器
     if (onlyImagesCheckbox) {
@@ -1589,9 +1669,22 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
     
+    if (createFolderPerWallpaperCheckbox) {
+      createFolderPerWallpaperCheckbox.addEventListener('change', () => {
+        settingsManager.set('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
+        syncAllCheckboxes('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
+      });
+    }
+    
     if (autoOpenExtractFolderCheckbox) {
       autoOpenExtractFolderCheckbox.addEventListener('change', () => {
         settingsManager.set('auto-open-extract-folder', autoOpenExtractFolderCheckbox.checked);
+      });
+    }
+    
+    if (autoOpenImportFolderCheckbox) {
+      autoOpenImportFolderCheckbox.addEventListener('change', () => {
+        settingsManager.set('auto-open-import-folder', autoOpenImportFolderCheckbox.checked);
       });
     }
   }
@@ -1602,7 +1695,8 @@ document.addEventListener('DOMContentLoaded', function () {
       'only-images': ['only-images-checkbox'],
       'no-tex-convert': ['no-tex-convert-checkbox'],
       'ignore-dir-structure': ['ignore-dir-structure-checkbox'],
-      'overwrite-files': ['overwrite-files-checkbox']
+      'overwrite-files': ['overwrite-files-checkbox'],
+      'create-folder-per-wallpaper': ['create-folder-per-wallpaper-checkbox']
     };
     
     const ids = checkboxIds[settingName];
@@ -1626,7 +1720,8 @@ document.addEventListener('DOMContentLoaded', function () {
       'only-images': settingsManager.get('only-images'),
       'no-tex-convert': settingsManager.get('no-tex-convert'),
       'ignore-dir-structure': settingsManager.get('ignore-dir-structure'),
-      'overwrite-files': settingsManager.get('overwrite-files')
+      'overwrite-files': settingsManager.get('overwrite-files'),
+      'create-folder-per-wallpaper': settingsManager.get('create-folder-per-wallpaper')
     };
     
     Object.keys(settings).forEach(settingName => {
@@ -1874,6 +1969,7 @@ async function initManualExtractFunction() {
       const noTexConvert = settingsManager.get('no-tex-convert') === true;
       const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
       const overwriteFiles = settingsManager.get('overwrite-files') === true;
+      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
 
         // 构造提取选项
         const options = {
@@ -1894,9 +1990,52 @@ async function initManualExtractFunction() {
         for (const file of manualFiles) {
           try {
             // console.log('正在提取文件:', file.name);
+            
+            // 如果启用为每个壁纸单独生成文件夹，创建以文件名命名的文件夹
+            let fileExtractPath = extractPath;
+            if (createFolderPerWallpaper) {
+              // 获取文件名（不含扩展名）作为文件夹名
+              const fileName = file.name.replace(/\.pkg$/i, '');
+              if (fileName) {
+                // 构造新的提取路径
+                fileExtractPath = `${extractPath}/${fileName}`;
+                
+                // 创建文件夹
+                try {
+                  await invoke('create_directory', { path: fileExtractPath });
+                } catch (createError) {
+                  // 如果文件夹已存在
+                  if (overwriteFiles) {
+                    // 如果启用了覆盖设置，直接使用现有文件夹
+                    // console.log('文件夹已存在，使用现有文件夹（覆盖模式）');
+                  } else {
+                    // 如果未启用覆盖设置，添加后缀
+                    let suffix = 1;
+                    let newPath;
+                    do {
+                      newPath = `${extractPath}/${fileName}_${suffix}`;
+                      try {
+                        await invoke('create_directory', { path: newPath });
+                        fileExtractPath = newPath;
+                        break;
+                      } catch (e) {
+                        suffix++;
+                      }
+                    } while (suffix <= 100); // 最多尝试100次
+                  }
+                }
+              }
+            }
+            
+            // 更新提取选项中的输出路径
+            const fileOptions = {
+              ...options,
+              output: fileExtractPath.replace(/\\/g, '/')
+            };
+            
             const result = await invoke('extract_pkg', { 
               input: file.path, 
-              options: options 
+              options: fileOptions 
             });
             successCount++;
             // console.log(`文件 ${file.name} 提取成功`);
@@ -1918,7 +2057,8 @@ async function initManualExtractFunction() {
             // 将所有媒体文件移动到根目录并删除文件夹
             await invoke('flatten_media_files', { 
               path: extractPath,
-              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
+              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'],
+              overwrite: overwriteFiles
             });
             // console.log('已将所有媒体文件移动到根目录');
           } catch (cleanupError) {
