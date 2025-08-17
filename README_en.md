@@ -62,7 +62,7 @@
 ## 🌟 Features
 
 ### Core Features
-- **Smart Unpacking**: Batch extract `.pkg` files and automatically handle file structure
+- **Unpacking pkg**: Batch extract `.pkg` files and automatically handle file structure
 - **Local Wallpaper Management**: Automatically scan and display Steam Workshop wallpapers
 - **Import to Wallpaper Editor**: Import directly into Wallpaper Engine for editing
 - **Manual Unpacking**: Support selecting pkg files for manual unpacking
@@ -198,24 +198,9 @@ repkg-gui/
 │   └── tauri.conf.json          # Tauri configuration file
 ```
 
-## 🛠️ Tech Stack
-
-### Frontend
-- **HTML5** + **CSS3** + **JavaScript (ES6+)**
-- **Tailwind CSS** - Utility-first CSS framework
-- **Native DOM API** - No framework dependency, lightweight and efficient
-
-### Backend
-- **Tauri 2.0** - Build cross-platform desktop applications
-- **Rust** - Systems programming language
-- **Tokio** - Async runtime
-
-### Core Dependencies
-- **RePKG** - Wallpaper engine `.pkg` file unpacking tool
-
 ## 🙏 Acknowledgments
 
-- [RePKG](https://github.com/NotAdam/RePKG) - Core unpacking tool
+- [RePKG](https://github.com/notscuffed/repkg) - Core unpacking tool
 - [Tauri](https://tauri.app/) - Cross-platform desktop app framework
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
 - [Steam Workshop](https://steamcommunity.com/workshop/) - Wallpaper resource platform

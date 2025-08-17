@@ -64,7 +64,7 @@
 ## 🌟 功能特性
 
 ### 核心功能
-- **智能解包**：支持批量提取 `.pkg` 文件，自动处理文件结构
+- **解包pkg**：支持批量提取 `.pkg` 文件，自动处理文件结构
 - **本地壁纸管理**：自动扫描并展示 Steam 创意工坊壁纸
 - **导入壁纸编辑器**：导入后可以直接在Wallpaper Engine中编辑壁纸
 - **手动解包**：支持选择pkg文件进行手动解包
@@ -202,24 +202,9 @@ repkg-gui/
 │   └── tauri.conf.json          # Tauri 配置文件
 ```
 
-## 🛠️ 技术栈
-
-### 前端
-- **HTML5** + **CSS3** + **JavaScript (ES6+)**
-- **Tailwind CSS** - 实用优先的 CSS 框架
-- **原生 DOM API** - 无框架依赖，轻量高效
-
-### 后端
-- **Tauri 2.0** - 构建跨平台桌面应用
-- **Rust** - 系统级编程语言
-- **Tokio** - 异步运行时
-
-### 核心依赖
-- **RePKG** - 壁纸引擎 `.pkg` 文件解包工具
-
 ## 🙏 致谢
 
-- [RePKG](https://github.com/NotAdam/RePKG) - 核心解包工具
+- [RePKG](https://github.com/notscuffed/repkg) - 核心解包工具
 - [Tauri](https://tauri.app/) - 跨平台桌面应用框架
 - [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
 - [Steam Workshop](https://steamcommunity.com/workshop/) - 壁纸资源平台
