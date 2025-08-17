@@ -3,10 +3,7 @@ import cleanCSS from 'gulp-clean-css';
 import terser from 'gulp-terser';
 import htmlmin from 'gulp-htmlmin';
 import imagemin from 'gulp-imagemin';
-import rev from 'gulp-rev';
-import revReplace from 'gulp-rev-replace';
 import { deleteAsync } from 'del';
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import newer from 'gulp-newer';
@@ -73,41 +70,7 @@ export const minifyJson = () => {
     .pipe(gulp.dest('dist'));
 };
 
-// 添加hash版本号
-export const revision = () => {
-  return gulp.src(['dist/**/*.{css,js}'])
-    .pipe(rev())
-    .pipe(gulp.dest('dist'))
-    .pipe(rev.manifest())
-    .pipe(gulp.dest('dist'));
-};
 
-// 清理原始文件（只保留带hash的文件）
-export const cleanOriginalFiles = async () => {
-  const manifestPath = 'dist/rev-manifest.json';
-  if (!fs.existsSync(manifestPath)) {
-    return Promise.resolve();
-  }
-  
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const filesToDelete = Object.keys(manifest).map(originalFile => `dist/${originalFile}`);
-  
-  // 删除原始文件
-  await deleteAsync(filesToDelete);
-  
-  // 删除manifest文件
-  await deleteAsync([manifestPath]);
-  
-  return Promise.resolve();
-};
-
-// 替换文件引用中的hash
-export const revReplaceTask = () => {
-  const manifest = gulp.src('dist/rev-manifest.json');
-  return gulp.src('dist/**/*.html')
-    .pipe(revReplace({ manifest }))
-    .pipe(gulp.dest('dist'));
-};
 
 // 复制其他文件
 export const copyOtherFiles = () => {
@@ -129,10 +92,7 @@ export const build = gulp.series(
     minifyImages,
     minifyJson,
     copyOtherFiles
-  ),
-  revision,
-  revReplaceTask,
-  cleanOriginalFiles
+  )
 );
 
 // 默认任务
@@ -160,10 +120,7 @@ export const buildIncremental = gulp.series(
     minifyImages,
     minifyJson,
     copyOtherFiles
-  ),
-  revision,
-  revReplaceTask,
-  cleanOriginalFiles
+  )
 );
 
 // 开发模式
