@@ -14,7 +14,7 @@
     "tauri:build:version": "pnpm run build:frontend && node scripts/build-with-version.js",
     "find-unused-i18n": "node scripts/find-unused-i18n.js",
     "cmd": "node scripts/command-manager.js",
-    "dev": "gulp dev"
+    "gulp:dev": "gulp dev"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
