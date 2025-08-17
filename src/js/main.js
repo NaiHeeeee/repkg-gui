@@ -589,11 +589,32 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- 页面导航逻辑 ---
   const navLinks = document.querySelectorAll('.nav-link');
   const pages = document.querySelectorAll('.page');
+  
+  // 页面滚动位置管理
+  const pageScrollPositions = new Map();
+  
+  function saveCurrentPageScrollPosition() {
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+      pageScrollPositions.set(activePage.id, activePage.scrollTop);
+    }
+  }
+  
+  function restorePageScrollPosition(pageId) {
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+      const savedPosition = pageScrollPositions.get(pageId) || 0;
+      targetPage.scrollTop = savedPosition;
+    }
+  }
 
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const pageId = link.dataset.page;
+
+      // 保存当前页面滚动位置
+      saveCurrentPageScrollPosition();
 
       pages.forEach(page => page.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
@@ -611,6 +632,11 @@ document.addEventListener('DOMContentLoaded', function () {
           l.style.color = 'var(--text-primary)';
         }
       });
+      
+      // 恢复目标页面滚动位置
+      setTimeout(() => {
+        restorePageScrollPosition(pageId);
+      }, 50);
     });
   });
   // 初始化首页高亮
