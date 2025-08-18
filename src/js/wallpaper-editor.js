@@ -114,7 +114,7 @@ class WallpaperEditorImporter {
                     // 使用后端返回的实际文件夹路径
                     await window.__TAURI__.core.invoke('open_folder', { path: result });
                 } catch (openError) {
-                    console.warn('无法自动打开壁纸文件夹:', openError);
+//                     console.warn('无法自动打开壁纸文件夹:', openError);
                 }
             }
 
@@ -165,13 +165,23 @@ class WallpaperEditorImporter {
             };
         }
         
-        // 从详情页获取
+        // 从当前选中的壁纸获取（支持右键菜单和详情页）
         const currentWallpaper = window.currentlySelectedWallpaper;
         if (currentWallpaper) {
-            return {
-                workshopId: currentWallpaper.id,
-                scenePkgPath: currentWallpaper.scenePkgPath || `${currentWallpaper.path}/scene.pkg`
-            };
+            // 如果有scenePkgPath，优先使用
+            if (currentWallpaper.scenePkgPath) {
+                return {
+                    workshopId: currentWallpaper.id,
+                    scenePkgPath: currentWallpaper.scenePkgPath
+                };
+            }
+            // 否则使用path构建scenePkgPath
+            if (currentWallpaper.path) {
+                return {
+                    workshopId: currentWallpaper.id,
+                    scenePkgPath: `${currentWallpaper.path}/scene.pkg`
+                };
+            }
         }
         
         alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
@@ -205,7 +215,7 @@ window.importToWallpaperEditor = async function(type = 'detail') {
 
     let wallpaperInfo = null;
 
-    if (type === 'detail') {
+    if (type === 'detail' || type === 'context-menu') {
         wallpaperInfo = wallpaperEditorImporter.getSelectedWallpaperInfo();
     }
 

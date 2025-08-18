@@ -169,5 +169,14 @@
   },
   "search": {
     "placeholder": "搜索壁纸名称或ID"
+  },
+  "context_menu": {
+    "open_in_workshop": "在创意工坊中打开",
+    "open_wallpaper_folder": "打开壁纸所在文件夹",
+    "start_extract": "开始提取",
+    "open_extract_folder": "打开提取文件夹",
+    "import_wallpaper_editor": "导入壁纸编辑器",
+    "no_workshop_url": "未在project.json中找到创意工坊链接",
+    "read_project_failed": "读取project.json失败"
   }
 }

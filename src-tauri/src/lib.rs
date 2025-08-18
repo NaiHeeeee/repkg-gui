@@ -188,6 +188,36 @@ async fn close_window(window: tauri::Window) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn open_shell(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        // 使用Windows的start命令来打开steam://链接
+        Command::new("cmd")
+            .args(["/c", "start", "", &path])
+            .spawn()
+            .map_err(|e| format!("无法打开链接: {}", e))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("无法打开链接: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("无法打开链接: {}", e))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 async fn is_window_maximized(window: tauri::Window) -> Result<bool, String> {
     window.is_maximized().map_err(|e| e.to_string())
 }
@@ -488,6 +518,7 @@ pub fn run() {
             read_text_file,
             write_text_file,
             open_folder,
+            open_shell,
             minimize_window,
             maximize_window,
             unmaximize_window,

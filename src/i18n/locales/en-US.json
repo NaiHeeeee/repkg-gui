@@ -171,5 +171,14 @@
   },
   "search": {
     "placeholder": "Search wallpaper name or ID"
+  },
+  "context_menu": {
+    "open_in_workshop": "Open in Workshop",
+    "open_wallpaper_folder": "Open Wallpaper Folder",
+    "start_extract": "Start Extract",
+    "open_extract_folder": "Open Extract Folder",
+    "import_wallpaper_editor": "Import Wallpaper Editor",
+    "no_workshop_url": "No workshop URL found in project.json",
+    "read_project_failed": "Failed to read project.json"
   }
 }

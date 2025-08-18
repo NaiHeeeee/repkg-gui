@@ -17,6 +17,8 @@ let sortOrders = {
   date: 'asc' // 默认时间正序（最旧的在前）
 };
 
+
+
 // 设置默认提取路径函数（移到全局作用域）
 async function setDefaultExtractPath() {
   const extractPathInput = document.getElementById('extract-path');
@@ -1174,6 +1176,9 @@ document.addEventListener('DOMContentLoaded', function () {
       throw error;
     }
   }
+  
+  // 创建全局别名供context-menu.js使用
+  window.extractWallpaperFromMain = extractWallpaper;
   
   // 为提取按钮添加事件监听器
   document.getElementById('extract-btn').addEventListener('click', async () => {
