@@ -233,7 +233,8 @@ window.openWorkshop = async function(wallpaper) {
             
             if (projectData && projectData.workshopurl) {
                 // 打开Steam创意工坊链接
-                window.open(projectData.workshopurl, '_blank');
+                const { invoke } = window.__TAURI__.core;
+                await invoke('open_shell', { path: projectData.workshopurl });
             } else {
                 alert(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
             }
