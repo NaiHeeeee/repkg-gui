@@ -1988,7 +1988,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 初始化手动提取页面的提取功能
   await initManualExtractFunction();
+  
+  // 初始化搜索功能
+  initSearchFunction();
 });
+
+// 搜索功能实现
+function initSearchFunction() {
+  const searchInput = document.getElementById('search-wallpapers');
+  if (!searchInput) return;
+  
+  searchInput.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    filterWallpapers(searchTerm);
+  });
+}
+
+// 过滤壁纸列表
+function filterWallpapers(searchTerm) {
+  const wallpaperCards = document.querySelectorAll('.wallpaper-card');
+  
+  wallpaperCards.forEach(card => {
+    const wallpaperId = card.dataset.wallpaperId?.toLowerCase() || '';
+    const wallpaperName = card.querySelector('.text-white.text-sm.font-medium')?.textContent.toLowerCase() || '';
+    
+    // 搜索标题或ID
+    const matchesSearch = searchTerm === '' || 
+                         wallpaperName.includes(searchTerm) || 
+                         wallpaperId.includes(searchTerm);
+    
+    // 显示或隐藏项目
+    card.style.display = matchesSearch ? 'block' : 'none';
+  });
+}
 
 async function initManualExtractFunction() {
   const manualExtractBtn = document.getElementById('manual-extract-btn');

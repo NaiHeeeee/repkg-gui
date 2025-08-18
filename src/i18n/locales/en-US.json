@@ -168,5 +168,8 @@
     "everyone": "Everyone",
     "mature": "Mature",
     "questionable": "Parental Guidance"
+  },
+  "search": {
+    "placeholder": "Search wallpaper name or ID"
   }
 }
