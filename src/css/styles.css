@@ -486,6 +486,11 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
     cursor: default;
 }
 
+/* 详情弹窗内容区域滚动修复 */
+#details-drawer {
+    overflow-y: auto;
+}
+
 /* 详情页提取路径输入框统一悬停效果 */
 #details-drawer #extract-path {
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
