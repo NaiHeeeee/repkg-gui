@@ -955,12 +955,41 @@ document.addEventListener('DOMContentLoaded', function () {
   const detailsImg = document.getElementById('details-img');
   const detailsName = document.getElementById('details-name');
 
-  window.openDrawer = (wallpaper) => {
+  window.openDrawer = async (wallpaper) => {
     // 存储当前选中的壁纸信息，供提取功能使用
     window.currentlySelectedWallpaper = wallpaper;
     
     detailsImg.src = wallpaper.image;
     detailsName.textContent = wallpaper.name;
+    
+    // 读取并显示contentrating字段
+    const contentRatingElement = document.getElementById('details-contentrating');
+    if (contentRatingElement) {
+      try {
+        const { invoke } = window.__TAURI__.core;
+        const projectJsonPath = `${wallpaper.path}/project.json`;
+        const projectData = await invoke('read_json_file', { path: projectJsonPath });
+        
+        if (projectData && projectData.contentrating) {
+          // 使用i18n获取内容评级的翻译
+          let contentRatingKey = projectData.contentrating.toLowerCase();
+          let contentRatingText = window.i18n.t(`content_rating.${contentRatingKey}`);
+          
+          // 如果找不到对应的翻译，使用原始值
+          if (contentRatingText === `content_rating.${contentRatingKey}`) {
+            contentRatingText = projectData.contentrating;
+          }
+          
+          contentRatingElement.textContent = contentRatingText;
+        } else {
+          contentRatingElement.textContent = '';
+        }
+      } catch (error) {
+        // console.error('读取contentrating失败:', error);
+        contentRatingElement.textContent = '';
+      }
+    }
+    
     detailsDrawer.classList.add('open');
     detailsBackdrop.classList.remove('opacity-0', 'pointer-events-none');
     

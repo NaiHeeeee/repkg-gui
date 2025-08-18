@@ -162,5 +162,11 @@
     "opacity_value": "{value}%",
     "invalid_url": "Please enter a valid image or video URL",
     "load_failed": "Background loading failed, please check if the URL is correct"
+  },
+  "content_rating": {
+    "label": "Content Rating",
+    "everyone": "Everyone",
+    "mature": "Mature",
+    "questionable": "Parental Guidance"
   }
 }

@@ -161,5 +161,10 @@
     "opacity_value": "{value}%",
     "invalid_url": "请输入有效的图片或视频地址",
     "load_failed": "背景加载失败，请检查地址是否正确"
+  },
+  "content_rating": {
+    "everyone": "大众",
+    "mature": "成人",
+    "questionable": "家长指导级"
   }
 }
