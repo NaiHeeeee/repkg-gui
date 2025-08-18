@@ -177,6 +177,7 @@ repkg-gui/
 │   ├── index.html               # Main page file
 │   └── js/                      # JavaScript files
 │       ├── background.js        # Background script
+│       ├── context-menu.js      # Right-click menu
 │       ├── main.js              # Main script
 │       ├── settings.js          # Settings script
 │       ├── tailwindcss.js       # Tailwind CSS script

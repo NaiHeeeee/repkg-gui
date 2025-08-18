@@ -70,6 +70,17 @@ html.dark {
   line-height: 1.4;
 }
 
+/* 确保鼠标移入菜单项内的 SVG 图标和文字时也显示指针样式 */
+#wallpaper-context-menu .px-4.py-2 svg,
+#wallpaper-context-menu .px-4.py-2 span {
+  cursor: pointer;
+}
+
+/* 鼠标移入菜单项时文字变蓝 */
+#wallpaper-context-menu .px-4.py-2:hover span {
+  color: #3b82f6;
+}
+
 /* 页面切换过渡效果 */
 .page {
   position: absolute;

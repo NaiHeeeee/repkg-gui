@@ -181,6 +181,7 @@ repkg-gui/
 │   ├── index.html               # 主页面文件
 │   └── js/                      # JavaScript 文件
 │       ├── background.js        # 背景
+│       ├── context-menu.js      # 右键菜单
 │       ├── main.js              # 主文件
 │       ├── settings.js          # 设置
 │       ├── tailwindcss.js       # Tailwind CSS
