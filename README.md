@@ -174,18 +174,10 @@ repkg-gui/
 ├── src/                         # 前端代码
 │   ├── assets/                  # 前端资源文件
 │   ├── css/                     # 样式文件
-│   │   └── styles.css           # 主样式文件
 │   ├── i18n/                    # 国际化配置
-│   │   ├── i18n.js              # 国际化主文件
 │   │   └── locales/             # 语言包目录
 │   ├── index.html               # 主页面文件
 │   └── js/                      # JavaScript 文件
-│       ├── background.js        # 背景
-│       ├── context-menu.js      # 右键菜单
-│       ├── main.js              # 主文件
-│       ├── settings.js          # 设置
-│       ├── tailwindcss.js       # Tailwind CSS
-│       └── wallpaper-editor.js  # 壁纸编辑器脚本
 ├── src-tauri/                   # Tauri 后端
 │   ├── .gitignore               # Rust 项目忽略文件配置
 │   ├── Cargo.toml               # Rust 项目配置文件
@@ -194,10 +186,6 @@ repkg-gui/
 │   ├── gen/                     # Tauri 生成文件
 │   ├── icons/                   # 应用图标
 │   ├── src/                     # Rust 源代码
-│   │   ├── lib.rs               # 库文件
-│   │   ├── main.rs              # 主入口文件
-│   │   ├── repkg.rs             # RePKG 相关功能
-│   │   └── wallpaper_editor.rs  # 壁纸编辑器功能
 │   ├── bin/                     # 可执行文件
 │   │   └── RePKG.exe            # RePKG 可执行文件
 │   └── tauri.conf.json          # Tauri 配置文件

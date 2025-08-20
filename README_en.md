@@ -170,18 +170,10 @@ repkg-gui/
 ├── src/                         # Frontend code
 │   ├── assets/                  # Frontend resource files
 │   ├── css/                     # Style files
-│   │   └── styles.css           # Main style file
 │   ├── i18n/                    # Internationalization configuration
-│   │   ├── i18n.js              # Internationalization main file
 │   │   └── locales/             # Language pack directory
 │   ├── index.html               # Main page file
 │   └── js/                      # JavaScript files
-│       ├── background.js        # Background script
-│       ├── context-menu.js      # Right-click menu
-│       ├── main.js              # Main script
-│       ├── settings.js          # Settings script
-│       ├── tailwindcss.js       # Tailwind CSS script
-│       └── wallpaper-editor.js  # Wallpaper editor script
 ├── src-tauri/                   # Tauri backend
 │   ├── .gitignore               # Rust project ignore file configuration
 │   ├── Cargo.toml               # Rust project configuration file
@@ -190,10 +182,6 @@ repkg-gui/
 │   ├── gen/                     # Tauri generated files
 │   ├── icons/                   # Application icons
 │   ├── src/                     # Rust source code
-│   │   ├── lib.rs               # Library file
-│   │   ├── main.rs              # Main entry file
-│   │   ├── repkg.rs             # RePKG related functionality
-│   │   └── wallpaper_editor.rs  # Wallpaper editor functionality
 │   ├── bin/                     # Executable files
 │   │   └── RePKG.exe            # RePKG executable file
 │   └── tauri.conf.json          # Tauri configuration file
