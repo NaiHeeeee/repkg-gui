@@ -287,6 +287,11 @@ html.dark .btn-purple:hover {
   animation: spin 1s linear;
 }
 
+/* 180度旋转类 */
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
 
 /* 毛玻璃效果样式 */
 .glass-effect {
@@ -371,7 +376,35 @@ html.dark .nav-link.active {
 
 /* 统一按钮悬停效果 */
 /* 首页按钮 */
+#refresh-wallpapers,
+#content-rating-filter-btn,
+#sort-by-name,
+#sort-by-date,
+#change-extract-path-manual,
+#restore-default-extract-path-manual,
+#browse-workshop-path,
+#restore-default-path,
+#change-extract-path,
+#restore-default-extract-path,
+#open-extract-folder,
+#open-workshop-folder {
+    cursor: pointer;
+}
+
+/* 内容评级下拉菜单选项 */
+.content-rating-checkbox,
+#content-rating-dropdown label {
+    cursor: pointer;
+}
+
+/* 内容评级下拉菜单选项文字hover效果 */
+#content-rating-dropdown label:hover span {
+    color: var(--accent-color) !important;
+    transition: color 0.2s ease-in-out;
+}
+
 #refresh-wallpapers:hover,
+#content-rating-filter-btn:hover,
 #sort-by-name:hover,
 #sort-by-date:hover,
 #change-extract-path-manual:hover,
@@ -387,12 +420,14 @@ html.dark .nav-link.active {
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-#refresh-wallpapers:hover svg {
+#refresh-wallpapers:hover svg,
+#content-rating-filter-btn:hover svg {
     color: var(--accent-color) !important;
     transition: color 0.2s ease-in-out;
 }
 
 html.dark #refresh-wallpapers:hover,
+html.dark #content-rating-filter-btn:hover,
 html.dark #sort-by-name:hover,
 html.dark #sort-by-date:hover,
 html.dark #change-extract-path-manual:hover,
@@ -407,7 +442,8 @@ html.dark #open-workshop-folder:hover {
     background-color: rgba(128, 128, 128, 0.15) !important;
 }
 
-html.dark #refresh-wallpapers:hover svg {
+html.dark #refresh-wallpapers:hover svg,
+html.dark #content-rating-filter-btn:hover svg {
     color: var(--accent-color) !important;
     transition: color 0.2s ease-in-out;
 }
@@ -570,6 +606,13 @@ html.dark #details-drawer #extract-path.glass-disabled {
 /* 保持可点击元素的鼠标样式 */
 button, a, [role="button"], [role="link"], select, .cursor-pointer {
     cursor: pointer;
+}
+
+/* 确保按钮内的span元素也显示指针样式 */
+#content-rating-filter-btn span,
+#sort-by-name span,
+#sort-by-date span {
+    cursor: pointer !important;
 }
 
 /* 输入框和文本区域保持文本光标 */

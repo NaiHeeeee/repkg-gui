@@ -163,6 +163,7 @@
     "load_failed": "背景加载失败，请检查地址是否正确"
   },
   "content_rating": {
+    "label": "内容评级",
     "everyone": "大众",
     "mature": "成人",
     "questionable": "家长指导级"

@@ -537,6 +537,11 @@ document.addEventListener('DOMContentLoaded', function () {
           // 重新渲染壁纸网格
           renderWallpaperGrid();
           
+          // 重新应用内容评级筛选
+          if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
+            await window.contentRatingFilter.apply();
+          }
+          
           // 更新排序箭头显示
           updateSortArrows();
           
@@ -568,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   
-  function loadMockData() {
+  async function loadMockData() {
     // 保留一些模拟数据作为后备
     const mockWallpapers = [
       { id: 1, name: 'Cyberpunk Cityscape', image: 'https://placehold.co/600x400/000000/FFFFFF?text=Cyberpunk' },
@@ -583,6 +588,11 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // 重新渲染壁纸网格
     renderWallpaperGrid();
+    
+    // 重新应用内容评级筛选
+    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
+      await window.contentRatingFilter.apply();
+    }
     
     // 更新排序箭头显示
     updateSortArrows();
@@ -819,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   
   // 加载壁纸数据
-  loadSteamWorkshopWallpapers().then(() => {
+  loadSteamWorkshopWallpapers().then(async () => {
     // 默认按时间倒序排序（新的在前）
     currentSortMethod = 'date';
     sortOrders.date = 'desc'; // 确保是降序（新的在前）
@@ -836,13 +846,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // 重新渲染壁纸网格
     renderWallpaperGrid();
     
+    // 重新应用内容评级筛选
+    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
+      await window.contentRatingFilter.apply();
+    }
+    
     // 预加载前几张图片
     preloadFirstImages(6);
   });
 
   // --- 排序功能 ---
   
-  function sortWallpapers(method) {
+  async function sortWallpapers(method) {
     // 如果切换了排序方法，重置新方法的排序顺序为升序
     if (currentSortMethod !== method) {
       sortOrders[method] = 'asc';
@@ -882,6 +897,11 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // 重新渲染壁纸网格
     renderWallpaperGrid();
+    
+    // 重新应用内容评级筛选
+    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
+      await window.contentRatingFilter.apply();
+    }
   }
   
   function applyCurrentSort() {
@@ -943,12 +963,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // 为排序按钮添加事件监听器
-  document.getElementById('sort-by-name').addEventListener('click', () => {
-    sortWallpapers('name');
+  document.getElementById('sort-by-name').addEventListener('click', async () => {
+    await sortWallpapers('name');
   });
 
-  document.getElementById('sort-by-date').addEventListener('click', () => {
-    sortWallpapers('date');
+  document.getElementById('sort-by-date').addEventListener('click', async () => {
+    await sortWallpapers('date');
   });
 
   // --- 详情弹窗逻辑 ---
@@ -1290,6 +1310,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 更新GitHub图标显示
     updateThemeIcons();
+    
+    // 更新内容评级下拉菜单背景色
+    if (window.contentRatingFilter && typeof window.contentRatingFilter.updateBackground === 'function') {
+      const isDark = rootHtml.classList.contains('dark') || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      window.contentRatingFilter.updateBackground(isDark);
+    }
 
     if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1803,7 +1829,20 @@ document.addEventListener('DOMContentLoaded', function () {
       // 添加旋转动画类
       icon.classList.add('refresh-icon-spinning');
       
-      loadSteamWorkshopWallpapers().then(() => {
+      loadSteamWorkshopWallpapers().then(async () => {
+        // 清空内容评级缓存
+        if (window.contentRatingFilter && typeof window.contentRatingFilter.clearCache === 'function') {
+          window.contentRatingFilter.clearCache();
+        }
+        
+        // 重置内容评级筛选复选框为默认全选
+        const checkboxes = document.querySelectorAll('.content-rating-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = true;
+        });
+        
+
+        
         // 刷新后恢复默认排序：新的在前
         currentSortMethod = 'date';
         sortOrders.date = 'desc'; // 确保是降序（新的在前）
@@ -1819,6 +1858,11 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // 重新渲染壁纸网格
         renderWallpaperGrid();
+        
+        // 重新应用内容评级筛选
+        if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
+          await window.contentRatingFilter.apply();
+        }
         
         // 预加载前几张图片
         preloadFirstImages(6);
@@ -2003,27 +2047,56 @@ function initSearchFunction() {
   const searchInput = document.getElementById('search-wallpapers');
   if (!searchInput) return;
   
-  searchInput.addEventListener('input', (e) => {
+  searchInput.addEventListener('input', async (e) => {
     const searchTerm = e.target.value.toLowerCase().trim();
-    filterWallpapers(searchTerm);
+    await filterWallpapers(searchTerm);
   });
 }
 
 // 过滤壁纸列表
-function filterWallpapers(searchTerm) {
+async function filterWallpapers(searchTerm) {
+  const checkboxes = document.querySelectorAll('.content-rating-checkbox');
+  const selectedRatings = Array.from(checkboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+  
   const wallpaperCards = document.querySelectorAll('.wallpaper-card');
   
-  wallpaperCards.forEach(card => {
+  wallpaperCards.forEach(async (card) => {
     const wallpaperId = card.dataset.wallpaperId?.toLowerCase() || '';
     const wallpaperName = card.querySelector('.text-white.text-sm.font-medium')?.textContent.toLowerCase() || '';
     
-    // 搜索标题或ID
+    // 搜索条件匹配
     const matchesSearch = searchTerm === '' || 
                          wallpaperName.includes(searchTerm) || 
                          wallpaperId.includes(searchTerm);
     
-    // 显示或隐藏项目
-    card.style.display = matchesSearch ? 'block' : 'none';
+    // 如果没有选择任何内容评级，只应用搜索筛选
+    if (selectedRatings.length === 0) {
+      card.style.display = matchesSearch ? 'block' : 'none';
+      return;
+    }
+    
+    // 获取壁纸数据
+    const wallpaperIndex = parseInt(card.dataset.index);
+    const wallpaper = wallpapers[wallpaperIndex];
+    
+    if (!wallpaper) {
+      card.style.display = 'none';
+      return;
+    }
+    
+    // 获取内容评级
+    let contentRating = null;
+    if (window.contentRatingFilter && typeof window.contentRatingFilter.getWallpaperContentRating === 'function') {
+      contentRating = await window.contentRatingFilter.getWallpaperContentRating(wallpaper);
+    }
+    
+    // 内容评级筛选条件匹配
+    const matchesContentRating = contentRating && selectedRatings.includes(contentRating);
+    
+    // 同时满足搜索和内容评级条件才显示
+    card.style.display = (matchesSearch && matchesContentRating) ? 'block' : 'none';
   });
 }
 
