@@ -312,6 +312,72 @@ async fn cleanup_non_media_files(
 }
 
 #[tauri::command]
+async fn get_background_dir() -> Result<String, String> {
+    let background_dir = dirs::data_dir()
+        .ok_or("无法获取数据目录")?
+        .join("repkg-gui")
+        .join("backgrounds");
+    
+    // 确保目录存在
+    std::fs::create_dir_all(&background_dir).map_err(|e| format!("无法创建背景目录: {}", e))?;
+    
+    Ok(background_dir.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+async fn write_background_chunk(
+    file_path: String,
+    chunk_data: Vec<u8>,
+    chunk_index: usize,
+    is_last_chunk: bool
+) -> Result<(), String> {
+    use std::fs;
+    use std::io::Write;
+    
+    let path = std::path::Path::new(&file_path);
+    
+    // 如果是第一个块，创建新文件；否则追加到现有文件
+    let mut file = if chunk_index == 0 {
+        fs::File::create(path).map_err(|e| format!("无法创建文件: {}", e))?
+    } else {
+        fs::OpenOptions::new()
+            .append(true)
+            .open(path)
+            .map_err(|e| format!("无法打开文件进行追加: {}", e))?
+    };
+    
+    // 写入数据块
+    file.write_all(&chunk_data).map_err(|e| format!("无法写入文件块: {}", e))?;
+    
+    // 如果是最后一个块，确保文件被正确关闭
+    if is_last_chunk {
+        file.sync_all().map_err(|e| format!("无法同步文件: {}", e))?;
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_background_file_path(file_name: String) -> Result<String, String> {
+    
+    // 构建背景文件路径
+    let background_dir = dirs::data_dir()
+        .ok_or("无法获取数据目录")?
+        .join("repkg-gui")
+        .join("backgrounds");
+    
+    let file_path = background_dir.join(&file_name);
+    
+    // 检查文件是否存在
+    if !file_path.exists() {
+        return Err("背景文件不存在".to_string());
+    }
+    
+    // 返回文件路径
+    Ok(file_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 async fn flatten_media_files(
     path: String,
     allowed_extensions: Vec<String>,
@@ -535,7 +601,10 @@ pub fn run() {
             get_steamapps_paths,
             find_workshop_path_from_extract_path,
             check_wallpaper_exists_in_editor,
-            remove_wallpaper_from_editor
+            remove_wallpaper_from_editor,
+            get_background_dir,
+            write_background_chunk,
+            get_background_file_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

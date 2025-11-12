@@ -6,6 +6,8 @@ class BackgroundManager {
         this.currentType = null; // 'image' or 'video'
         this.opacity = 0.3;
         this.previewUrl = null; // 预览URL，未应用前不设置背景
+        this.currentFile = null; // 当前选择的本地文件
+        this.objectUrl = null; // 临时URL对象，用于本地文件
         this.init();
     }
 
@@ -21,6 +23,8 @@ class BackgroundManager {
         const clearBtn = document.getElementById('clear-bg-btn');
         const opacitySlider = document.getElementById('bg-opacity');
         const controls = document.getElementById('custom-bg-controls');
+        const fileInput = document.getElementById('bg-file-input');
+        const fileBtn = document.getElementById('select-bg-file');
 
         // 切换开关
         toggle.addEventListener('change', async (e) => {
@@ -53,16 +57,23 @@ class BackgroundManager {
             clearTimeout(previewTimeout);
             const url = e.target.value.trim();
             
-            if (url && this.isValidUrl(url)) {
-                // 延迟500ms后显示预览，避免频繁请求
-                previewTimeout = setTimeout(() => {
-                    this.showPreview(url);
-                }, 500);
+            if (url) {
+                // 用户正在输入URL，清除本地文件选择
+                this.currentFile = null;
+                fileInput.value = '';
+                this.clearFileInfo();
+                
+                if (this.isValidUrl(url)) {
+                    // 延迟500ms后显示预览，避免频繁请求
+                    previewTimeout = setTimeout(() => {
+                        this.showPreview(url);
+                    }, 500);
+                } else {
+                    // 无效URL时隐藏预览
+                    this.hidePreview();
+                }
             } else if (url === '') {
                 // 清空时立即隐藏预览
-                this.hidePreview();
-            } else {
-                // 无效URL时隐藏预览
                 this.hidePreview();
             }
         });
@@ -85,10 +96,24 @@ class BackgroundManager {
             }, 200);
         });
 
+        // 本地文件选择
+        fileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.handleLocalFile(file);
+            }
+        });
+
         // 清除背景
         clearBtn.addEventListener('click', () => {
             this.clearBackground();
             urlInput.value = '';
+            fileInput.value = ''; // 清空文件选择
+            this.clearFileInfo(); // 清除文件信息显示
         });
 
         // 透明度调节
@@ -102,6 +127,10 @@ class BackgroundManager {
         // 监听语言变化
         window.addEventListener('languageChanged', () => {
             this.updateOpacityDisplay();
+            // 如果有选中的文件，重新更新文件信息显示
+            if (this.currentFile) {
+                this.updateFileInfo(this.currentFile);
+            }
         });
     }
 
@@ -147,6 +176,12 @@ class BackgroundManager {
 
     isValidUrl(url) {
         try {
+            // 处理blob: URLs（本地文件）
+            if (url.startsWith('blob:')) {
+                return true;
+            }
+            
+            // 处理常规URL
             new URL(url);
             return url.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov|avi)$/i) !== null;
         } catch {
@@ -155,6 +190,13 @@ class BackgroundManager {
     }
 
     getUrlType(url) {
+        // 处理blob: URLs（本地文件）
+        if (url.startsWith('blob:')) {
+            // 对于blob URLs，使用当前类型或默认为image
+            return this.currentType || 'image';
+        }
+        
+        // 处理常规URL
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         const videoExtensions = ['mp4', 'webm', 'mov', 'avi'];
         const extension = url.split('.').pop().toLowerCase();
@@ -162,6 +204,100 @@ class BackgroundManager {
         if (imageExtensions.includes(extension)) return 'image';
         if (videoExtensions.includes(extension)) return 'video';
         return 'image'; // 默认
+    }
+
+    // 处理本地文件选择
+    handleLocalFile(file) {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 
+                             'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+        
+        if (!allowedTypes.includes(file.type)) {
+            const message = window.i18n && window.i18n.t ? 
+                window.i18n.t('background.invalid_file_type') : 
+                'Unsupported file type, please select image or video file';
+            alert(message);
+            return;
+        }
+
+        // 限制文件大小 (1GB)
+        const maxSize = 1024 * 1024 * 1024;
+        if (file.size > maxSize) {
+            const message = window.i18n && window.i18n.t ? 
+                window.i18n.t('background.file_too_large') : 
+                'File size exceeds limit, maximum 1GB supported';
+            alert(message);
+            return;
+        }
+
+        this.currentFile = file;
+        
+        // 创建临时URL对象
+        if (this.objectUrl) {
+            URL.revokeObjectURL(this.objectUrl);
+        }
+        this.objectUrl = URL.createObjectURL(file);
+        
+        // 确定文件类型
+        this.currentType = file.type.startsWith('image/') ? 'image' : 'video';
+        this.currentUrl = this.objectUrl;
+        
+        // 更新文件信息显示
+        this.updateFileInfo(file);
+        
+        // 显示预览 - 修复：确保使用正确的URL和类型
+        this.showPreview(this.objectUrl, this.currentType);
+    }
+
+    // 应用本地文件作为背景
+    applyLocalFile() {
+        if (!this.currentFile || !this.isEnabled) {
+            const message = window.i18n && window.i18n.t ? 
+                window.i18n.t('background.no_file_selected') : 
+                'Please select a file first';
+            alert(message);
+            return;
+        }
+
+        // 应用背景（逻辑与setBackground类似，但不需要预加载）
+        this.applyBackground();
+        
+        // 保存设置（注意：本地文件的URL是临时的，重启后会失效）
+        this.saveSettings();
+    }
+
+    // 更新文件信息显示
+    updateFileInfo(file) {
+        const fileInfoElement = document.getElementById('selected-file-info');
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+        const fileName = file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name;
+        
+        // 大文件性能警告
+        const isLargeFile = file.size > 200 * 1024 * 1024; // 大于200MB
+        const warningText = isLargeFile ? 
+            `<span class="text-yellow-500 text-xs ml-2" title="${window.i18n ? window.i18n.t('background.large_file_warning') : 'Large file warning'}">⚠</span>` : '';
+        
+        // 使用当前语言获取按钮文本
+        const applyButtonText = window.i18n ? window.i18n.t('background.apply') : 'Apply';
+        
+        fileInfoElement.innerHTML = `
+            <span class="truncate">${fileName}</span>
+            <span class="ml-2 text-[var(--text-secondary)]">(${sizeInMB} MB)</span>
+            ${warningText}
+            <button id="apply-local-bg" class="ml-2 px-2 py-1 text-xs btn-blue rounded">${applyButtonText}</button>
+        `;
+
+        // 绑定应用按钮事件
+        const applyBtn = document.getElementById('apply-local-bg');
+        applyBtn.addEventListener('click', () => {
+            this.applyLocalFile();
+        });
+    }
+
+    // 清除文件信息显示
+    clearFileInfo() {
+        const fileInfoElement = document.getElementById('selected-file-info');
+        const noFileText = window.i18n ? window.i18n.t('background.no_file_selected') : 'No file selected';
+        fileInfoElement.innerHTML = `<span>${noFileText}</span>`;
     }
 
     preloadResource(url, type) {
@@ -240,6 +376,14 @@ class BackgroundManager {
         this.currentUrl = null;
         this.currentType = null;
         this.previewUrl = null;
+        this.currentFile = null;
+        
+        // 清理临时URL对象
+        if (this.objectUrl) {
+            URL.revokeObjectURL(this.objectUrl);
+            this.objectUrl = null;
+        }
+        
         this.removeBackground();
         this.hidePreview();
         await this.saveSettings();
@@ -252,7 +396,7 @@ class BackgroundManager {
         }
     }
 
-    showPreview(url = null) {
+    showPreview(url = null, type = null) {
         const previewContainer = document.getElementById('bg-preview-container');
         const imgPreview = document.getElementById('bg-image-preview');
         const videoPreview = document.getElementById('bg-video-preview');
@@ -263,7 +407,8 @@ class BackgroundManager {
             return;
         }
 
-        const displayType = url ? this.getUrlType(url) : this.currentType;
+        // 使用传入的类型参数或自动检测类型
+        const displayType = type || this.getUrlType(displayUrl);
         this.previewUrl = displayUrl;
 
         // 显示加载状态
@@ -292,6 +437,12 @@ class BackgroundManager {
                     imgPreview.style.display = 'none';
                     imgPreview.classList.remove('fade-in');
                     imgPreview.classList.add('fade-out');
+                    
+                    // 播放视频
+                    videoPreview.play().catch(error => {
+                        // 静默处理播放失败，可能是由于浏览器策略限制
+                        // console.warn('视频自动播放失败:', error);
+                    });
                 }
             })
             .catch((error) => {
@@ -315,6 +466,12 @@ class BackgroundManager {
                 // 重置图片和视频状态
                 const imgPreview = document.getElementById('bg-image-preview');
                 const videoPreview = document.getElementById('bg-video-preview');
+                
+                // 暂停视频播放
+                if (videoPreview && !videoPreview.paused) {
+                    videoPreview.pause();
+                }
+                
                 imgPreview.classList.remove('fade-in', 'fade-out');
                 videoPreview.classList.remove('fade-in', 'fade-out');
             }, 200);
@@ -323,9 +480,14 @@ class BackgroundManager {
     async saveSettings() {
         const settings = {
             enabled: this.isEnabled,
-            url: this.currentUrl,
+            // 对于本地文件，不保存临时的object URL，只保存文件信息
+            url: this.currentFile ? null : this.currentUrl,
             type: this.currentType,
-            opacity: this.opacity
+            opacity: this.opacity,
+            isLocalFile: !!this.currentFile,
+            fileName: this.currentFile ? this.currentFile.name : null,
+            fileSize: this.currentFile ? this.currentFile.size : null,
+            fileType: this.currentFile ? this.currentFile.type : null
         };
         await settingsManager.init();
         settingsManager.set('custom-background', settings);
@@ -360,7 +522,15 @@ class BackgroundManager {
                 toggle.checked = this.isEnabled;
                 urlInput.value = this.currentUrl || '';
                 opacitySlider.value = this.opacity;
+                
+                // 确保在更新显示前i18n已经初始化
+                await this.waitForI18n();
                 this.updateOpacityDisplay();
+
+                // 如果是本地文件，显示提示信息
+                if (settings.isLocalFile && settings.fileName) {
+                    await this.showLocalFileWarning(settings.fileName);
+                }
 
                 this.toggleControls();
 
@@ -381,6 +551,61 @@ class BackgroundManager {
             this.isEnabled = false;
             this.toggleControls();
         }
+    }
+
+    // 显示本地文件警告信息
+    async showLocalFileWarning(fileName) {
+        // 更健壮的i18n等待机制
+        await this.waitForI18n();
+
+        const fileInfoElement = document.getElementById('selected-file-info');
+        const warningText1 = window.i18n && window.i18n.t ? 
+            window.i18n.t('background.previous_file') : 
+            'Previously selected file: ';
+        const warningText2 = window.i18n && window.i18n.t ? 
+            window.i18n.t('background.restart_reload') : 
+            'Due to security restrictions, files need to be re-selected after app restart';
+        
+        fileInfoElement.innerHTML = `
+            <div class="flex flex-col">
+                <span class="text-[var(--text-secondary)]">${warningText1} ${fileName}</span>
+                <span class="text-xs text-[var(--text-secondary)]">${warningText2}</span>
+            </div>
+        `;
+    }
+
+    // 等待i18n初始化完成的通用方法
+    async waitForI18n() {
+        // 等待i18n可用
+        if (!window.i18n) {
+            await new Promise((resolve) => {
+                const checkI18n = () => {
+                    if (window.i18n) {
+                        resolve();
+                    } else {
+                        setTimeout(checkI18n, 50);
+                    }
+                };
+                checkI18n();
+            });
+        }
+
+        // 等待翻译加载完成
+        if (!window.i18n.translations) {
+            await new Promise((resolve) => {
+                const checkTranslations = () => {
+                    if (window.i18n && window.i18n.translations && Object.keys(window.i18n.translations).length > 0) {
+                        resolve();
+                    } else {
+                        setTimeout(checkTranslations, 50);
+                    }
+                };
+                checkTranslations();
+            });
+        }
+
+        // 额外等待一小段时间确保DOM更新完成
+        await new Promise(resolve => setTimeout(resolve, 100));
     }
 }
 

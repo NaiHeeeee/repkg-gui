@@ -206,7 +206,7 @@
                             </svg>
                         </button>
                         <div class="relative">
-                            <svg class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <svg class="search-icon absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                             <input type="text" id="search-wallpapers" 
@@ -376,6 +376,23 @@
                                                 class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 transition-colors rounded-md"
                                                 data-i18n="background.clear">清除背景</button>
                                         </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2"
+                                            data-i18n="background.local_file">本地文件</label>
+                                        <div class="flex gap-2">
+                                            <input type="file" id="bg-file-input" 
+                                                class="hidden"
+                                                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-msvideo">
+                                            <button id="select-bg-file" 
+                                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md"
+                                                data-i18n="background.browse">浏览文件</button>
+                                            <div id="selected-file-info" class="flex-1 text-sm text-[var(--text-secondary)] flex items-center">
+                                                <span data-i18n="background.no_file_selected">未选择文件</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-[var(--text-secondary)] mt-1" data-i18n="background.supported_formats">支持格式：图片 (JPG, PNG, GIF, WebP) 和视频 (MP4, WebM, MOV, AVI)，最大1GB</p>
                                     </div>
 
                                     <div id="bg-preview-container" class="hidden">

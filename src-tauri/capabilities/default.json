@@ -29,6 +29,9 @@
         },
         {
           "path": "**/*.pkg"
+        },
+        {
+          "path": "$DATA/repkg-gui/backgrounds/**/*"
         }
       ]
     },
