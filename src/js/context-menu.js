@@ -228,13 +228,29 @@ window.openWorkshop = async function(wallpaper) {
             const { invoke } = window.__TAURI__.core;
             const projectJsonPath = `${wallpaperPath}/project.json`;
             
+            // 从壁纸路径中提取实际文件夹ID（如 C:\...\workshop\content\431960\3660962877 中的 3660962877）
+            const folderIdMatch = wallpaperPath.match(/workshop[/\\]content[/\\]\d+[/\\](\d+)$/);
+            const actualFolderId = folderIdMatch ? folderIdMatch[1] : null;
+            
             // 读取project.json文件
             const projectData = await invoke('read_json_file', { path: projectJsonPath });
             
             if (projectData && projectData.workshopurl) {
+                let workshopUrl = projectData.workshopurl;
+                
+                // 自动修正：如果获取到了实际文件夹ID且与workshopurl中的ID不同，则替换
+                if (actualFolderId) {
+                    const urlIdMatch = workshopUrl.match(/CommunityFilePage[\\/](\d+)/);
+                    const urlId = urlIdMatch ? urlIdMatch[1] : null;
+                    
+                    if (urlId && urlId !== actualFolderId) {
+                        workshopUrl = workshopUrl.replace(/CommunityFilePage[\\/]\d+/, `CommunityFilePage/${actualFolderId}`);
+                    }
+                }
+                
                 // 打开Steam创意工坊链接
                 const { invoke } = window.__TAURI__.core;
-                await invoke('open_shell', { path: projectData.workshopurl });
+                await invoke('open_shell', { path: workshopUrl });
             } else {
                 alert(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
             }
