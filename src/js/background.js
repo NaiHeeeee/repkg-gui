@@ -7,8 +7,46 @@ class BackgroundManager {
         this.opacity = 0.3;
         this.previewUrl = null; // 预览URL，未应用前不设置背景
         this.currentFile = null; // 当前选择的本地文件
+        this.currentFilePath = null; // 当前本地文件路径，用于重启后恢复
+        this.savedLocalFileName = null;
+        this.savedLocalFileSize = null;
+        this.savedLocalFileType = null;
         this.objectUrl = null; // 临时URL对象，用于本地文件
         this.init();
+    }
+
+    isVideoExtension(extension) {
+        return ['mp4', 'webm', 'mov', 'avi'].includes(extension);
+    }
+
+    isImageExtension(extension) {
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+    }
+
+    getMimeTypeFromExtension(extension) {
+        const normalizedExtension = (extension || '').toLowerCase();
+        const mimeTypes = {
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            png: 'image/png',
+            gif: 'image/gif',
+            webp: 'image/webp',
+            mp4: 'video/mp4',
+            webm: 'video/webm',
+            mov: 'video/quicktime',
+            avi: 'video/x-msvideo'
+        };
+
+        return mimeTypes[normalizedExtension] || 'application/octet-stream';
+    }
+
+    getLocalAssetUrl(filePath) {
+        const convertFileSrc = window.__TAURI__?.core?.convertFileSrc;
+        if (typeof convertFileSrc === 'function') {
+            return convertFileSrc(filePath);
+        }
+
+        return filePath;
     }
 
     init() {
@@ -60,6 +98,10 @@ class BackgroundManager {
             if (url) {
                 // 用户正在输入URL，清除本地文件选择
                 this.currentFile = null;
+                this.currentFilePath = null;
+                this.savedLocalFileName = null;
+                this.savedLocalFileSize = null;
+                this.savedLocalFileType = null;
                 fileInput.value = '';
                 this.clearFileInfo();
                 
@@ -97,7 +139,12 @@ class BackgroundManager {
         });
 
         // 本地文件选择
-        fileBtn.addEventListener('click', () => {
+        fileBtn.addEventListener('click', async () => {
+            if (window.__TAURI__?.core?.invoke) {
+                await this.selectLocalBackgroundFile();
+                return;
+            }
+
             fileInput.click();
         });
 
@@ -130,8 +177,27 @@ class BackgroundManager {
             // 如果有选中的文件，重新更新文件信息显示
             if (this.currentFile) {
                 this.updateFileInfo(this.currentFile);
+            } else if (this.savedLocalFileName) {
+                this.updateSavedFileInfo();
             }
         });
+    }
+
+    async selectLocalBackgroundFile() {
+        try {
+            const { invoke } = window.__TAURI__.core;
+            const selectedPath = await invoke('select_background_file');
+            if (!selectedPath) {
+                return;
+            }
+
+            await this.handleLocalFilePath(selectedPath);
+        } catch (error) {
+            const message = window.i18n && window.i18n.t
+                ? window.i18n.t('messages.select_file_error')
+                : '选择文件失败: ';
+            alert(message + error);
+        }
     }
 
     toggleControls() {
@@ -160,6 +226,11 @@ class BackgroundManager {
         this.currentUrl = url;
         this.currentType = this.getUrlType(url);
         this.previewUrl = null; // 清除预览状态
+        this.currentFile = null;
+        this.currentFilePath = null;
+        this.savedLocalFileName = null;
+        this.savedLocalFileSize = null;
+        this.savedLocalFileType = null;
 
         // 预加载并验证资源
         this.preloadResource(url, this.currentType)
@@ -230,6 +301,10 @@ class BackgroundManager {
         }
 
         this.currentFile = file;
+        this.currentFilePath = file.path || null;
+        this.savedLocalFileName = file.name;
+        this.savedLocalFileSize = file.size;
+        this.savedLocalFileType = file.type;
         
         // 创建临时URL对象
         if (this.objectUrl) {
@@ -248,9 +323,38 @@ class BackgroundManager {
         this.showPreview(this.objectUrl, this.currentType);
     }
 
+    async handleLocalFilePath(filePath) {
+        const extension = filePath.split('.').pop()?.toLowerCase() || '';
+        const isImage = this.isImageExtension(extension);
+        const isVideo = this.isVideoExtension(extension);
+
+        if (!isImage && !isVideo) {
+            const message = window.i18n && window.i18n.t
+                ? window.i18n.t('background.invalid_file_type')
+                : 'Unsupported file type, please select image or video file';
+            alert(message);
+            return;
+        }
+
+        const { invoke } = window.__TAURI__.core;
+        const copiedFile = await invoke('copy_background_file', { sourcePath: filePath });
+        const mimeType = this.getMimeTypeFromExtension(extension);
+
+        this.currentFile = null;
+        this.currentFilePath = copiedFile.filePath;
+        this.savedLocalFileName = copiedFile.fileName;
+        this.savedLocalFileSize = copiedFile.fileSize;
+        this.savedLocalFileType = mimeType;
+        this.currentType = isVideo ? 'video' : 'image';
+        this.currentUrl = this.getLocalAssetUrl(copiedFile.filePath);
+
+        this.updateSavedFileInfo();
+        this.showPreview(this.currentUrl, this.currentType);
+    }
+
     // 应用本地文件作为背景
-    applyLocalFile() {
-        if (!this.currentFile || !this.isEnabled) {
+    async applyLocalFile() {
+        if (!this.currentFile && !this.currentFilePath) {
             const message = window.i18n && window.i18n.t ? 
                 window.i18n.t('background.no_file_selected') : 
                 'Please select a file first';
@@ -258,11 +362,26 @@ class BackgroundManager {
             return;
         }
 
+        if (!this.isEnabled) {
+            this.isEnabled = true;
+            const toggle = document.getElementById('custom-bg-toggle');
+            if (toggle) {
+                toggle.checked = true;
+            }
+            this.toggleControls();
+        }
+
         // 应用背景（逻辑与setBackground类似，但不需要预加载）
         this.applyBackground();
         
         // 保存设置（注意：本地文件的URL是临时的，重启后会失效）
-        this.saveSettings();
+        await this.saveSettings();
+
+        if (window.__TAURI__?.core?.invoke && this.currentFilePath) {
+            await window.__TAURI__.core.invoke('cleanup_background_files', {
+                keepFilePath: this.currentFilePath
+            });
+        }
     }
 
     // 更新文件信息显示
@@ -288,8 +407,8 @@ class BackgroundManager {
 
         // 绑定应用按钮事件
         const applyBtn = document.getElementById('apply-local-bg');
-        applyBtn.addEventListener('click', () => {
-            this.applyLocalFile();
+        applyBtn.addEventListener('click', async () => {
+            await this.applyLocalFile();
         });
     }
 
@@ -298,6 +417,24 @@ class BackgroundManager {
         const fileInfoElement = document.getElementById('selected-file-info');
         const noFileText = window.i18n ? window.i18n.t('background.no_file_selected') : 'No file selected';
         fileInfoElement.innerHTML = `<span>${noFileText}</span>`;
+    }
+
+    updateSavedFileInfo() {
+        const fileInfoElement = document.getElementById('selected-file-info');
+        const applyButtonText = window.i18n ? window.i18n.t('background.apply') : 'Apply';
+        const fileName = this.savedLocalFileName && this.savedLocalFileName.length > 30
+            ? this.savedLocalFileName.substring(0, 30) + '...'
+            : (this.savedLocalFileName || this.currentFilePath || '');
+
+        fileInfoElement.innerHTML = `
+            <span class="truncate">${fileName}</span>
+            <button id="apply-local-bg" class="ml-2 px-2 py-1 text-xs btn-blue rounded">${applyButtonText}</button>
+        `;
+
+        const applyBtn = document.getElementById('apply-local-bg');
+        applyBtn.addEventListener('click', async () => {
+            await this.applyLocalFile();
+        });
     }
 
     preloadResource(url, type) {
@@ -377,6 +514,10 @@ class BackgroundManager {
         this.currentType = null;
         this.previewUrl = null;
         this.currentFile = null;
+        this.currentFilePath = null;
+        this.savedLocalFileName = null;
+        this.savedLocalFileSize = null;
+        this.savedLocalFileType = null;
         
         // 清理临时URL对象
         if (this.objectUrl) {
@@ -478,16 +619,19 @@ class BackgroundManager {
     }
 
     async saveSettings() {
+        const savedFilePath = this.currentFile ? (this.currentFile.path || this.currentFilePath) : this.currentFilePath;
+        const isPersistentLocalFile = !!savedFilePath;
         const settings = {
             enabled: this.isEnabled,
             // 对于本地文件，不保存临时的object URL，只保存文件信息
-            url: this.currentFile ? null : this.currentUrl,
+            url: isPersistentLocalFile ? null : (this.currentFile ? null : this.currentUrl),
             type: this.currentType,
             opacity: this.opacity,
-            isLocalFile: !!this.currentFile,
-            fileName: this.currentFile ? this.currentFile.name : null,
-            fileSize: this.currentFile ? this.currentFile.size : null,
-            fileType: this.currentFile ? this.currentFile.type : null
+            isLocalFile: isPersistentLocalFile,
+            fileName: this.currentFile ? this.currentFile.name : this.savedLocalFileName,
+            fileSize: this.currentFile ? this.currentFile.size : this.savedLocalFileSize,
+            fileType: this.currentFile ? this.currentFile.type : this.savedLocalFileType,
+            filePath: savedFilePath
         };
         await settingsManager.init();
         settingsManager.set('custom-background', settings);
@@ -513,6 +657,10 @@ class BackgroundManager {
                 this.currentUrl = settings.url || null;
                 this.currentType = settings.type || null;
                 this.opacity = settings.opacity || 0.3;
+                this.currentFilePath = settings.filePath || null;
+                this.savedLocalFileName = settings.fileName || null;
+                this.savedLocalFileSize = settings.fileSize || null;
+                this.savedLocalFileType = settings.fileType || null;
 
                 // 恢复UI状态
                 const toggle = document.getElementById('custom-bg-toggle');
@@ -527,9 +675,12 @@ class BackgroundManager {
                 await this.waitForI18n();
                 this.updateOpacityDisplay();
 
-                // 如果是本地文件，显示提示信息
+                // 如果是本地文件，优先尝试恢复
                 if (settings.isLocalFile && settings.fileName) {
-                    await this.showLocalFileWarning(settings.fileName);
+                    const restored = await this.restoreLocalBackground(settings);
+                    if (!restored) {
+                        await this.showLocalFileStatus(settings.fileName, 'background.file_missing', '保存的本地背景文件不存在，无法自动恢复');
+                    }
                 }
 
                 this.toggleControls();
@@ -554,7 +705,7 @@ class BackgroundManager {
     }
 
     // 显示本地文件警告信息
-    async showLocalFileWarning(fileName) {
+    async showLocalFileStatus(fileName, detailKey, fallbackDetail) {
         // 更健壮的i18n等待机制
         await this.waitForI18n();
 
@@ -563,8 +714,8 @@ class BackgroundManager {
             window.i18n.t('background.previous_file') : 
             'Previously selected file: ';
         const warningText2 = window.i18n && window.i18n.t ? 
-            window.i18n.t('background.restart_reload') : 
-            'Due to security restrictions, files need to be re-selected after app restart';
+            window.i18n.t(detailKey) : 
+            fallbackDetail;
         
         fileInfoElement.innerHTML = `
             <div class="flex flex-col">
@@ -572,6 +723,38 @@ class BackgroundManager {
                 <span class="text-xs text-[var(--text-secondary)]">${warningText2}</span>
             </div>
         `;
+    }
+
+    async restoreLocalBackground(settings) {
+        if (!settings.filePath || !settings.type || !this.isEnabled) {
+            return false;
+        }
+
+        try {
+            const { invoke } = window.__TAURI__.core;
+            const exists = await invoke('check_file_exists', { path: settings.filePath });
+            if (!exists) {
+                return false;
+            }
+
+            this.currentFile = null;
+            this.currentFilePath = settings.filePath;
+            this.savedLocalFileName = settings.fileName || null;
+            this.savedLocalFileSize = settings.fileSize || null;
+            this.savedLocalFileType = settings.fileType || null;
+            this.currentType = settings.type;
+            this.currentUrl = this.getLocalAssetUrl(settings.filePath);
+
+            await this.showLocalFileStatus(
+                settings.fileName,
+                'background.auto_restored',
+                '已在启动时自动恢复上次选择的本地背景'
+            );
+
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     // 等待i18n初始化完成的通用方法

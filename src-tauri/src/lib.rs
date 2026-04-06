@@ -25,6 +25,14 @@ struct WallpaperData {
     path: String,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BackgroundFileInfo {
+    file_path: String,
+    file_name: String,
+    file_size: u64,
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -43,6 +51,17 @@ async fn get_home_dir() -> Result<String, String> {
 #[tauri::command]
 async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
     let path = app.dialog().file().blocking_pick_folder();
+    Ok(path.map(|p| p.to_string()))
+}
+
+#[tauri::command]
+async fn select_background_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let path = app
+        .dialog()
+        .file()
+        .add_filter("Background Media", &["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "avi"])
+        .blocking_pick_file();
+
     Ok(path.map(|p| p.to_string()))
 }
 
@@ -325,6 +344,118 @@ async fn get_background_dir() -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn copy_background_file(source_path: String) -> Result<BackgroundFileInfo, String> {
+    let source = Path::new(&source_path);
+    if !source.exists() {
+        return Err("背景文件不存在".to_string());
+    }
+
+    if !source.is_file() {
+        return Err("选择的背景资源不是文件".to_string());
+    }
+
+    let background_dir = dirs::data_dir()
+        .ok_or("无法获取数据目录")?
+        .join("repkg-gui")
+        .join("backgrounds");
+    fs::create_dir_all(&background_dir).map_err(|e| format!("无法创建背景目录: {}", e))?;
+
+    let file_stem = source
+        .file_stem()
+        .and_then(|name| name.to_str())
+        .unwrap_or("background");
+    let sanitized_stem: String = file_stem
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+
+    let extension = source
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_ascii_lowercase())
+        .unwrap_or_default();
+
+    let unique_suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| format!("无法生成文件名: {}", e))?
+        .as_millis();
+
+    let target_file_name = if extension.is_empty() {
+        format!("{}_{}", sanitized_stem, unique_suffix)
+    } else {
+        format!("{}_{}.{}", sanitized_stem, unique_suffix, extension)
+    };
+
+    let target_path = background_dir.join(&target_file_name);
+    fs::copy(source, &target_path).map_err(|e| format!("无法复制背景文件: {}", e))?;
+
+    let metadata = fs::metadata(&target_path).map_err(|e| format!("无法读取背景文件信息: {}", e))?;
+
+    Ok(BackgroundFileInfo {
+        file_path: target_path.to_string_lossy().to_string(),
+        file_name: source
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or(&target_file_name)
+            .to_string(),
+        file_size: metadata.len(),
+    })
+}
+
+#[tauri::command]
+async fn cleanup_background_files(keep_file_path: Option<String>) -> Result<(), String> {
+    let background_dir = dirs::data_dir()
+        .ok_or("无法获取数据目录")?
+        .join("repkg-gui")
+        .join("backgrounds");
+
+    if !background_dir.exists() {
+        return Ok(());
+    }
+
+    let keep_path = keep_file_path
+        .as_ref()
+        .map(|path| Path::new(path).to_path_buf());
+
+    let allowed_extensions = [
+        "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "avi",
+    ];
+
+    for entry in fs::read_dir(&background_dir).map_err(|e| format!("无法读取背景目录: {}", e))? {
+        let entry = entry.map_err(|e| format!("无法读取背景目录项: {}", e))?;
+        let path = entry.path();
+
+        if !path.is_file() {
+            continue;
+        }
+
+        if let Some(ref keep) = keep_path {
+            if &path == keep {
+                continue;
+            }
+        }
+
+        let extension = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| ext.to_ascii_lowercase())
+            .unwrap_or_default();
+
+        if allowed_extensions.contains(&extension.as_str()) {
+            fs::remove_file(&path).map_err(|e| format!("无法删除旧背景文件: {}", e))?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 async fn write_background_chunk(
     file_path: String,
     chunk_data: Vec<u8>,
@@ -575,6 +706,7 @@ pub fn run() {
             greet,
             get_home_dir,
             select_folder,
+            select_background_file,
             read_workshop_directory,
             read_json_file,
             check_file_exists,
@@ -603,6 +735,8 @@ pub fn run() {
             check_wallpaper_exists_in_editor,
             remove_wallpaper_from_editor,
             get_background_dir,
+            copy_background_file,
+            cleanup_background_files,
             write_background_chunk,
             get_background_file_path
         ])
