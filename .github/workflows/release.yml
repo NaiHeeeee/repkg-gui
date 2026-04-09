@@ -67,9 +67,8 @@ jobs:
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: Release ${{ steps.extract_version.outputs.version }}
           body: ${{ steps.generate_changelog.outputs.changelog }}
@@ -142,22 +141,12 @@ jobs:
           # Clean up temporary directory
           Remove-Item "portable-temp" -Recurse -Force
 
-      - name: Upload installer to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload assets to release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./src-tauri/target/release/bundle/nsis/repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}-setup.exe
-          asset_name: repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}-setup.exe
-          asset_content_type: application/octet-stream
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ./src-tauri/target/release/bundle/nsis/repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}-setup.exe
+            ./repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.zip
 
-      - name: Upload portable zip to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.zip
-          asset_name: repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.zip
-          asset_content_type: application/zip
