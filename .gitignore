@@ -1,6 +1,6 @@
 /.vscode/
-package-lock.json
-pnpm-lock.yaml
+# package-lock.json
+# pnpm-lock.yaml
 settings.json
 i18n-detailed-report.json
 dist/
