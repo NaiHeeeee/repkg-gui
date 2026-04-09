@@ -17,6 +17,11 @@ jobs:
       version: ${{ steps.extract_version.outputs.version }}
       body: ${{ steps.generate_changelog.outputs.changelog }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整的git历史记录
+
       - name: Extract version from tag
         id: extract_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
