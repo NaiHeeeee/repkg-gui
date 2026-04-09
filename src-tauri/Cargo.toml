@@ -1,6 +1,10 @@
 [package]
 name = "repkg-gui"
+<<<<<<< HEAD
 version = "0.7.0"
+=======
+version = "0.6.11"
+>>>>>>> 879c888dcd9c87bdd84393d73f8bb057a77b03a0
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
