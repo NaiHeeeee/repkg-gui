@@ -1,11 +1,7 @@
 {
   "name": "repkg-gui",
   "private": true,
-<<<<<<< HEAD
   "version": "0.7.0",
-=======
-  "version": "0.6.11",
->>>>>>> 879c888dcd9c87bdd84393d73f8bb057a77b03a0
   "type": "module",
   "scripts": {
     "tauri": "tauri",
