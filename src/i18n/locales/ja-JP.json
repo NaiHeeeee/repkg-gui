@@ -1,16 +1,16 @@
 {
   "title": {
-    "main": "RePKG GUI - Wallpaper Engine パッケージ解凍ツール"
+    "main": "RePKG GUI - Wallpaper Engine パッケージ抽出ツール"
   },
   "extract": {
-    "local_wallpapers": "ローカル壁紙",
-    "manual_extract": "手動解凍",
-    "select_output": "解凍先",
-    "extract_btn": "解凍開始",
-    "drag_drop": "ここをクリックして.pkgファイルを一括選択します",
+    "local_wallpapers": "ローカルの壁紙",
+    "manual_extract": "手動抽出",
+    "select_output": "出力先",
+    "extract_btn": "抽出開始",
+    "drag_drop": "ここをクリックまたはドラッグ＆ドロップで.pkgファイルを選択",
     "load_failed": "読み込み失敗",
     "no_wallpapers": "壁紙が見つかりません",
-    "ensure_path": "Steamワークショップのパスが存在し、壁紙ファイルが含まれているか確認してください"
+    "ensure_path": "Steamワークショップのパスが正しく、壁紙ファイルが含まれているか確認してください"
   },
   "settings": {
     "title": "設定",
@@ -19,78 +19,78 @@
     "language": "言語",
     "light": "ライト",
     "dark": "ダーク",
-    "system": "システム",
+    "system": "システムのデフォルト",
     "system_settings": "システム設定",
-    "extract_settings": "解凍設定",
+    "extract_settings": "抽出設定",
     "create_folder_per_wallpaper": "壁紙ごとにフォルダを作成",
-    "create_folder_per_wallpaper_desc": "ローカル壁紙は壁紙名、手動解凍はファイル名をフォルダ名とします",
-    "image_only": "画像ファイルのみ保持",
-    "image_only_desc": "画像と動画のみ解凍し、他のファイルは無視します",
+    "create_folder_per_wallpaper_desc": "ローカル壁紙は壁紙名、手動抽出はファイル名をフォルダ名として作成します",
+    "image_only": "画像と動画のみ抽出",
+    "image_only_desc": "画像と動画ファイルのみを抽出し、その他のファイル（スクリプト等）を無視します",
     "no_convert": "Texファイルを画像に変換しない",
-    "no_convert_desc": "元の.texファイルを保持します",
-    "flatten_structure": "元のディレクトリ構造を無視する",
-    "flatten_structure_desc": "すべてのファイルを同じディレクトリレベルに配置します",
-    "overwrite_existing": "既存のファイルを上書きする",
-    "overwrite_existing_desc": "ターゲットフォルダに同じ名前のファイルがある場合に上書きします",
-    "open_after_extract": "解凍完了後にフォルダを開く",
-    "open_after_extract_desc": "解凍が完了した後、自動的に解凍先フォルダを開きます",
-    "open_after_import": "エディタにインポート後にフォルダを開く",
+    "no_convert_desc": "元の.texファイルをそのまま保持します",
+    "flatten_structure": "ディレクトリ構造を維持しない",
+    "flatten_structure_desc": "すべてのファイルを同じディレクトリ階層に配置します",
+    "overwrite_existing": "既存のファイルを上書き",
+    "overwrite_existing_desc": "出力先に同名のファイルが存在する場合、上書きします",
+    "open_after_extract": "抽出完了後にフォルダを開く",
+    "open_after_extract_desc": "抽出が完了した後、自動的に出力先フォルダを開きます",
+    "open_after_import": "エディタへのインポート後にフォルダを開く",
     "open_after_import_desc": "壁紙をエディタにインポートした後、自動的にプロジェクトフォルダを開きます",
     "glass_effect": "ガラス効果",
-    "glass_effect_desc": "インターフェースのガラス効果を有効または無効にします"
+    "glass_effect_desc": "インターフェースのガラス効果（半透明）を有効にします"
   },
   "about": {
     "title": "RePKG GUI について",
     "version": "バージョン"
   },
   "messages": {
-    "extracting": "解凍中...",
+    "extracting": "抽出中...",
     "importing": "インポート中...",
-    "extract_success": "解凍完了！",
-    "extract_failed": "解凍失敗: ",
-    "set_extract_path_first": "先に解凍先パスを設定してください",
+    "extract_success": "抽出が完了しました",
+    "extract_failed": "抽出失敗: ",
+    "set_extract_path_first": "先に出力先パスを設定してください",
     "enter_valid_path": "有効なパスを入力してください",
-    "enter_extract_path": "解凍先パスを入力してください",
+    "enter_extract_path": "出力先パスを入力してください",
     "select_pkg_files": "先に.pkgファイルを選択してください",
     "select_folder_error": "フォルダの選択に失敗しました: ",
-    "open_folder_error": "フォルダを開くのに失敗しました: ",
+    "open_folder_error": "フォルダを開けませんでした: ",
     "select_file_error": "ファイルの選択に失敗しました: ",
-    "path_saved": "パスが保存されました",
-    "path_restored": "デフォルトのパスに復元されました",
+    "path_saved": "パスを保存しました",
+    "path_restored": "デフォルトのパスに戻しました",
     "no_wallpaper_selected": "壁紙が選択されていません",
-    "cannot_get_info": "壁紙情報または解凍先パスを取得できません",
-    "empty_path": "壁紙のパスまたは解凍先パスが空です",
-    "extract_complete": "解凍完了！成功: {success}ファイル、失敗: {error}ファイル",
+    "cannot_get_info": "壁紙情報または出力先パスを取得できません",
+    "empty_path": "壁紙のパスまたは出力先パスが空です",
+    "extract_complete": "抽出完了！ 成功: {success}、失敗: {error}",
     "import_success": "インポート成功",
     "import_failed": "インポート失敗",
-    "steam_not_found": "SteamまたはWallpaper Engineのインストールパスが見つかりません。Wallpaper Engineがインストールされているか確認してください",
-    "wallpaper_editor_not_loaded": "壁紙エディタのインポート機能が読み込まれていません",
-    "desktop_only": "この機能はデスクトップアプリでのみ利用可能です"
+    "steam_not_found": "SteamまたはWallpaper Engineのインストール場所が見つかりません。Wallpaper Engineがインストールされているか確認してください",
+    "wallpaper_editor_not_loaded": "壁紙エディタのインポート機能が利用できません",
+    "desktop_only": "この機能はデスクトップ版アプリでのみ利用可能です"
   },
   "buttons": {
     "change": "変更",
-    "restore_default": "デフォルトに戻す",
+    "restore_default": "リセット",
     "save": "保存",
     "browse": "参照",
-    "sort_by_name": "名前",
-    "sort_by_date": "日付",
-    "extract_start": "解凍開始",
-    "open_wallpaper_folder": "壁紙フォルダを開く",
-    "open_extract_folder": "解凍先フォルダを開く",
+    "sort_by_name": "名前順",
+    "sort_by_date": "日付順",
+    "extract_start": "抽出開始",
+    "open_wallpaper_folder": "元のフォルダを開く",
+    "open_extract_folder": "出力先フォルダを開く",
     "import_wallpaper_editor": "エディタにインポート",
     "reload": "再読み込み"
   },
   "nav": {
     "home": "ホーム",
-    "manual": "手動解凍",
+    "manual": "手動抽出",
     "settings": "設定"
   },
   "workshop": {
-    "title": "ワークショップパス",
+    "title": "ワークショップのパス",
     "custom_path": "カスタムパス",
     "current_path": "現在のパス: {path}",
-    "hint": "ヒント: D:/Steam のような基本パス、または E:/Game/Steam/steamapps のような部分的なパスを入力すると、システムが自動的にフルパスを補完します",
-    "placeholder": "D:/Steamのような基本パスを入力、フルパスを自動補完"
+    "hint": "ヒント: D:/Steam などの基本パス、または E:/Game/Steam/steamapps などの部分的なパスを入力すると、自動的にフルパスが補完されます",
+    "placeholder": "基本パスを入力（例: D:/Steam）"
   },
   "background": {
     "title": "カスタム背景",
@@ -99,26 +99,26 @@
     "local_file": "ローカルファイル",
     "browse": "参照",
     "no_file_selected": "ファイルが選択されていません",
-    "file_too_large": "ファイルサイズが制限を超えています。最大1GBまでサポートされています",
-    "invalid_file_type": "サポートされていないファイルタイプです。画像または動画ファイルを選択してください",
-    "large_file_warning": "過大なファイルはパフォーマンスに影響する場合があります",
-    "supported_formats": "サポートされる形式: 画像(JPG, PNG, GIF, WebP) および動画(MP4, WebM, MOV, AVI)、最大1GB",
-    "previous_file": "以前に選択したファイル:",
+    "file_too_large": "ファイルサイズが上限を超えています（最大1GB）",
+    "invalid_file_type": "サポートされていない形式です。画像または動画ファイルを選択してください",
+    "large_file_warning": "大きなファイルはパフォーマンスに影響する場合があります",
+    "supported_formats": "形式: 画像(JPG, PNG, GIF, WebP)、動画(MP4, WebM, MOV, AVI)、最大1GB",
+    "previous_file": "最近使用したファイル:",
     "apply": "適用",
-    "clear": "背景をクリア",
-    "preview": "背景プレビュー",
+    "clear": "背景を解除",
+    "preview": "プレビュー",
     "opacity": "不透明度",
     "opacity_value": "{value}%",
     "invalid_url": "有効な画像または動画のURLを入力してください",
-    "load_failed": "背景の読み込みに失敗しました。URLが正しいか確認してください"
+    "load_failed": "背景の読み込みに失敗しました。URLを確認してください"
   },
   "content_rating": {
     "label": "コンテンツレーティング",
     "everyone": "全年齢",
     "mature": "成人向け",
-    "questionable": "保護者の同意"
+    "questionable": "要確認"
   },
   "search": {
-    "placeholder": "壁紙名またはIDを検索"
+    "placeholder": "名前またはIDで検索"
   }
 }
