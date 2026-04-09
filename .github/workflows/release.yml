@@ -41,28 +41,22 @@ jobs:
       - name: Generate changelog
         id: generate_changelog
         run: |
-          # 生成两次版本之间的commit历史
           PREVIOUS_TAG="${{ steps.get_previous_tag.outputs.previous_tag }}"
           CURRENT_TAG="${{ github.ref }}"
           
           if [ -z "$PREVIOUS_TAG" ]; then
-            # 如果没有上一个标签，获取所有commit
             COMMITS=$(git log --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --reverse)
-            CHANGELOG="## 初始发布\n\n$COMMITS"
+            TITLE="## 初始发布"
           else
-            # 获取两个标签之间的commit
             COMMITS=$(git log --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --reverse $PREVIOUS_TAG..$CURRENT_TAG)
-            CHANGELOG="## 更新内容\n\n$COMMITS"
+            TITLE="## 更新内容"
           fi
           
-          # 转义多行文本
-          CHANGELOG="${CHANGELOG//'%'/'%25'}"
-          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-          
-          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "Generated changelog:"
-          echo "$CHANGELOG"
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$TITLE" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
@@ -89,16 +83,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -106,8 +100,6 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2.0.0"
 
       - name: Install dependencies
         run: pnpm install
