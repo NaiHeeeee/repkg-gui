@@ -1,7 +1,7 @@
 window.addEventListener("contextmenu", (e) => {
   e.preventDefault(); // 阻止浏览器默认右键菜单
 });
-  
+
 document.addEventListener('dragstart', (event) => {
   if (event.target.tagName === 'IMG') {
     event.preventDefault();
@@ -50,121 +50,121 @@ async function setDefaultExtractPath() {
 
 // 防止FOUC的核心逻辑
 (function preventFOUC() {
-    // 检测样式是否加载完成
-    function checkStylesLoaded() {
-        const body = document.body;
-        const loadingOverlay = document.getElementById('loading-overlay');
-        
-        // 标记样式已加载
-        body.classList.add('styles-loaded');
-        
-        // 隐藏加载动画
-        if (loadingOverlay) {
-            setTimeout(() => {
-                loadingOverlay.classList.add('hidden');
-                // 可选：完全移除加载动画元素
-                setTimeout(() => {
-                    loadingOverlay.remove();
-                }, 300);
-            }, 100);
-        }
-    }
+  // 检测样式是否加载完成
+  function checkStylesLoaded() {
+    const body = document.body;
+    const loadingOverlay = document.getElementById('loading-overlay');
 
-    // 页面加载完成后检查样式
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', checkStylesLoaded);
-    } else {
-        // 如果已经加载完成，直接执行
-        checkStylesLoaded();
-    }
+    // 标记样式已加载
+    body.classList.add('styles-loaded');
 
-    // 作为备用方案，在window.onload时也执行
-    window.addEventListener('load', checkStylesLoaded);
+    // 隐藏加载动画
+    if (loadingOverlay) {
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+        // 可选：完全移除加载动画元素
+        setTimeout(() => {
+          loadingOverlay.remove();
+        }, 300);
+      }, 100);
+    }
+  }
+
+  // 页面加载完成后检查样式
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkStylesLoaded);
+  } else {
+    // 如果已经加载完成，直接执行
+    checkStylesLoaded();
+  }
+
+  // 作为备用方案，在window.onload时也执行
+  window.addEventListener('load', checkStylesLoaded);
 })();
 
 // 主题切换优化 - 在样式加载前设置主题
 async function initializeTheme() {
-    await settingsManager.init();
-    const savedTheme = settingsManager.get('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-        document.documentElement.classList.add('dark');
-    } else if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
-    }
+  await settingsManager.init();
+  const savedTheme = settingsManager.get('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+    document.documentElement.classList.add('dark');
+  } else if (savedTheme === 'light') {
+    document.documentElement.classList.remove('dark');
+  }
 }
 
-  // 存储手动提取的文件列表
-  let manualFiles = [];
+// 存储手动提取的文件列表
+let manualFiles = [];
 
-  // 窗口控制功能
+// 窗口控制功能
 function setupWindowControls() {
-    const minimizeBtn = document.getElementById('minimize-btn');
-    const maximizeBtn = document.getElementById('maximize-btn');
-    const closeBtn = document.getElementById('close-btn');
+  const minimizeBtn = document.getElementById('minimize-btn');
+  const maximizeBtn = document.getElementById('maximize-btn');
+  const closeBtn = document.getElementById('close-btn');
 
-    if (!minimizeBtn || !maximizeBtn || !closeBtn) {
-        // console.warn('窗口控制按钮未找到');
-        return;
+  if (!minimizeBtn || !maximizeBtn || !closeBtn) {
+    // console.warn('窗口控制按钮未找到');
+    return;
+  }
+
+  // 检查Tauri API是否可用
+  if (!window.__TAURI__) {
+    // console.warn('Tauri API 不可用');
+    return;
+  }
+
+  // 最小化按钮
+  minimizeBtn.addEventListener('click', async () => {
+    try {
+      await window.__TAURI__.core.invoke('minimize_window');
+    } catch (error) {
+      // console.error('最小化窗口失败:', error);
     }
+  });
 
-    // 检查Tauri API是否可用
-    if (!window.__TAURI__) {
-        // console.warn('Tauri API 不可用');
-        return;
+  // 最大化/还原按钮
+  maximizeBtn.addEventListener('click', async () => {
+    try {
+      const isMaximized = await window.__TAURI__.core.invoke('is_window_maximized');
+      if (isMaximized) {
+        await window.__TAURI__.core.invoke('unmaximize_window');
+      } else {
+        await window.__TAURI__.core.invoke('maximize_window');
+      }
+      updateMaximizeButton();
+    } catch (error) {
+      // console.error('最大化/还原窗口失败:', error);
     }
+  });
 
-    // 最小化按钮
-    minimizeBtn.addEventListener('click', async () => {
-        try {
-            await window.__TAURI__.core.invoke('minimize_window');
-        } catch (error) {
-            // console.error('最小化窗口失败:', error);
-        }
-    });
+  // 关闭按钮
+  closeBtn.addEventListener('click', async () => {
+    try {
+      await window.__TAURI__.core.invoke('close_window');
+    } catch (error) {
+      // console.error('关闭窗口失败:', error);
+    }
+  });
 
-    // 最大化/还原按钮
-    maximizeBtn.addEventListener('click', async () => {
-        try {
-            const isMaximized = await window.__TAURI__.core.invoke('is_window_maximized');
-            if (isMaximized) {
-                await window.__TAURI__.core.invoke('unmaximize_window');
-            } else {
-                await window.__TAURI__.core.invoke('maximize_window');
-            }
-            updateMaximizeButton();
-        } catch (error) {
-            // console.error('最大化/还原窗口失败:', error);
-        }
-    });
-
-    // 关闭按钮
-    closeBtn.addEventListener('click', async () => {
-        try {
-            await window.__TAURI__.core.invoke('close_window');
-        } catch (error) {
-            // console.error('关闭窗口失败:', error);
-        }
-    });
-
-    // 初始化最大化按钮状态
-    updateMaximizeButton();
+  // 初始化最大化按钮状态
+  updateMaximizeButton();
 }
 
 // 更新最大化按钮图标
 async function updateMaximizeButton() {
-    const maximizeBtn = document.getElementById('maximize-btn');
-    if (!maximizeBtn || !window.__TAURI__) return;
+  const maximizeBtn = document.getElementById('maximize-btn');
+  if (!maximizeBtn || !window.__TAURI__) return;
 
-    try {
-        const isMaximized = await window.__TAURI__.core.invoke('is_window_maximized');
-        maximizeBtn.innerHTML = isMaximized ? 
-            '<svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M597.333333 395.861333V192a21.333333 21.333333 0 0 0-42.666666 0v256a21.333333 21.333333 0 0 0 21.333333 21.333333h256a21.333333 21.333333 0 0 0 0-42.666666h-205.12L890.24 163.306667a21.333333 21.333333 0 0 0-30.165333-30.165334L597.333333 395.861333z m-170.666666 232.277334V832a21.333333 21.333333 0 0 0 42.666666 0V576a21.333333 21.333333 0 0 0-21.333333-21.333333H192a21.333333 21.333333 0 0 0 0 42.666666h205.12L133.76 860.693333a21.333333 21.333333 0 0 0 30.165333 30.165334L426.666667 628.138667z" fill="currentColor"></path></svg>':
-        '<svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M170.666667 822.528V618.666667a21.333333 21.333333 0 0 0-42.666667 0v256a21.333333 21.333333 0 0 0 21.333333 21.333333h256a21.333333 21.333333 0 0 0 0-42.666667H200.213333L463.573333 589.973333a21.333333 21.333333 0 0 0-30.165333-30.165333L170.666667 822.528zM853.333333 201.472L590.592 464.192a21.333333 21.333333 0 1 1-30.165333-30.165333L823.786667 170.666667H618.666667a21.333333 21.333333 0 0 1 0-42.666667h256a21.333333 21.333333 0 0 1 21.333333 21.333333v256a21.333333 21.333333 0 0 1-42.666667 0V201.472z" fill="currentColor"></path></svg>';
-    } catch (error) {
-        // console.error('更新最大化按钮失败:', error);
-    }
+  try {
+    const isMaximized = await window.__TAURI__.core.invoke('is_window_maximized');
+    maximizeBtn.innerHTML = isMaximized ?
+      '<svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M597.333333 395.861333V192a21.333333 21.333333 0 0 0-42.666666 0v256a21.333333 21.333333 0 0 0 21.333333 21.333333h256a21.333333 21.333333 0 0 0 0-42.666666h-205.12L890.24 163.306667a21.333333 21.333333 0 0 0-30.165333-30.165334L597.333333 395.861333z m-170.666666 232.277334V832a21.333333 21.333333 0 0 0 42.666666 0V576a21.333333 21.333333 0 0 0-21.333333-21.333333H192a21.333333 21.333333 0 0 0 0 42.666666h205.12L133.76 860.693333a21.333333 21.333333 0 0 0 30.165333 30.165334L426.666667 628.138667z" fill="currentColor"></path></svg>' :
+      '<svg class="w-3 h-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M170.666667 822.528V618.666667a21.333333 21.333333 0 0 0-42.666667 0v256a21.333333 21.333333 0 0 0 21.333333 21.333333h256a21.333333 21.333333 0 0 0 0-42.666667H200.213333L463.573333 589.973333a21.333333 21.333333 0 0 0-30.165333-30.165333L170.666667 822.528zM853.333333 201.472L590.592 464.192a21.333333 21.333333 0 1 1-30.165333-30.165333L823.786667 170.666667H618.666667a21.333333 21.333333 0 0 1 0-42.666667h256a21.333333 21.333333 0 0 1 21.333333 21.333333v256a21.333333 21.333333 0 0 1-42.666667 0V201.472z" fill="currentColor"></path></svg>';
+  } catch (error) {
+    // console.error('更新最大化按钮失败:', error);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -175,12 +175,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof settingsManager !== 'undefined') {
         await settingsManager.init();
       }
-      
+
       // 初始化i18n
       if (typeof window.initI18n !== 'undefined' && (!window.i18n || !window.i18n.translations)) {
         await window.initI18n();
       }
-      
+
       // 等待i18n加载完成
       if (window.i18n && window.i18n.translations) {
         resolve();
@@ -189,36 +189,38 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
-  
+
   // 初始化语言选择器
   function initLanguageSelector() {
     const languageToggleBtn = document.getElementById('language-toggle-btn');
     const languageOptions = document.getElementById('language-options');
     const languageButtons = document.querySelectorAll('.language-option');
-    
+
     if (window.i18n) {
       // 更新按钮文本显示当前语言
       function updateLanguageButtonText() {
         const currentLang = window.i18n.currentLanguage;
         const langMap = {
           'zh-CN': '简体中文',
-          'en-US': 'English'
+          'zh-TW': '繁體中文',
+          'en-US': 'English',
+          'ja-JP': '日本語'
         };
         if (languageToggleBtn) {
           languageToggleBtn.textContent = langMap[currentLang] || '选择语言';
         }
       }
-      
+
       // 初始化按钮文本
       updateLanguageButtonText();
-      
+
       // 更新语言选项的选中状态
       function updateLanguageSelection() {
         const currentLang = window.i18n.currentLanguage;
         languageButtons.forEach(button => {
           const lang = button.dataset.lang;
           const checkIcon = button.querySelector('.check-icon');
-          
+
           if (lang === currentLang) {
             button.classList.add('bg-[var(--accent-color)]', 'text-[var(--accent-text)]');
             button.classList.remove('bg-[var(--bg-tertiary)]');
@@ -232,17 +234,17 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
       }
-      
+
       // 初始化语言选择状态
       updateLanguageSelection();
-      
+
       // 切换语言选项区域的显示/隐藏
       if (languageToggleBtn) {
         languageToggleBtn.addEventListener('click', () => {
           languageOptions.classList.toggle('hidden');
         });
       }
-      
+
       // 为语言选项按钮添加点击事件
       languageButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -253,12 +255,12 @@ document.addEventListener('DOMContentLoaded', function () {
           updateLanguageSelection(); // 更新选中状态
         });
       });
-      
+
       // 监听语言变化事件，更新按钮文本
       window.addEventListener('languageChanged', () => {
         updateLanguageButtonText();
       });
-      
+
       // 点击其他地方关闭语言选项
       document.addEventListener('click', (e) => {
         if (!e.target.closest('#language-toggle-btn') && !e.target.closest('#language-options')) {
@@ -267,33 +269,33 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   }
-  
+
   // 初始化翻译
   async function initTranslations() {
     await waitForI18n();
     initLanguageSelector();
   }
-  
+
   initTranslations();
   // --- 初始化主题和设置默认提取路径 ---
   document.addEventListener('DOMContentLoaded', async () => {
     await initializeTheme();
     await setDefaultExtractPath();
   });
-  
+
   // 使用Tauri的API读取本地文件系统
   async function loadSteamWorkshopWallpapers() {
     try {
       // console.log('开始加载Steam创意工坊壁纸...');
-      
+
       // 检查是否在Tauri环境中运行
       if (typeof window.__TAURI__ !== 'undefined') {
         const { invoke } = window.__TAURI__.core;
-        
+
         // 首先检查用户设置的自定义路径
         let workshopPath = '';
         let wallpaperFolders = [];
-        
+
         // 检查用户设置的自定义路径
         await settingsManager.init();
         const customPath = settingsManager.get('workshop-path');
@@ -310,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 workshopPathInput.value = completedPath;
               }
             }
-            
+
             const exists = await invoke('check_file_exists', { path: completedPath });
             if (exists) {
               workshopPath = completedPath;
@@ -321,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // console.log('用户设置的路径无效:', customPath);
           }
         }
-        
+
         // 如果没有有效的自定义路径，则尝试预定义路径
         if (!workshopPath) {
           // 定义可能的Steam Workshop路径
@@ -334,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'F:/Steam/steamapps/workshop/content/431960',
             'F:/SteamLibrary/steamapps/workshop/content/431960'
           ];
-          
+
           // 尝试找到有效的路径
           for (const path of possiblePaths) {
             try {
@@ -351,39 +353,39 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         }
-        
+
         // 如果没有找到有效的路径
         if (!workshopPath) {
           // console.warn('未找到有效的Steam Workshop路径');
           loadMockData();
           return;
         }
-        
+
         try {
           // 显示加载动画
           showLoadingAnimation();
           // console.log('正在读取目录...');
           // console.log('找到的文件夹:', wallpaperFolders);
-          
+
           if (wallpaperFolders.length === 0) {
             // console.warn('未找到任何壁纸文件夹');
             loadMockData();
             return;
           }
-          
+
           const loadedWallpapers = [];
-          
+
           for (const folder of wallpaperFolders) {
             const folderId = folder.name;
             const folderPath = `${workshopPath}/${folderId}`;
-            
+
             // console.log(`处理文件夹: ${folderId}`);
-            
+
             try {
               // 读取project.json获取标题
               const projectJsonPath = `${folderPath}/project.json`;
               let name = `壁纸 ${folderId}`;
-              
+
               try {
                 const projectData = await invoke('read_json_file', { path: projectJsonPath });
                 // console.log(`Project.json内容:`, projectData);
@@ -391,14 +393,14 @@ document.addEventListener('DOMContentLoaded', function () {
               } catch (e) {
                 // console.warn(`无法读取project.json: ${projectJsonPath}`, e);
               }
-              
+
               // 查找预览图片/视频文件
               const previewExtensions = ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'webm'];
               let imagePath = null;
               let foundPreviewType = 'none';
-              
+
               // console.log(`在 ${folderPath} 中查找预览文件...`);
-              
+
               // 方法1: 查找标准preview文件
               for (const ext of previewExtensions) {
                 const previewPath = `${folderPath}/preview.${ext}`;
@@ -410,24 +412,24 @@ document.addEventListener('DOMContentLoaded', function () {
                   break;
                 }
               }
-              
+
               // 方法2: 如果没有找到标准preview，查找其他图片/视频文件
               if (!imagePath) {
                 // console.log('未找到标准preview文件，查找其他媒体文件...');
                 const files = await invoke('read_directory_files', { path: folderPath });
                 // console.log(`目录中的文件:`, files);
-                
-                const previewFile = files.find(file => 
+
+                const previewFile = files.find(file =>
                   previewExtensions.some(ext => file.name.toLowerCase().endsWith(`.${ext}`))
                 );
-                
+
                 if (previewFile) {
                   imagePath = `${folderPath}/${previewFile.name}`;
                   foundPreviewType = previewFile.name;
                   // console.log(`找到媒体文件: ${previewFile.name}`);
                 }
               }
-              
+
               // 方法3: 查找assets目录中的文件
               if (!imagePath) {
                 const assetsPath = `${folderPath}/assets`;
@@ -435,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (assetsExists) {
                   // console.log('检查assets目录...');
                   const assetFiles = await invoke('read_directory_files', { path: assetsPath });
-                  const assetPreview = assetFiles.find(file => 
+                  const assetPreview = assetFiles.find(file =>
                     previewExtensions.some(ext => file.name.toLowerCase().endsWith(`.${ext}`))
                   );
                   if (assetPreview) {
@@ -444,39 +446,39 @@ document.addEventListener('DOMContentLoaded', function () {
                   }
                 }
               }
-              
+
               // 检查是否包含scene.pkg文件
               const scenePkgPath = `${folderPath}/scene.pkg`;
               const hasScenePkg = await invoke('check_file_exists', { path: scenePkgPath });
-              
+
               if (!hasScenePkg) {
                 // console.log(`跳过文件夹 ${folderId}: 缺少scene.pkg文件`);
                 continue; // 跳过不包含scene.pkg的文件夹
               }
-              
+
               // console.log(`文件夹 ${folderId} 包含scene.pkg文件，将被添加`);
-              
+
               // 生成图片URL
               let imageUrl = 'https://placehold.co/600x400/6B7280/FFFFFF?text=No+Preview';
               if (imagePath) {
                 // console.log(`找到预览文件: ${imagePath} (类型: ${foundPreviewType})`);
-                
+
                 try {
                   // 直接使用Base64编码的图片数据
                   const { invoke } = window.__TAURI__.core;
                   const imageData = await invoke('read_image_as_base64', { path: imagePath });
-                  
+
                   // 根据文件扩展名确定MIME类型
                   const extension = foundPreviewType.split('.').pop().toLowerCase();
                   let mimeType = 'image/jpeg';
-                  switch(extension) {
+                  switch (extension) {
                     case 'png': mimeType = 'image/png'; break;
                     case 'gif': mimeType = 'image/gif'; break;
                     case 'webp': mimeType = 'image/webp'; break;
                     case 'jpg': case 'jpeg': mimeType = 'image/jpeg'; break;
                     default: mimeType = 'image/jpeg';
                   }
-                  
+
                   imageUrl = `data:${mimeType};base64,${imageData}`;
                   // console.log(`使用Base64编码图片 (${mimeType})`);
                 } catch (error) {
@@ -487,16 +489,16 @@ document.addEventListener('DOMContentLoaded', function () {
               } else {
                 // console.warn(`未在 ${folderId} 中找到任何预览文件`);
               }
-              
+
               // 获取文件夹的修改日期
               let modifiedDate = null;
               try {
                 const folderInfo = await invoke('get_file_info', { path: folderPath });
                 modifiedDate = folderInfo.modified;
               } catch (error) {
-//                 console.warn(`无法获取文件夹信息: ${folderPath}`, error);
+                //                 console.warn(`无法获取文件夹信息: ${folderPath}`, error);
               }
-              
+
               loadedWallpapers.push({
                 id: folderId,
                 name: name,
@@ -507,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 previewType: foundPreviewType,
                 modifiedDate: modifiedDate
               });
-              
+
             } catch (error) {
               // console.error(`处理文件夹 ${folderId} 时出错:`, error);
               // 即使没有预览文件也添加基本信息
@@ -521,36 +523,36 @@ document.addEventListener('DOMContentLoaded', function () {
               });
             }
           }
-          
+
           // console.log(`成功加载 ${loadedWallpapers.length} 个壁纸（已筛选包含scene.pkg的文件）`, loadedWallpapers);
-          
+
           // 更新壁纸数据
           wallpapers.length = 0;
           wallpapers.push(...loadedWallpapers);
-          
+
           // 应用当前排序设置
           applyCurrentSort();
-          
+
           // 隐藏加载动画
           hideLoadingAnimation();
-          
+
           // 重新渲染壁纸网格
           renderWallpaperGrid();
-          
+
           // 重新应用内容评级筛选
           if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
             await window.contentRatingFilter.apply();
           }
-          
+
           // 更新排序箭头显示
           updateSortArrows();
-          
+
           // 预加载前几张图片
           preloadFirstImages(6);
-          
+
         } catch (error) {
           // console.error('读取目录失败:', error);
-          document.getElementById('wallpaper-grid').innerHTML = 
+          document.getElementById('wallpaper-grid').innerHTML =
             `<div class="col-span-full flex flex-col items-center justify-center py-16">
               <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -572,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function () {
       loadMockData();
     }
   }
-  
+
   async function loadMockData() {
     // 保留一些模拟数据作为后备
     const mockWallpapers = [
@@ -582,18 +584,18 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
     wallpapers.length = 0;
     wallpapers.push(...mockWallpapers);
-    
+
     // 应用当前排序设置
     applyCurrentSort();
-    
+
     // 重新渲染壁纸网格
     renderWallpaperGrid();
-    
+
     // 重新应用内容评级筛选
     if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
       await window.contentRatingFilter.apply();
     }
-    
+
     // 更新排序箭头显示
     updateSortArrows();
   }
@@ -601,17 +603,17 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- 页面导航逻辑 ---
   const navLinks = document.querySelectorAll('.nav-link');
   const pages = document.querySelectorAll('.page');
-  
+
   // 页面滚动位置管理
   const pageScrollPositions = new Map();
-  
+
   function saveCurrentPageScrollPosition() {
     const activePage = document.querySelector('.page.active');
     if (activePage) {
       pageScrollPositions.set(activePage.id, activePage.scrollTop);
     }
   }
-  
+
   function restorePageScrollPosition(pageId) {
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
@@ -644,7 +646,7 @@ document.addEventListener('DOMContentLoaded', function () {
           l.style.color = 'var(--text-primary)';
         }
       });
-      
+
       // 恢复目标页面滚动位置
       setTimeout(() => {
         restorePageScrollPosition(pageId);
@@ -658,12 +660,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- 首页逻辑 ---
   function showLoadingAnimation() {
     const grid = document.getElementById('wallpaper-grid');
-    
+
     // 计算视口高度减去头部区域
     const viewportHeight = window.innerHeight;
     const headerHeight = 120; // 估算的头部高度 (h2 + padding)
     const availableHeight = viewportHeight - headerHeight;
-    
+
     grid.innerHTML = `
       <div class="col-span-full flex items-center justify-center" style="min-height: ${availableHeight}px;">
         <div class="flex flex-col items-center text-center">
@@ -701,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderWallpaperGrid() {
     const wallpaperGrid = document.getElementById('wallpaper-grid');
     wallpaperGrid.innerHTML = '';
-    
+
     if (wallpapers.length === 0) {
       wallpaperGrid.innerHTML = `
         <div class="col-span-full text-center py-12">
@@ -714,14 +716,14 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
       return;
     }
-    
+
     wallpapers.forEach((wallpaper, index) => {
       const card = document.createElement('div');
       card.className = 'wallpaper-card group cursor-pointer';
       card.dataset.wallpaperId = wallpaper.id;
       card.dataset.index = index;
       card.dataset.scenePkgPath = wallpaper.scenePkgPath;
-      
+
       const mediaContainer = document.createElement('div');
       mediaContainer.className = 'aspect-square bg-[var(--bg-tertiary)] rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-105 relative';
       mediaContainer.innerHTML = `
@@ -735,12 +737,12 @@ document.addEventListener('DOMContentLoaded', function () {
           <p class="text-white text-sm font-medium text-center line-clamp-2 break-words w-full px-1 mt-2">${wallpaper.name}</p>
         </div>
       `;
-      
+
       card.appendChild(mediaContainer);
       card.addEventListener('click', () => openDrawer(wallpaper));
       wallpaperGrid.appendChild(card);
     });
-    
+
     lazyLoadImages();
   }
 
@@ -758,31 +760,31 @@ document.addEventListener('DOMContentLoaded', function () {
       rootMargin: '100px 0px',
       threshold: 0.1
     });
-    
+
     document.querySelectorAll('[data-wallpaper-id]').forEach(card => {
       imageObserver.observe(card);
     });
-    
+
     // 预加载前6张
     preloadFirstImages(6);
   }
 
   async function loadWallpaperMedia(index) {
     if (index < 0 || index >= wallpapers.length) return;
-    
+
     const wallpaper = wallpapers[index];
     const card = document.querySelector(`[data-index="${index}"]`);
     if (!card) return;
-    
+
     const container = card.querySelector('.aspect-square');
-    
+
     try {
       const isVideo = wallpaper.image.endsWith('.mp4') || wallpaper.image.endsWith('.webm');
-      
+
       // 保留名称显示区域，只替换加载动画
       const loadingDiv = container.querySelector('.w-full.h-full.flex.items-center.justify-center');
       const nameOverlay = container.querySelector('.absolute.bottom-0');
-      
+
       if (isVideo) {
         const video = document.createElement('video');
         video.src = wallpaper.image;
@@ -790,10 +792,10 @@ document.addEventListener('DOMContentLoaded', function () {
         video.muted = true;
         video.loop = true;
         video.loading = 'lazy';
-        
+
         card.addEventListener('mouseenter', () => video.play());
         card.addEventListener('mouseleave', () => video.pause());
-        
+
         if (loadingDiv) loadingDiv.remove();
         container.insertBefore(video, nameOverlay);
       } else {
@@ -813,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
           `;
           container.insertBefore(errorDiv, nameOverlay);
         };
-        
+
         if (loadingDiv) loadingDiv.remove();
         container.insertBefore(img, nameOverlay);
       }
@@ -827,36 +829,36 @@ document.addEventListener('DOMContentLoaded', function () {
       setTimeout(() => loadWallpaperMedia(i), i * 150);
     }
   }
-  
+
   // 加载壁纸数据
   loadSteamWorkshopWallpapers().then(async () => {
     // 默认按时间倒序排序（新的在前）
     currentSortMethod = 'date';
     sortOrders.date = 'desc'; // 确保是降序（新的在前）
-    
+
     // 应用默认排序（新的在前）
     wallpapers.sort((a, b) => {
       if (!a.modifiedDate || !b.modifiedDate) return 0;
       return new Date(b.modifiedDate) - new Date(a.modifiedDate);
     });
-    
+
     // 更新箭头显示
     updateSortArrows();
-    
+
     // 重新渲染壁纸网格
     renderWallpaperGrid();
-    
+
     // 重新应用内容评级筛选
     if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
       await window.contentRatingFilter.apply();
     }
-    
+
     // 预加载前几张图片
     preloadFirstImages(6);
   });
 
   // --- 排序功能 ---
-  
+
   async function sortWallpapers(method) {
     // 如果切换了排序方法，重置新方法的排序顺序为升序
     if (currentSortMethod !== method) {
@@ -865,9 +867,9 @@ document.addEventListener('DOMContentLoaded', function () {
       // 如果点击的是当前排序方法，切换排序方向
       sortOrders[method] = sortOrders[method] === 'asc' ? 'desc' : 'asc';
     }
-    
+
     currentSortMethod = method;
-    
+
     if (method === 'name') {
       if (sortOrders.name === 'asc') {
         wallpapers.sort((a, b) => a.name.localeCompare(b.name));
@@ -891,19 +893,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }
     }
-    
+
     // 更新箭头显示
     updateSortArrows();
-    
+
     // 重新渲染壁纸网格
     renderWallpaperGrid();
-    
+
     // 重新应用内容评级筛选
     if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
       await window.contentRatingFilter.apply();
     }
   }
-  
+
   function applyCurrentSort() {
     // 根据当前排序方法应用排序
     if (currentSortMethod === 'name') {
@@ -935,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function () {
     arrows.forEach(arrow => {
       arrow.classList.add('opacity-0');
     });
-    
+
     // 根据当前排序方法和顺序显示相应的箭头
     if (currentSortMethod === 'name') {
       const arrow = document.getElementById('name-sort-arrow');
@@ -980,10 +982,10 @@ document.addEventListener('DOMContentLoaded', function () {
   window.openDrawer = async (wallpaper) => {
     // 存储当前选中的壁纸信息，供提取功能使用
     window.currentlySelectedWallpaper = wallpaper;
-    
+
     detailsImg.src = wallpaper.image;
     detailsName.textContent = wallpaper.name;
-    
+
     // 读取并显示contentrating字段
     const contentRatingElement = document.getElementById('details-contentrating');
     if (contentRatingElement) {
@@ -991,17 +993,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const { invoke } = window.__TAURI__.core;
         const projectJsonPath = `${wallpaper.path}/project.json`;
         const projectData = await invoke('read_json_file', { path: projectJsonPath });
-        
+
         if (projectData && projectData.contentrating) {
           // 使用i18n获取内容评级的翻译
           let contentRatingKey = projectData.contentrating.toLowerCase();
           let contentRatingText = window.i18n.t(`content_rating.${contentRatingKey}`);
-          
+
           // 如果找不到对应的翻译，使用原始值
           if (contentRatingText === `content_rating.${contentRatingKey}`) {
             contentRatingText = projectData.contentrating;
           }
-          
+
           contentRatingElement.textContent = contentRatingText;
         } else {
           contentRatingElement.textContent = '';
@@ -1011,13 +1013,13 @@ document.addEventListener('DOMContentLoaded', function () {
         contentRatingElement.textContent = '';
       }
     }
-    
+
     detailsDrawer.classList.add('open');
     detailsBackdrop.classList.remove('opacity-0', 'pointer-events-none');
-    
+
     // 设置壁纸文件夹路径
     const folderPath = wallpaper.path;
-    
+
     // 为打开文件夹按钮添加事件
     const openFolderBtn = document.getElementById('open-folder-btn');
     if (openFolderBtn) {
@@ -1025,11 +1027,11 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
           const { invoke } = window.__TAURI__.core;
           // console.log('正在打开文件夹:', folderPath);
-          
+
           // 确保路径格式正确（使用反斜杠）
           const normalizedPath = folderPath.replace(/\//g, '\\');
           // console.log('标准化路径:', normalizedPath);
-          
+
           await invoke('open_folder', { path: normalizedPath });
         } catch (error) {
           // console.error('打开文件夹失败:', error);
@@ -1052,14 +1054,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const originalText = extractBtn.textContent;
       extractBtn.textContent = window.i18n.t('messages.extracting');
       extractBtn.disabled = true;
-      
+
       // 调用 Rust 后端的提取功能
       const { invoke } = window.__TAURI__.core;
-      
+
       // 检查是否为每个壁纸单独生成文件夹
       await settingsManager.init();
       const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
-      
+
       // 如果启用为每个壁纸单独生成文件夹，创建以壁纸名命名的文件夹
       if (createFolderPerWallpaper) {
         // 获取壁纸文件夹名称
@@ -1067,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (wallpaperFolderName) {
           // 构造新的提取路径
           extractPath = `${extractPath}/${wallpaperFolderName}`;
-          
+
           // 创建文件夹
           try {
             await invoke('create_directory', { path: extractPath });
@@ -1096,17 +1098,17 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
       }
-      
+
       // 构造正确的scene.pkg文件路径
       const scenePkgPath = `${wallpaperPath}/scene.pkg`;
-      
+
       // 获取解包设置
       await settingsManager.init();
       const overwriteFiles = settingsManager.get('overwrite-files') === true;
       const onlyImages = settingsManager.get('only-images') === true;
       const noTexConvert = settingsManager.get('no-tex-convert') === true;
       const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
-      
+
       const options = {
         output: extractPath,
         ignore_exts: null,
@@ -1120,10 +1122,10 @@ document.addEventListener('DOMContentLoaded', function () {
         no_tex_convert: noTexConvert,  // 根据设置决定是否保留原始 .tex 文件
         overwrite: overwriteFiles  // 覆盖现有文件设置
       };
-      
+
       // 添加调试日志
       // console.log('提取参数:', { input: scenePkgPath, options: options });
-      
+
       // 在提取前先清理目标目录
       try {
         await invoke('cleanup_directory_before_extract', { path: extractPath });
@@ -1131,36 +1133,36 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (cleanupError) {
         // console.warn('清理目标目录时出错:', cleanupError);
       }
-      
+
       // 执行提取
       const result = await invoke('extract_pkg', { input: scenePkgPath, options: options });
-      
+
       // 添加调试日志
       // console.log('提取结果:', result);
-      
+
       // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
       if (onlyImages) {
         try {
           const { invoke } = window.__TAURI__.core;
-          
+
           // 根据设置确定允许的文件扩展名
           let allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'];
-          
+
           // 如果启用不转换Tex文件，添加.tex扩展名到允许列表
           if (noTexConvert) {
             allowedExtensions.push('.tex');
           }
-          
-          await invoke('cleanup_non_media_files', { 
+
+          await invoke('cleanup_non_media_files', {
             path: extractPath,
             allowedExtensions: allowedExtensions
           });
           // console.log('已清理非媒体文件');
-          
+
           // 如果没有启用忽略目录结构，将所有媒体文件移动到根目录并删除文件夹
           // 如果启用了忽略目录结构，RePKG已经将所有文件放在同一级目录中，无需额外处理
           if (!ignoreDirStructure) {
-            await invoke('flatten_media_files', { 
+            await invoke('flatten_media_files', {
               path: extractPath,
               allowedExtensions: allowedExtensions,
               overwrite: overwriteFiles
@@ -1171,14 +1173,14 @@ document.addEventListener('DOMContentLoaded', function () {
           // console.warn('清理非媒体文件时出错:', cleanupError);
         }
       }
-      
+
       // 恢复按钮状态
       extractBtn.textContent = originalText;
       extractBtn.disabled = false;
-      
+
       // 显示成功消息
       alert(window.i18n.t('messages.extract_success'));
-      
+
       // 返回结果
       return result;
     } catch (error) {
@@ -1188,29 +1190,29 @@ document.addEventListener('DOMContentLoaded', function () {
         extractBtn.textContent = window.i18n.t('buttons.extract_start');
         extractBtn.disabled = false;
       }
-      
+
       // 显示错误消息
       // console.error('提取失败:', error);
       alert(window.i18n.t('messages.extract_failed') + error);
-      
+
       throw error;
     }
   }
-  
+
   // 创建全局别名供context-menu.js使用
   window.extractWallpaperFromMain = extractWallpaper;
-  
+
   // 为提取按钮添加事件监听器
   document.getElementById('extract-btn').addEventListener('click', async () => {
     // 获取当前选中的壁纸信息
     const detailsName = document.getElementById('details-name');
     const extractPathInput = document.getElementById('extract-path');
-    
+
     if (!detailsName || !extractPathInput) {
       alert(window.i18n.t('messages.cannot_get_info'));
       return;
     }
-    
+
     // 获取壁纸路径（需要从当前打开的壁纸信息中获取）
     // 这里我们假设在 openDrawer 函数中将壁纸路径存储在某个地方
     const currentWallpaper = window.currentlySelectedWallpaper;
@@ -1218,20 +1220,20 @@ document.addEventListener('DOMContentLoaded', function () {
       alert(window.i18n.t('messages.no_wallpaper_selected'));
       return;
     }
-    
+
     const wallpaperPath = currentWallpaper.path;
     // 确保提取路径使用正斜杠
     const extractPath = extractPathInput.value.replace(/\\/g, '/');
-    
+
     if (!wallpaperPath || !extractPath) {
       alert(window.i18n.t('messages.empty_path'));
       return;
     }
-    
+
     try {
       // 执行提取
       await extractWallpaper(wallpaperPath, extractPath);
-      
+
       // 提取成功后，根据设置决定是否自动打开提取文件夹
       await settingsManager.init();
       const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
@@ -1252,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await invoke('open_folder', { path: normalizedPath });
       }
     } catch (error) {
-//       console.error('提取过程出错:', error);
+      //       console.error('提取过程出错:', error);
     }
   });
 
@@ -1260,12 +1262,12 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('open-extract-folder-btn').addEventListener('click', async () => {
     const extractPathInput = document.getElementById('extract-path');
     const extractPath = extractPathInput.value;
-    
+
     if (!extractPath) {
       alert(window.i18n.t('messages.set_extract_path_first'));
       return;
     }
-    
+
     try {
       if (window.__TAURI__) {
         const { invoke } = window.__TAURI__.core;
@@ -1310,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 更新GitHub图标显示
     updateThemeIcons();
-    
+
     // 更新内容评级下拉菜单背景色
     if (window.contentRatingFilter && typeof window.contentRatingFilter.updateBackground === 'function') {
       const isDark = rootHtml.classList.contains('dark') || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -1330,11 +1332,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const isDark = rootHtml.classList.contains('dark');
     const lightIcons = document.querySelectorAll('.theme-icon-light');
     const darkIcons = document.querySelectorAll('.theme-icon-dark');
-    
+
     lightIcons.forEach(icon => {
       icon.style.display = isDark ? 'none' : 'block';
     });
-    
+
     darkIcons.forEach(icon => {
       icon.style.display = isDark ? 'block' : 'none';
     });
@@ -1353,14 +1355,14 @@ document.addEventListener('DOMContentLoaded', function () {
     applyTheme(savedTheme);
     updateThemeIcons();
   }
-  
+
   // 在样式加载完成后初始化主题
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeThemeAfterLoad);
   } else {
     initializeThemeAfterLoad();
   }
-  
+
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
     await settingsManager.init();
     if (settingsManager.get('theme') === 'system') {
@@ -1394,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 使用Tauri的文件选择器
   fileInput.addEventListener('click', async (e) => {
     e.preventDefault();
-    
+
     try {
       if (window.__TAURI__) {
         const { open } = window.__TAURI__.dialog;
@@ -1408,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           ]
         });
-        
+
         if (selectedFiles && selectedFiles.length > 0) {
           // 转换为文件对象数组，并获取文件大小
           const files = [];
@@ -1457,16 +1459,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function handleFiles(files) {
     // 保留原有文件，过滤掉重复的文件
-    const uniqueFiles = files.filter(newFile => 
+    const uniqueFiles = files.filter(newFile =>
       !manualFiles.some(existingFile => existingFile.name === newFile.name)
     );
-    
+
     // 将新文件添加到现有文件列表中
     manualFiles = [...manualFiles, ...uniqueFiles];
-    
+
     // 清空文件列表显示
     fileList.innerHTML = '';
-    
+
     // 重新渲染所有文件
     for (const file of manualFiles) {
       const fileItem = document.createElement('div');
@@ -1484,7 +1486,7 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
       fileList.appendChild(fileItem);
     }
-    
+
     // 为删除按钮添加事件监听器
     document.querySelectorAll('.remove-file-btn').forEach(button => {
       button.addEventListener('click', (e) => {
@@ -1494,25 +1496,25 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   }
-  
+
   // 删除文件的函数
   function removeFile(filename) {
     // 从manualFiles数组中移除文件
     manualFiles = manualFiles.filter(file => file.name !== filename);
-    
+
     // 重新渲染文件列表
     handleFiles(manualFiles);
   }
 
   // 初始化窗口控制
   setupWindowControls();
-  
+
   // --- 创意工坊路径设置逻辑 ---
   const workshopPathInput = document.getElementById('workshop-path');
   const saveWorkshopPathBtn = document.getElementById('save-workshop-path');
   const browseWorkshopPathBtn = document.getElementById('browse-workshop-path');
   const currentWorkshopPath = document.getElementById('current-workshop-path');
-  
+
   // 读取保存的路径
   async function loadWorkshopPath() {
     await settingsManager.init();
@@ -1524,27 +1526,27 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-  
+
   // 自动补全创意工坊路径
   async function autoCompleteWorkshopPath(basePath) {
     if (!basePath) return null;
-    
+
     // 定义标准的创意工坊子路径
     const workshopSubPath = 'steamapps/workshop/content/431960';
-    
+
     try {
       // 检查是否在Tauri环境中运行
       if (typeof window.__TAURI__ !== 'undefined') {
         const { invoke } = window.__TAURI__.core;
-        
+
         // 标准化路径分隔符
         let normalizedBasePath = basePath.replace(/\\/g, '/').replace(/\/$/, '');
-        
+
         // 如果基础路径本身已经是完整路径，直接返回
         if (basePath.includes('workshop/content/431960')) {
           return basePath;
         }
-        
+
         // 检查用户输入的路径是否包含steamapps，但缺少后续部分
         if (normalizedBasePath.includes('steamapps')) {
           // 如果路径已经包含steamapps，尝试直接补全剩余部分
@@ -1553,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (exists) {
             return workshopFullPath;
           }
-          
+
           // 如果steamapps后面还有内容，尝试清理并重新构建
           const steamappsIndex = normalizedBasePath.indexOf('steamapps');
           if (steamappsIndex !== -1) {
@@ -1565,14 +1567,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         }
-        
+
         // 尝试直接拼接的完整路径
         const fullPath = `${normalizedBasePath}/${workshopSubPath}`;
         const exists = await invoke('check_file_exists', { path: fullPath });
         if (exists) {
           return fullPath;
         }
-        
+
         // 处理常见的Steam安装路径模式
         const pathPatterns = [
           // 直接路径
@@ -1591,10 +1593,10 @@ document.addEventListener('DOMContentLoaded', function () {
           // 检查SteamLibrary在其他驱动器
           `${normalizedBasePath}/SteamLibrary/steamapps/workshop/content/431960`
         ];
-        
+
         // 去重路径
         const uniquePaths = [...new Set(pathPatterns)];
-        
+
         for (const testPath of uniquePaths) {
           try {
             const exists = await invoke('check_file_exists', { path: testPath });
@@ -1606,14 +1608,14 @@ document.addEventListener('DOMContentLoaded', function () {
             continue;
           }
         }
-        
+
         // 特殊处理：如果用户输入了部分steamapps路径
         const steamappsVariants = [
           `${normalizedBasePath}/workshop/content/431960`,
           `${normalizedBasePath.replace(/steamapps.*$/, 'steamapps')}/workshop/content/431960`,
           `${normalizedBasePath.replace(/steamapps.*$/, 'steamapps/common')}/SteamLibrary/workshop/content/431960`
         ];
-        
+
         for (const variantPath of steamappsVariants) {
           try {
             const exists = await invoke('check_file_exists', { path: variantPath });
@@ -1624,14 +1626,14 @@ document.addEventListener('DOMContentLoaded', function () {
             continue;
           }
         }
-        
+
         // 如果没有找到，返回原始输入（保持兼容性）
         return basePath;
       }
     } catch (error) {
       // console.error('路径检测失败:', error);
     }
-    
+
     return basePath;
   }
 
@@ -1646,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', function () {
           path = completedPath;
           workshopPathInput.value = path;
         }
-        
+
         await settingsManager.init();
         settingsManager.set('workshop-path', path);
         if (currentWorkshopPath) {
@@ -1660,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
-  
+
   // 浏览按钮事件
   if (browseWorkshopPathBtn) {
     browseWorkshopPathBtn.addEventListener('click', async () => {
@@ -1676,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
-  
+
   // 恢复默认按钮事件
   const restoreDefaultPathBtn = document.getElementById('restore-default-path');
   if (restoreDefaultPathBtn) {
@@ -1692,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', function () {
       loadSteamWorkshopWallpapers();
     });
   }
-  
+
   // --- 解包设置逻辑 ---
   // 初始化解包设置
   async function initUnpackSettings() {
@@ -1704,10 +1706,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const createFolderPerWallpaperCheckbox = document.getElementById('create-folder-per-wallpaper-checkbox');
     const autoOpenExtractFolderCheckbox = document.getElementById('auto-open-extract-folder');
     const autoOpenImportFolderCheckbox = document.getElementById('auto-open-import-folder');
-    
+
     // 等待settingsManager初始化完成
     await settingsManager.init();
-    
+
     // 从settings.json读取保存的设置
     const savedOnlyImages = settingsManager.get('only-images');
     const savedNoTexConvert = settingsManager.get('no-tex-convert');
@@ -1716,7 +1718,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedCreateFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper');
     const savedAutoOpenExtractFolder = settingsManager.get('auto-open-extract-folder');
     const savedAutoOpenImportFolder = settingsManager.get('auto-open-import-folder');
-    
+
     // 设置复选框的初始状态
     if (onlyImagesCheckbox) onlyImagesCheckbox.checked = savedOnlyImages;
     if (noTexConvertCheckbox) noTexConvertCheckbox.checked = savedNoTexConvert;
@@ -1725,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (createFolderPerWallpaperCheckbox) createFolderPerWallpaperCheckbox.checked = savedCreateFolderPerWallpaper;
     if (autoOpenExtractFolderCheckbox) autoOpenExtractFolderCheckbox.checked = savedAutoOpenExtractFolder;
     if (autoOpenImportFolderCheckbox) autoOpenImportFolderCheckbox.checked = savedAutoOpenImportFolder;
-    
+
     // 为每个复选框添加事件监听器
     if (onlyImagesCheckbox) {
       onlyImagesCheckbox.addEventListener('change', () => {
@@ -1733,41 +1735,41 @@ document.addEventListener('DOMContentLoaded', function () {
         syncAllCheckboxes('only-images', onlyImagesCheckbox.checked);
       });
     }
-    
+
     if (noTexConvertCheckbox) {
       noTexConvertCheckbox.addEventListener('change', () => {
         settingsManager.set('no-tex-convert', noTexConvertCheckbox.checked);
         syncAllCheckboxes('no-tex-convert', noTexConvertCheckbox.checked);
       });
     }
-    
+
     if (ignoreDirStructureCheckbox) {
       ignoreDirStructureCheckbox.addEventListener('change', () => {
         settingsManager.set('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
         syncAllCheckboxes('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
       });
     }
-    
+
     if (overwriteFilesCheckbox) {
       overwriteFilesCheckbox.addEventListener('change', () => {
         settingsManager.set('overwrite-files', overwriteFilesCheckbox.checked);
         syncAllCheckboxes('overwrite-files', overwriteFilesCheckbox.checked);
       });
     }
-    
+
     if (createFolderPerWallpaperCheckbox) {
       createFolderPerWallpaperCheckbox.addEventListener('change', () => {
         settingsManager.set('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
         syncAllCheckboxes('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
       });
     }
-    
+
     if (autoOpenExtractFolderCheckbox) {
       autoOpenExtractFolderCheckbox.addEventListener('change', () => {
         settingsManager.set('auto-open-extract-folder', autoOpenExtractFolderCheckbox.checked);
       });
     }
-    
+
     if (autoOpenImportFolderCheckbox) {
       autoOpenImportFolderCheckbox.addEventListener('change', () => {
         settingsManager.set('auto-open-import-folder', autoOpenImportFolderCheckbox.checked);
@@ -1784,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'overwrite-files': ['overwrite-files-checkbox'],
       'create-folder-per-wallpaper': ['create-folder-per-wallpaper-checkbox']
     };
-    
+
     const ids = checkboxIds[settingName];
     if (ids) {
       ids.forEach(id => {
@@ -1795,10 +1797,10 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   }
-  
+
   // 初始化解包设置
   initUnpackSettings();
-  
+
   // 同步所有复选框状态到页面
   async function syncSettingsToCheckboxes() {
     await settingsManager.init();
@@ -1809,61 +1811,61 @@ document.addEventListener('DOMContentLoaded', function () {
       'overwrite-files': settingsManager.get('overwrite-files'),
       'create-folder-per-wallpaper': settingsManager.get('create-folder-per-wallpaper')
     };
-    
+
     Object.keys(settings).forEach(settingName => {
       syncAllCheckboxes(settingName, settings[settingName]);
     });
   }
-  
+
   // 页面加载时同步所有复选框
   document.addEventListener('DOMContentLoaded', async () => {
     await syncSettingsToCheckboxes();
   });
-  
+
   // 添加刷新按钮事件监听器
   const refreshButton = document.getElementById('refresh-wallpapers');
   if (refreshButton) {
-    refreshButton.addEventListener('click', function() {
+    refreshButton.addEventListener('click', function () {
       const icon = refreshButton.querySelector('svg');
-      
+
       // 添加旋转动画类
       icon.classList.add('refresh-icon-spinning');
-      
+
       loadSteamWorkshopWallpapers().then(async () => {
         // 清空内容评级缓存
         if (window.contentRatingFilter && typeof window.contentRatingFilter.clearCache === 'function') {
           window.contentRatingFilter.clearCache();
         }
-        
+
         // 重置内容评级筛选复选框为默认全选
         const checkboxes = document.querySelectorAll('.content-rating-checkbox');
         checkboxes.forEach(checkbox => {
           checkbox.checked = true;
         });
-        
 
-        
+
+
         // 刷新后恢复默认排序：新的在前
         currentSortMethod = 'date';
         sortOrders.date = 'desc'; // 确保是降序（新的在前）
-        
+
         // 应用默认排序（新的在前）
         wallpapers.sort((a, b) => {
           if (!a.modifiedDate || !b.modifiedDate) return 0;
           return new Date(b.modifiedDate) - new Date(a.modifiedDate);
         });
-        
+
         // 更新箭头显示
         updateSortArrows();
-        
+
         // 重新渲染壁纸网格
         renderWallpaperGrid();
-        
+
         // 重新应用内容评级筛选
         if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
           await window.contentRatingFilter.apply();
         }
-        
+
         // 预加载前几张图片
         preloadFirstImages(6);
       }).finally(() => {
@@ -2034,10 +2036,10 @@ async function loadManualExtractPath() {
 document.addEventListener('DOMContentLoaded', async () => {
   await initManualExtractPathEvents();
   await loadManualExtractPath();
-  
+
   // 初始化手动提取页面的提取功能
   await initManualExtractFunction();
-  
+
   // 初始化搜索功能
   initSearchFunction();
 });
@@ -2046,7 +2048,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initSearchFunction() {
   const searchInput = document.getElementById('search-wallpapers');
   if (!searchInput) return;
-  
+
   searchInput.addEventListener('input', async (e) => {
     const searchTerm = e.target.value.toLowerCase().trim();
     await filterWallpapers(searchTerm);
@@ -2059,42 +2061,42 @@ async function filterWallpapers(searchTerm) {
   const selectedRatings = Array.from(checkboxes)
     .filter(cb => cb.checked)
     .map(cb => cb.value);
-  
+
   const wallpaperCards = document.querySelectorAll('.wallpaper-card');
-  
+
   wallpaperCards.forEach(async (card) => {
     const wallpaperId = card.dataset.wallpaperId?.toLowerCase() || '';
     const wallpaperName = card.querySelector('.text-white.text-sm.font-medium')?.textContent.toLowerCase() || '';
-    
+
     // 搜索条件匹配
-    const matchesSearch = searchTerm === '' || 
-                         wallpaperName.includes(searchTerm) || 
-                         wallpaperId.includes(searchTerm);
-    
+    const matchesSearch = searchTerm === '' ||
+      wallpaperName.includes(searchTerm) ||
+      wallpaperId.includes(searchTerm);
+
     // 如果没有选择任何内容评级，只应用搜索筛选
     if (selectedRatings.length === 0) {
       card.style.display = matchesSearch ? 'block' : 'none';
       return;
     }
-    
+
     // 获取壁纸数据
     const wallpaperIndex = parseInt(card.dataset.index);
     const wallpaper = wallpapers[wallpaperIndex];
-    
+
     if (!wallpaper) {
       card.style.display = 'none';
       return;
     }
-    
+
     // 获取内容评级
     let contentRating = null;
     if (window.contentRatingFilter && typeof window.contentRatingFilter.getWallpaperContentRating === 'function') {
       contentRating = await window.contentRatingFilter.getWallpaperContentRating(wallpaper);
     }
-    
+
     // 内容评级筛选条件匹配
     const matchesContentRating = contentRating && selectedRatings.includes(contentRating);
-    
+
     // 同时满足搜索和内容评级条件才显示
     card.style.display = (matchesSearch && matchesContentRating) ? 'block' : 'none';
   });
@@ -2113,7 +2115,7 @@ async function initManualExtractFunction() {
 
       const extractPathInput = document.getElementById('extract-path-manual');
       const extractPath = extractPathInput.value.trim();
-      
+
       if (!extractPath) {
         alert(window.i18n.t('messages.enter_extract_path'));
         return;
@@ -2130,11 +2132,11 @@ async function initManualExtractFunction() {
 
         // 获取解包设置
         await settingsManager.init();
-      const onlyImages = settingsManager.get('only-images') === true;
-      const noTexConvert = settingsManager.get('no-tex-convert') === true;
-      const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
-      const overwriteFiles = settingsManager.get('overwrite-files') === true;
-      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
+        const onlyImages = settingsManager.get('only-images') === true;
+        const noTexConvert = settingsManager.get('no-tex-convert') === true;
+        const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
+        const overwriteFiles = settingsManager.get('overwrite-files') === true;
+        const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
 
         // 构造提取选项
         const options = {
@@ -2155,7 +2157,7 @@ async function initManualExtractFunction() {
         for (const file of manualFiles) {
           try {
             // console.log('正在提取文件:', file.name);
-            
+
             // 如果启用为每个壁纸单独生成文件夹，创建以文件名命名的文件夹
             let fileExtractPath = extractPath;
             if (createFolderPerWallpaper) {
@@ -2164,7 +2166,7 @@ async function initManualExtractFunction() {
               if (fileName) {
                 // 构造新的提取路径
                 fileExtractPath = `${extractPath}/${fileName}`;
-                
+
                 // 创建文件夹
                 try {
                   await invoke('create_directory', { path: fileExtractPath });
@@ -2191,16 +2193,16 @@ async function initManualExtractFunction() {
                 }
               }
             }
-            
+
             // 更新提取选项中的输出路径
             const fileOptions = {
               ...options,
               output: fileExtractPath.replace(/\\/g, '/')
             };
-            
-            const result = await invoke('extract_pkg', { 
-              input: file.path, 
-              options: fileOptions 
+
+            const result = await invoke('extract_pkg', {
+              input: file.path,
+              options: fileOptions
             });
             successCount++;
             // console.log(`文件 ${file.name} 提取成功`);
@@ -2213,14 +2215,14 @@ async function initManualExtractFunction() {
         // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
         if (onlyImages && successCount > 0) {
           try {
-            await invoke('cleanup_non_media_files', { 
+            await invoke('cleanup_non_media_files', {
               path: extractPath,
-              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'] 
+              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv']
             });
             // console.log('已清理非媒体文件');
-            
+
             // 将所有媒体文件移动到根目录并删除文件夹
-            await invoke('flatten_media_files', { 
+            await invoke('flatten_media_files', {
               path: extractPath,
               allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'],
               overwrite: overwriteFiles
@@ -2244,7 +2246,7 @@ async function initManualExtractFunction() {
 
         // 提取成功后，根据设置决定是否自动打开提取文件夹
         await settingsManager.init();
-      const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
+        const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
         if (autoOpenExtractFolder && successCount > 0 && window.__TAURI__) {
           const normalizedPath = extractPath.replace(/\\/g, '\\');
           await invoke('open_folder', { path: normalizedPath });
@@ -2253,7 +2255,7 @@ async function initManualExtractFunction() {
       } catch (error) {
         // console.error('提取过程出错:', error);
         alert(window.i18n.t('messages.extract_failed') + error);
-        
+
         // 恢复按钮状态
         manualExtractBtn.textContent = window.i18n.t('buttons.extract_start');
         manualExtractBtn.disabled = false;
@@ -2265,7 +2267,7 @@ async function initManualExtractFunction() {
     openManualExtractFolderBtn.addEventListener('click', async () => {
       const extractPathInput = document.getElementById('extract-path-manual');
       const extractPath = extractPathInput.value;
-      
+
       if (!extractPath) {
         alert(window.i18n.t('messages.set_extract_path_first'));
         return;

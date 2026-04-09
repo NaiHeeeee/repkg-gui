@@ -1,0 +1,155 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.extract_version.outputs.version }}
+      body: ${{ steps.generate_changelog.outputs.changelog }}
+    steps:
+      - name: Extract version from tag
+        id: extract_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          # 获取上一个标签
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ github.ref }}^ 2>/dev/null || echo "")
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Current tag: ${{ github.ref }}"
+          echo "Previous tag: $PREVIOUS_TAG"
+
+      - name: Generate changelog
+        id: generate_changelog
+        run: |
+          # 生成两次版本之间的commit历史
+          PREVIOUS_TAG="${{ steps.get_previous_tag.outputs.previous_tag }}"
+          CURRENT_TAG="${{ github.ref }}"
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # 如果没有上一个标签，获取所有commit
+            COMMITS=$(git log --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --reverse)
+            CHANGELOG="## 初始发布\n\n$COMMITS"
+          else
+            # 获取两个标签之间的commit
+            COMMITS=$(git log --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --reverse $PREVIOUS_TAG..$CURRENT_TAG)
+            CHANGELOG="## 更新内容\n\n$COMMITS"
+          fi
+          
+          # 转义多行文本
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+          
+          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "Generated changelog:"
+          echo "$CHANGELOG"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.extract_version.outputs.version }}
+          body: ${{ steps.generate_changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+  build-windows:
+    name: Build for Windows
+    needs: create-release
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            arch: x64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Tauri application
+        run: pnpm run tauri:build:version
+
+      - name: Create portable zip package
+        run: |
+          $version = "${{ needs.create-release.outputs.version }}"
+          $arch = "${{ matrix.arch }}"
+          
+          # Create portable package with executable and bin folder
+          $zipName = "repkg-gui_${version}_${arch}.zip"
+          $releaseDir = "src-tauri/target/release"
+          
+          # Create temporary directory for portable package
+          New-Item -ItemType Directory -Force -Path "portable-temp"
+          
+          # Copy main executable
+          Copy-Item "$releaseDir/repkg-gui.exe" "portable-temp/"
+          
+          # Copy bin folder if it exists
+          if (Test-Path "$releaseDir/bin") {
+            Copy-Item "$releaseDir/bin" "portable-temp/" -Recurse
+          }
+          
+          # Create zip file
+          Compress-Archive -Path "portable-temp/*" -DestinationPath $zipName -Force
+          
+          # Clean up temporary directory
+          Remove-Item "portable-temp" -Recurse -Force
+
+      - name: Upload installer to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./src-tauri/target/release/bundle/nsis/repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}-setup.exe
+          asset_name: repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}-setup.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload portable zip to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.zip
+          asset_name: repkg-gui_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.zip
+          asset_content_type: application/zip

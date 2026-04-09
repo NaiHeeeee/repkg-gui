@@ -1,0 +1,124 @@
+{
+  "title": {
+    "main": "RePKG GUI - Wallpaper Engine パッケージ解凍ツール"
+  },
+  "extract": {
+    "local_wallpapers": "ローカル壁紙",
+    "manual_extract": "手動解凍",
+    "select_output": "解凍先",
+    "extract_btn": "解凍開始",
+    "drag_drop": "ここをクリックして.pkgファイルを一括選択します",
+    "load_failed": "読み込み失敗",
+    "no_wallpapers": "壁紙が見つかりません",
+    "ensure_path": "Steamワークショップのパスが存在し、壁紙ファイルが含まれているか確認してください"
+  },
+  "settings": {
+    "title": "設定",
+    "appearance": "外観",
+    "theme": "テーマ",
+    "language": "言語",
+    "light": "ライト",
+    "dark": "ダーク",
+    "system": "システム",
+    "system_settings": "システム設定",
+    "extract_settings": "解凍設定",
+    "create_folder_per_wallpaper": "壁紙ごとにフォルダを作成",
+    "create_folder_per_wallpaper_desc": "ローカル壁紙は壁紙名、手動解凍はファイル名をフォルダ名とします",
+    "image_only": "画像ファイルのみ保持",
+    "image_only_desc": "画像と動画のみ解凍し、他のファイルは無視します",
+    "no_convert": "Texファイルを画像に変換しない",
+    "no_convert_desc": "元の.texファイルを保持します",
+    "flatten_structure": "元のディレクトリ構造を無視する",
+    "flatten_structure_desc": "すべてのファイルを同じディレクトリレベルに配置します",
+    "overwrite_existing": "既存のファイルを上書きする",
+    "overwrite_existing_desc": "ターゲットフォルダに同じ名前のファイルがある場合に上書きします",
+    "open_after_extract": "解凍完了後にフォルダを開く",
+    "open_after_extract_desc": "解凍が完了した後、自動的に解凍先フォルダを開きます",
+    "open_after_import": "エディタにインポート後にフォルダを開く",
+    "open_after_import_desc": "壁紙をエディタにインポートした後、自動的にプロジェクトフォルダを開きます",
+    "glass_effect": "ガラス効果",
+    "glass_effect_desc": "インターフェースのガラス効果を有効または無効にします"
+  },
+  "about": {
+    "title": "RePKG GUI について",
+    "version": "バージョン"
+  },
+  "messages": {
+    "extracting": "解凍中...",
+    "importing": "インポート中...",
+    "extract_success": "解凍完了！",
+    "extract_failed": "解凍失敗: ",
+    "set_extract_path_first": "先に解凍先パスを設定してください",
+    "enter_valid_path": "有効なパスを入力してください",
+    "enter_extract_path": "解凍先パスを入力してください",
+    "select_pkg_files": "先に.pkgファイルを選択してください",
+    "select_folder_error": "フォルダの選択に失敗しました: ",
+    "open_folder_error": "フォルダを開くのに失敗しました: ",
+    "select_file_error": "ファイルの選択に失敗しました: ",
+    "path_saved": "パスが保存されました",
+    "path_restored": "デフォルトのパスに復元されました",
+    "no_wallpaper_selected": "壁紙が選択されていません",
+    "cannot_get_info": "壁紙情報または解凍先パスを取得できません",
+    "empty_path": "壁紙のパスまたは解凍先パスが空です",
+    "extract_complete": "解凍完了！成功: {success}ファイル、失敗: {error}ファイル",
+    "import_success": "インポート成功",
+    "import_failed": "インポート失敗",
+    "steam_not_found": "SteamまたはWallpaper Engineのインストールパスが見つかりません。Wallpaper Engineがインストールされているか確認してください",
+    "wallpaper_editor_not_loaded": "壁紙エディタのインポート機能が読み込まれていません",
+    "desktop_only": "この機能はデスクトップアプリでのみ利用可能です"
+  },
+  "buttons": {
+    "change": "変更",
+    "restore_default": "デフォルトに戻す",
+    "save": "保存",
+    "browse": "参照",
+    "sort_by_name": "名前",
+    "sort_by_date": "日付",
+    "extract_start": "解凍開始",
+    "open_wallpaper_folder": "壁紙フォルダを開く",
+    "open_extract_folder": "解凍先フォルダを開く",
+    "import_wallpaper_editor": "エディタにインポート",
+    "reload": "再読み込み"
+  },
+  "nav": {
+    "home": "ホーム",
+    "manual": "手動解凍",
+    "settings": "設定"
+  },
+  "workshop": {
+    "title": "ワークショップパス",
+    "custom_path": "カスタムパス",
+    "current_path": "現在のパス: {path}",
+    "hint": "ヒント: D:/Steam のような基本パス、または E:/Game/Steam/steamapps のような部分的なパスを入力すると、システムが自動的にフルパスを補完します",
+    "placeholder": "D:/Steamのような基本パスを入力、フルパスを自動補完"
+  },
+  "background": {
+    "title": "カスタム背景",
+    "network_url": "ネットワークURL",
+    "enter_url": "画像のURLを入力してください",
+    "local_file": "ローカルファイル",
+    "browse": "参照",
+    "no_file_selected": "ファイルが選択されていません",
+    "file_too_large": "ファイルサイズが制限を超えています。最大1GBまでサポートされています",
+    "invalid_file_type": "サポートされていないファイルタイプです。画像または動画ファイルを選択してください",
+    "large_file_warning": "過大なファイルはパフォーマンスに影響する場合があります",
+    "supported_formats": "サポートされる形式: 画像(JPG, PNG, GIF, WebP) および動画(MP4, WebM, MOV, AVI)、最大1GB",
+    "previous_file": "以前に選択したファイル:",
+    "apply": "適用",
+    "clear": "背景をクリア",
+    "preview": "背景プレビュー",
+    "opacity": "不透明度",
+    "opacity_value": "{value}%",
+    "invalid_url": "有効な画像または動画のURLを入力してください",
+    "load_failed": "背景の読み込みに失敗しました。URLが正しいか確認してください"
+  },
+  "content_rating": {
+    "label": "コンテンツレーティング",
+    "everyone": "全年齢",
+    "mature": "成人向け",
+    "questionable": "保護者の同意"
+  },
+  "search": {
+    "placeholder": "壁紙名またはIDを検索"
+  }
+}

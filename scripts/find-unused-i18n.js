@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import readline from 'readline';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,17 +46,17 @@ function readJsonFile(filePath) {
  */
 function getAllKeys(obj, prefix = '') {
   const keys = [];
-  
+
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = prefix ? `${prefix}.${key}` : key;
-    
+
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       keys.push(...getAllKeys(value, fullKey));
     } else {
       keys.push(fullKey);
     }
   }
-  
+
   return keys;
 }
 
@@ -71,16 +72,16 @@ function shouldIgnore(filePath) {
  */
 function scanDirectory(dir, callback) {
   const items = fs.readdirSync(dir);
-  
+
   for (const item of items) {
     const fullPath = path.join(dir, item);
-    
+
     if (shouldIgnore(fullPath)) {
       continue;
     }
-    
+
     const stat = fs.statSync(fullPath);
-    
+
     if (stat.isDirectory()) {
       scanDirectory(fullPath, callback);
     } else if (stat.isFile() && CONFIG.supportedExtensions.includes(path.extname(item))) {
@@ -108,7 +109,7 @@ function findUsedKeysInFile(filePath) {
     data_attributes: [],
     dynamic_usage: []
   };
-  
+
   // 定义所有匹配模式
   const patternDefinitions = [
     {
@@ -152,7 +153,7 @@ function findUsedKeysInFile(filePath) {
       description: '动态键值使用'
     }
   ];
-  
+
   // 执行所有模式匹配
   for (const { name, pattern } of patternDefinitions) {
     let match;
@@ -166,7 +167,7 @@ function findUsedKeysInFile(filePath) {
       });
     }
   }
-  
+
   return { keys: usedKeys, patterns: usagePatterns };
 }
 
@@ -185,17 +186,17 @@ function findAllUsedKeys() {
     data_attributes: [],
     dynamic_usage: []
   };
-  
+
   scanDirectory(CONFIG.srcDir, (filePath) => {
     const { keys, patterns } = findUsedKeysInFile(filePath);
     keys.forEach(key => usedKeys.add(key));
-    
+
     // 合并各个模式的使用情况
     Object.keys(allPatterns).forEach(patternName => {
       allPatterns[patternName].push(...patterns[patternName]);
     });
   });
-  
+
   return { keys: usedKeys, patterns: allPatterns };
 }
 
@@ -204,14 +205,14 @@ function findAllUsedKeys() {
  */
 function findAllI18nKeys() {
   const allKeys = {};
-  
+
   if (!fs.existsSync(CONFIG.i18nDir)) {
     console.error(`i18n目录不存在: ${CONFIG.i18nDir}`);
     return allKeys;
   }
-  
+
   const files = fs.readdirSync(CONFIG.i18nDir);
-  
+
   for (const file of files) {
     if (path.extname(file) === '.json') {
       const filePath = path.join(CONFIG.i18nDir, file);
@@ -220,7 +221,7 @@ function findAllI18nKeys() {
       allKeys[locale] = getAllKeys(translations);
     }
   }
-  
+
   return allKeys;
 }
 
@@ -243,34 +244,95 @@ const colors = {
   bgBlue: '\x1b[44m'
 };
 
+function deeplyRemoveKey(obj, keyPath) {
+  const parts = keyPath.split('.');
+  let current = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!current[parts[i]]) return;
+    current = current[parts[i]];
+  }
+  delete current[parts[parts.length - 1]];
+}
+
+function removeEmptyObjects(obj) {
+  let changed = false;
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      removeEmptyObjects(obj[key]);
+      if (Object.keys(obj[key]).length === 0) {
+        delete obj[key];
+        changed = true;
+      }
+    }
+  }
+  return changed ? removeEmptyObjects(obj) : obj;
+}
+
+function askCleanup(allI18nKeys, usedKeys) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question(`\n${colors.cyan}是否清理未使用的键？(y/N): ${colors.reset}`, (answer) => {
+      rl.close();
+      if (answer.trim().toLowerCase() === 'y') {
+        console.log(`\n${colors.cyan}🧹 开始清理未使用的键值...${colors.reset}`);
+        let totalDeleted = 0;
+        for (const [locale, keys] of Object.entries(allI18nKeys)) {
+          const localePath = path.join(CONFIG.i18nDir, `${locale}.json`);
+          if (!fs.existsSync(localePath)) continue;
+
+          const data = JSON.parse(fs.readFileSync(localePath, 'utf-8'));
+          const unused = keys.filter(key => !usedKeys.has(key));
+
+          let deleted = 0;
+          for (const key of unused) {
+            deeplyRemoveKey(data, key);
+            deleted++;
+          }
+
+          removeEmptyObjects(data);
+          fs.writeFileSync(localePath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+          console.log(`   ${colors.green}✅ ${locale}.json: 清理了 ${deleted} 个键值${colors.reset}`);
+          totalDeleted += deleted;
+        }
+        console.log(`\n${colors.green}✨ 清理完成！共清理 ${totalDeleted} 个键值。${colors.reset}`);
+      }
+      resolve();
+    });
+  });
+}
+
 /**
  * 主函数
  */
-function main() {
+async function main() {
   console.log(`${colors.cyan}🔍 开始检查未使用的i18n键值...${colors.reset}\n`);
-  
+
   // 获取所有i18n键值
   const allI18nKeys = findAllI18nKeys();
-  
+
   if (Object.keys(allI18nKeys).length === 0) {
     console.error(`${colors.red}❌ 没有找到任何i18n键值${colors.reset}`);
     return;
   }
-  
+
   console.log(`${colors.blue}📁 找到的语言文件:${colors.reset}`);
   Object.keys(allI18nKeys).forEach(locale => {
     console.log(`   ${colors.green}${locale}${colors.reset}: ${colors.yellow}${allI18nKeys[locale].length}${colors.reset} 个键值`);
   });
-  
+
   // 获取所有使用的i18n键值和使用模式
   console.log(`\n${colors.blue}🔍 扫描源码中的i18n使用...${colors.reset}`);
   const { keys: usedKeys, patterns: usagePatterns } = findAllUsedKeys();
   console.log(`   ${colors.green}✅ 找到 ${colors.yellow}${usedKeys.size}${colors.reset} 个被使用的键值`);
-  
+
   // 显示使用方式分类统计
   console.log(`\n${colors.magenta}📊 i18n使用方式分类:${colors.reset}`);
   console.log(`${colors.gray}${'='.repeat(50)}${colors.reset}`);
-  
+
   const patternStats = [
     { name: 'i18n_t', label: '直接i18n.t调用', count: usagePatterns.i18n_t.length },
     { name: 'this_t', label: 'this.t调用', count: usagePatterns.this_t.length },
@@ -281,7 +343,7 @@ function main() {
     { name: 'data_attributes', label: 'HTML data属性', count: usagePatterns.data_attributes.length },
     { name: 'dynamic_usage', label: '动态键值使用', count: usagePatterns.dynamic_usage.length }
   ];
-  
+
   let totalUsages = 0;
   patternStats.forEach(stat => {
     if (stat.count > 0) {
@@ -290,32 +352,32 @@ function main() {
     }
   });
   console.log(`   ${colors.blue}总计使用次数${colors.reset}: ${colors.yellow}${totalUsages}${colors.reset}`);
-  
+
   // 分析每个语言文件
   const results = {};
-  
+
   for (const [locale, keys] of Object.entries(allI18nKeys)) {
     const unusedKeys = keys.filter(key => !usedKeys.has(key));
     const usedKeysInLocale = keys.filter(key => usedKeys.has(key));
-    
+
     results[locale] = {
       total: keys.length,
       used: usedKeysInLocale.length,
       unused: unusedKeys.length,
-      usedPercentage: ((usedKeysInLocale.length/keys.length)*100).toFixed(1),
-      unusedPercentage: ((unusedKeys.length/keys.length)*100).toFixed(1)
+      usedPercentage: ((usedKeysInLocale.length / keys.length) * 100).toFixed(1),
+      unusedPercentage: ((unusedKeys.length / keys.length) * 100).toFixed(1)
     };
   }
-  
+
   // 显示简洁的统计结果
   console.log(`\n${colors.magenta}📊 检查结果摘要:${colors.reset}`);
   console.log(`${colors.gray}${'='.repeat(60)}${colors.reset}`);
-  
+
   for (const [locale, result] of Object.entries(results)) {
     const color = result.unused > 0 ? colors.red : colors.green;
     console.log(`${color}🌍 ${locale}${colors.reset}: ${colors.yellow}${result.total}${colors.reset} 个键值, ${colors.green}${result.used} 已使用${colors.reset}, ${result.unused > 0 ? colors.red : colors.gray}${result.unused} 未使用${colors.reset}`);
   }
-  
+
   // 生成详细报告（包含具体键值）
   const reportPath = path.join(__dirname, 'i18n-detailed-report.json');
   const detailedReport = {
@@ -337,10 +399,10 @@ function main() {
       }])
     )
   };
-  
+
   fs.writeFileSync(reportPath, JSON.stringify(detailedReport, null, 2));
   console.log(`\n${colors.green}📄 详细报告已保存到:${colors.reset} ${colors.cyan}${reportPath}${colors.reset}`);
-  
+
   // 生成简洁报告（仅统计）
   // const summaryReportPath = path.join(__dirname, 'i18n-summary-report.json');
   // const summaryReport = {
@@ -353,20 +415,21 @@ function main() {
   //               Object.values(results).reduce((sum, r) => sum + r.total, 0)) * 100).toFixed(1)
   // };
   // fs.writeFileSync(summaryReportPath, JSON.stringify(summaryReport, null, 2));
-  
+
   // 总结
   const totalUnused = Object.values(results).reduce((sum, r) => sum + r.unused, 0);
   const totalKeys = Object.values(results).reduce((sum, r) => sum + r.total, 0);
-  
+
   console.log(`\n${colors.cyan}📈 总结:${colors.reset}`);
   console.log(`   ${colors.blue}总键值数${colors.reset}: ${colors.yellow}${totalKeys}${colors.reset}`);
   console.log(`   ${colors.blue}已使用键值${colors.reset}: ${colors.green}${totalKeys - totalUnused}${colors.reset}`);
-  console.log(`   ${colors.blue}未使用键值${colors.reset}: ${totalUnused > 0 ? colors.red : colors.green}${totalUnused}${colors.reset} ${colors.gray}(${((totalUnused/totalKeys)*100).toFixed(1)}%)${colors.reset}`);
-  
+  console.log(`   ${colors.blue}未使用键值${colors.reset}: ${totalUnused > 0 ? colors.red : colors.green}${totalUnused}${colors.reset} ${colors.gray}(${((totalUnused / totalKeys) * 100).toFixed(1)}%)${colors.reset}`);
+
   if (totalUnused === 0) {
     console.log(`\n${colors.green}${colors.bgGreen}${colors.white} 🎉 所有i18n键值都被使用了！ ${colors.reset}`);
   } else {
     console.log(`\n${colors.yellow}💡 建议清理未使用的键值以减少翻译文件大小${colors.reset}`);
+    await askCleanup(allI18nKeys, usedKeys);
   }
 }
 

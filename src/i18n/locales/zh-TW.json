@@ -1,0 +1,124 @@
+{
+  "title": {
+    "main": "RePKG GUI - 壁紙引擎包提取工具"
+  },
+  "extract": {
+    "local_wallpapers": "本地壁紙",
+    "manual_extract": "手動提取",
+    "select_output": "提取到",
+    "extract_btn": "開始提取",
+    "drag_drop": "點擊此處批量選擇.pkg文件",
+    "load_failed": "加載失敗",
+    "no_wallpapers": "未找到壁纸",
+    "ensure_path": "請確保Steam創意工坊路徑存在且包含壁紙文件"
+  },
+  "settings": {
+    "title": "設置",
+    "appearance": "外觀",
+    "theme": "主題",
+    "language": "語言",
+    "light": "淺色",
+    "dark": "深色",
+    "system": "跟隨系統",
+    "system_settings": "系統設置",
+    "extract_settings": "提取設置",
+    "create_folder_per_wallpaper": "為每個壁紙單獨生成文件夾",
+    "create_folder_per_wallpaper_desc": "首頁壁紙自動以壁紙名創建文件夾，手動提取以文件名創建文件夾",
+    "overwrite_existing": "覆蓋已存在文件",
+    "open_after_extract": "提取完成後打開文件夾",
+    "open_after_extract_desc": "提取完成後自動打開提取文件夾",
+    "open_after_import": "導入壁紙編輯器後打開文件夾",
+    "open_after_import_desc": "導入壁紙到編輯器後自動打開項目文件夾",
+    "image_only": "僅保留圖像文件",
+    "image_only_desc": "只提取圖片和視頻，忽略其他文件",
+    "no_convert": "不將Tex文件轉換為圖像",
+    "no_convert_desc": "保留原始的 .tex 文件",
+    "flatten_structure": "忽略原有目錄結構",
+    "flatten_structure_desc": "將所有文件放在同一級目錄中",
+    "overwrite_existing_desc": "如果目標文件夾中存在同名文件則覆蓋",
+    "glass_effect": "毛玻璃效果",
+    "glass_effect_desc": "啟用或禁用界面的毛玻璃效果"
+  },
+  "about": {
+    "title": "關於 RePKG GUI",
+    "version": "版本"
+  },
+  "messages": {
+    "extracting": "提取中...",
+    "importing": "導入中...",
+    "extract_success": "提取完成!",
+    "extract_failed": "提取失敗: ",
+    "set_extract_path_first": "請先設置提取路徑",
+    "enter_valid_path": "請輸入有效的路徑",
+    "enter_extract_path": "請輸入提取路徑",
+    "select_pkg_files": "請先選擇要提取的 .pkg 文件",
+    "select_folder_error": "選擇文件夾失敗: ",
+    "open_folder_error": "打開文件夾失敗: ",
+    "select_file_error": "選擇文件失敗: ",
+    "path_saved": "路徑已保存",
+    "path_restored": "已恢復默認路徑",
+    "no_wallpaper_selected": "未選擇壁紙",
+    "cannot_get_info": "無法獲取壁紙信息或提取路徑",
+    "empty_path": "壁紙路徑或提取路徑為空",
+    "extract_complete": "提取完成！成功: {success} 個，失敗: {error} 個",
+    "import_success": "導入成功",
+    "import_failed": "導入失敗",
+    "steam_not_found": "無法找到Steam或Wallpaper Engine安裝路徑，請確保已安裝Wallpaper Engine",
+    "wallpaper_editor_not_loaded": "壁紙編輯器導入功能未加載",
+    "desktop_only": "此功能僅在桌面應用中可用"
+  },
+  "buttons": {
+    "change": "更改",
+    "restore_default": "恢復默認",
+    "save": "保存",
+    "browse": "瀏覽",
+    "sort_by_name": "名稱",
+    "sort_by_date": "日期",
+    "extract_start": "開始提取",
+    "open_wallpaper_folder": "打開壁紙所在文件夾",
+    "open_extract_folder": "打開提取文件夾",
+    "import_wallpaper_editor": "導入壁紙編輯器",
+    "reload": "重新加載"
+  },
+  "nav": {
+    "home": "首頁",
+    "manual": "手動提取",
+    "settings": "設置"
+  },
+  "workshop": {
+    "title": "創意工坊路徑",
+    "custom_path": "自定義路徑",
+    "current_path": "當前路徑: {path}",
+    "hint": "提示: 可輸入基礎路徑如 D:/Steam，或部分路徑如 E:/Game/Steam/steamapps，系統會自動補全為完整路徑",
+    "placeholder": "可輸入基礎路徑如 D:/Steam，自動補全完整路徑"
+  },
+  "background": {
+    "title": "自定義背景",
+    "network_url": "網絡地址",
+    "enter_url": "請輸入圖片的URL",
+    "local_file": "本地文件",
+    "browse": "瀏覽",
+    "no_file_selected": "未選擇文件",
+    "file_too_large": "文件大小超過限制，最大支持1GB",
+    "invalid_file_type": "不支持的文件類型，請選擇圖片或視頻文件",
+    "large_file_warning": "大文件可能影響性能",
+    "supported_formats": "支持格式：圖片 (JPG, PNG, GIF, WebP) 和視頻 (MP4, WebM, MOV, AVI)，最大1GB",
+    "previous_file": "之前選擇的文件:",
+    "apply": "應用",
+    "clear": "清除背景",
+    "preview": "背景預覽",
+    "opacity": "透明度",
+    "opacity_value": "{value}%",
+    "invalid_url": "請輸入有效的圖片或視頻地址",
+    "load_failed": "背景加載失敗，請檢查地址是否正確"
+  },
+  "content_rating": {
+    "label": "內容評級",
+    "everyone": "大眾",
+    "mature": "成人",
+    "questionable": "家長指導級"
+  },
+  "search": {
+    "placeholder": "搜索壁紙名稱或ID"
+  }
+}

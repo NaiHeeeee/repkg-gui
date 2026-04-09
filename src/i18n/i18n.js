@@ -30,10 +30,12 @@ class I18n {
     const languageMap = {
       'zh': 'zh-CN',
       'zh-CN': 'zh-CN',
-      'zh-TW': 'zh-CN', // Fallback to zh-CN for now
+      'zh-TW': 'zh-TW',
       'en': 'en-US',
       'en-US': 'en-US',
-      'en-GB': 'en-US' // Fallback to en-US
+      'en-GB': 'en-US', // Fallback to en-US
+      'ja': 'ja-JP',
+      'ja-JP': 'ja-JP'
     };
 
     return languageMap[browserLang] || 'en-US';
@@ -65,7 +67,9 @@ class I18n {
   getSupportedLanguages() {
     return [
       { code: 'zh-CN', name: '简体中文' },
-      { code: 'en-US', name: 'English' }
+      { code: 'zh-TW', name: '繁體中文' },
+      { code: 'en-US', name: 'English' },
+      { code: 'ja-JP', name: '日本語' }
     ];
   }
 
@@ -155,12 +159,12 @@ class I18n {
 }
 
 // 延迟初始化函数
-window.initI18n = async function() {
+window.initI18n = async function () {
   // 确保settingsManager已初始化
   if (typeof window.settingsManager !== 'undefined') {
     await window.settingsManager.init();
   }
-  
+
   // 创建全局实例
   window.i18n = new I18n();
   return window.i18n;
