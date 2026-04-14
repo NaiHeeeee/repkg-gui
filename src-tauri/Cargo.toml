@@ -1,8 +1,8 @@
 [package]
 name = "repkg-gui"
 version = "0.7.1"
-description = "A Tauri App"
-authors = ["you"]
+description = "repkg-gui"
+authors = ["NaiHe"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
