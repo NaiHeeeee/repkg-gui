@@ -17,6 +17,7 @@
     "appearance": "外観",
     "theme": "テーマ",
     "language": "言語",
+    "select_language": "言語を選択",
     "light": "ライト",
     "dark": "ダーク",
     "system": "システムのデフォルト",
@@ -65,7 +66,9 @@
     "import_failed": "インポート失敗",
     "steam_not_found": "SteamまたはWallpaper Engineのインストール場所が見つかりません。Wallpaper Engineがインストールされているか確認してください",
     "wallpaper_editor_not_loaded": "壁紙エディタのインポート機能が利用できません",
-    "desktop_only": "この機能はデスクトップ版アプリでのみ利用可能です"
+    "desktop_only": "この機能はデスクトップ版アプリでのみ利用可能です",
+    "no_workshop_url": "この壁紙にはワークショップのリンクがありません",
+    "read_project_failed": "プロジェクト情報の読み込みに失敗しました: "
   },
   "buttons": {
     "change": "変更",
@@ -75,6 +78,7 @@
     "sort_by_name": "名前順",
     "sort_by_date": "日付順",
     "extract_start": "抽出開始",
+    "open_in_workshop": "ワークショップで開く",
     "open_wallpaper_folder": "元のフォルダを開く",
     "open_extract_folder": "出力先フォルダを開く",
     "import_wallpaper_editor": "エディタにインポート",
@@ -104,6 +108,8 @@
     "large_file_warning": "大きなファイルはパフォーマンスに影響する場合があります",
     "supported_formats": "形式: 画像(JPG, PNG, GIF, WebP)、動画(MP4, WebM, MOV, AVI)、最大1GB",
     "previous_file": "最近使用したファイル:",
+    "file_missing": "保存済みのローカル背景ファイルが存在しないため、自動復元できませんでした",
+    "auto_restored": "起動時に前回選択したローカル背景を自動復元しました",
     "apply": "適用",
     "clear": "背景を解除",
     "preview": "プレビュー",

@@ -17,6 +17,7 @@
     "appearance": "Appearance",
     "theme": "Theme",
     "language": "Language",
+    "select_language": "Select Language",
     "light": "Light",
     "dark": "Dark",
     "system": "System",
@@ -65,7 +66,9 @@
     "import_failed": "Import failed",
     "steam_not_found": "Cannot find Steam or Wallpaper Engine installation path, please ensure Wallpaper Engine is installed",
     "wallpaper_editor_not_loaded": "Wallpaper Editor import function not loaded",
-    "desktop_only": "This feature is only available in the desktop application"
+    "desktop_only": "This feature is only available in the desktop application",
+    "no_workshop_url": "This wallpaper does not have a Workshop link",
+    "read_project_failed": "Failed to read project info: "
   },
   "buttons": {
     "change": "Change",
@@ -75,6 +78,7 @@
     "sort_by_name": "Name",
     "sort_by_date": "Date",
     "extract_start": "Start Extract",
+    "open_in_workshop": "Open in Workshop",
     "open_wallpaper_folder": "Open Wallpaper Folder",
     "open_extract_folder": "Open Extract Folder",
     "import_wallpaper_editor": "Import Wallpaper Editor",
@@ -104,6 +108,8 @@
     "large_file_warning": "Large file may affect performance",
     "supported_formats": "Supported formats: Images (JPG, PNG, GIF, WebP) and Videos (MP4, WebM, MOV, AVI), maximum 1GB",
     "previous_file": "Previously selected file:",
+    "file_missing": "The saved local background file no longer exists and could not be restored automatically",
+    "auto_restored": "Automatically restored the last selected local background on startup",
     "apply": "Apply",
     "clear": "Clear Background",
     "preview": "Background Preview",

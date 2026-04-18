@@ -17,6 +17,7 @@
     "appearance": "外觀",
     "theme": "主題",
     "language": "語言",
+    "select_language": "選擇語言",
     "light": "淺色",
     "dark": "深色",
     "system": "跟隨系統",
@@ -65,7 +66,9 @@
     "import_failed": "導入失敗",
     "steam_not_found": "無法找到Steam或Wallpaper Engine安裝路徑，請確保已安裝Wallpaper Engine",
     "wallpaper_editor_not_loaded": "壁紙編輯器導入功能未加載",
-    "desktop_only": "此功能僅在桌面應用中可用"
+    "desktop_only": "此功能僅在桌面應用中可用",
+    "no_workshop_url": "該壁紙沒有創意工坊連結",
+    "read_project_failed": "讀取項目資訊失敗："
   },
   "buttons": {
     "change": "更改",
@@ -75,6 +78,7 @@
     "sort_by_name": "名稱",
     "sort_by_date": "日期",
     "extract_start": "開始提取",
+    "open_in_workshop": "在創意工坊中打開",
     "open_wallpaper_folder": "打開壁紙所在文件夾",
     "open_extract_folder": "打開提取文件夾",
     "import_wallpaper_editor": "導入壁紙編輯器",
@@ -104,6 +108,8 @@
     "large_file_warning": "大文件可能影響性能",
     "supported_formats": "支持格式：圖片 (JPG, PNG, GIF, WebP) 和視頻 (MP4, WebM, MOV, AVI)，最大1GB",
     "previous_file": "之前選擇的文件:",
+    "file_missing": "保存的本地背景文件不存在，無法自動恢復",
+    "auto_restored": "已在啟動時自動恢復上次選擇的本地背景",
     "apply": "應用",
     "clear": "清除背景",
     "preview": "背景預覽",

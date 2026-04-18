@@ -207,7 +207,8 @@ document.addEventListener('DOMContentLoaded', function () {
           'ja-JP': '日本語'
         };
         if (languageToggleBtn) {
-          languageToggleBtn.textContent = langMap[currentLang] || '选择语言';
+          languageToggleBtn.textContent = langMap[currentLang] ||
+            window.i18n.t('settings.select_language');
         }
       }
 
