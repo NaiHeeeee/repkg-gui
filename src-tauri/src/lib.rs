@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use tauri_plugin_opener::OpenerExt;
 
 // 引入 RePKG 模块
 mod repkg;
@@ -207,33 +208,10 @@ async fn close_window(window: tauri::Window) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn open_shell(path: String) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        // 使用Windows的start命令来打开steam://链接
-        Command::new("cmd")
-            .args(["/c", "start", "", &path])
-            .spawn()
-            .map_err(|e| format!("无法打开链接: {}", e))?;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("无法打开链接: {}", e))?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        Command::new("xdg-open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("无法打开链接: {}", e))?;
-    }
-
-    Ok(())
+async fn open_shell(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    app.opener()
+        .open_url(&path, None::<&str>)
+        .map_err(|e| format!("无法打开链接: {}", e))
 }
 
 #[tauri::command]
