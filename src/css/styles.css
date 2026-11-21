@@ -414,6 +414,20 @@ input:checked+.toggle-slider:before {
   background-color: var(--accent-color);
 }
 
+.language-option[aria-pressed="true"] {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--accent-text);
+}
+
+.language-option[aria-pressed="true"]:hover {
+  background-color: var(--accent-hover);
+}
+
+.language-option[aria-pressed="false"] .check-icon {
+  visibility: hidden;
+}
+
 /* 统一按钮悬停效果 */
 /* 首页按钮 */
 #refresh-wallpapers,
@@ -455,7 +469,7 @@ input:checked+.toggle-slider:before {
 #open-extract-folder:hover,
 #open-workshop-folder:hover,
 #language-toggle-btn:hover,
-.language-option:hover,
+.language-option:not([aria-pressed="true"]):hover,
 .theme-btn:hover:not([style*="background-color: var(--accent-color)"]),
 #dropzone:hover,
 #dropzone.is-drag-over {
@@ -467,7 +481,6 @@ input:checked+.toggle-slider:before {
 #refresh-wallpapers:hover svg,
 #content-rating-filter-btn:hover svg,
 #content-rating-dropdown label:hover span,
-.language-option:hover .check-icon,
 #dropzone:hover p,
 #dropzone.is-drag-over p {
     color: var(--accent-color) !important;

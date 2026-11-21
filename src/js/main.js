@@ -242,20 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
       function updateLanguageSelection() {
         const currentLang = window.i18n.currentLanguage;
         languageButtons.forEach(button => {
-          const lang = button.dataset.lang;
-          const checkIcon = button.querySelector('.check-icon');
-
-          if (lang === currentLang) {
-            button.classList.add('bg-[var(--accent-color)]', 'text-[var(--accent-text)]');
-            button.classList.remove('bg-[var(--bg-tertiary)]');
-            checkIcon.classList.remove('opacity-0');
-            checkIcon.classList.add('opacity-100');
-          } else {
-            button.classList.remove('bg-[var(--accent-color)]', 'text-[var(--accent-text)]');
-            button.classList.add('bg-[var(--bg-tertiary)]');
-            checkIcon.classList.remove('opacity-100');
-            checkIcon.classList.add('opacity-0');
-          }
+          button.setAttribute('aria-pressed', String(button.dataset.lang === currentLang));
         });
       }
 
@@ -280,9 +267,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
 
-      // 监听语言变化事件，更新按钮文本
       window.addEventListener('languageChanged', () => {
         updateLanguageButtonText();
+        updateLanguageSelection();
       });
 
       // 点击其他地方关闭语言选项

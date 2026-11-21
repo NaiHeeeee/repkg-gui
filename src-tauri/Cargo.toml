@@ -1,6 +1,6 @@
 [package]
 name = "repkg-gui"
-version = "0.8.0"
+version = "0.8.1"
 description = "repkg-gui"
 authors = ["NaiHe"]
 edition = "2021"
