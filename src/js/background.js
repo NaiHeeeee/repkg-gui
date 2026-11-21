@@ -178,7 +178,6 @@ class BackgroundManager {
         window.addEventListener('languageChanged', () => {
             this.updateOpacityDisplay();
         });
-
     }
 
     async selectLocalBackgroundFile() {
@@ -190,7 +189,7 @@ class BackgroundManager {
                 return;
             }
 
-            this.handleLocalFilePath(selectedPath);
+            await this.handleLocalFilePath(selectedPath);
         } catch (error) {
             const message = window.i18n && window.i18n.t
                 ? window.i18n.t('messages.select_file_error')
@@ -318,7 +317,7 @@ class BackgroundManager {
         this.showPreview(url, type);
     }
 
-    handleLocalFilePath(filePath) {
+    async handleLocalFilePath(filePath) {
         const extension = filePath.split('.').pop()?.toLowerCase() || '';
         const isImage = this.isImageExtension(extension);
         const isVideo = this.isVideoExtension(extension);
@@ -333,12 +332,29 @@ class BackgroundManager {
 
         this.discardFileSelection();
         this.hidePreview();
+        const version = this.selectionVersion;
+        let cachedFile;
+        if (isVideo) {
+            this.clearFileInfo();
+            try {
+                cachedFile = await window.__TAURI__.core.invoke('copy_background_file', {
+                    sourcePath: filePath
+                });
+            } catch (error) {
+                if (version === this.selectionVersion) throw error;
+                return;
+            }
+            if (version !== this.selectionVersion) return;
+        }
+
         const selected = {
             file: null,
             sourcePath: filePath,
+            path: cachedFile?.filePath,
             name: filePath.split(/[\\/]/).pop(),
+            size: cachedFile?.fileSize,
             mimeType: this.getMimeTypeFromExtension(extension),
-            url: this.getLocalAssetUrl(filePath),
+            url: this.getLocalAssetUrl(cachedFile?.filePath || filePath),
             type: isVideo ? 'video' : 'image'
         };
         this.pendingLocalFile = selected;
@@ -451,15 +467,15 @@ class BackgroundManager {
             } else if (type === 'video') {
                 const video = document.createElement('video');
                 const finish = callback => {
-                    video.onloadedmetadata = null;
+                    video.onloadeddata = null;
                     video.onerror = null;
                     video.removeAttribute('src');
                     video.load();
                     callback();
                 };
-                video.onloadedmetadata = () => finish(resolve);
+                video.onloadeddata = () => finish(resolve);
                 video.onerror = () => finish(reject);
-                video.preload = 'metadata';
+                video.preload = 'auto';
                 video.src = url;
                 video.load();
             }
@@ -618,16 +634,6 @@ class BackgroundManager {
         resume();
     }
 
-    playVideo(video) {
-        video.play().catch(error => {
-            if (error.name === 'NotAllowedError' && video.isConnected) {
-                document.addEventListener('pointerdown', () => {
-                    if (video.isConnected && video.hasAttribute('src')) this.playVideo(video);
-                }, { once: true });
-            }
-        });
-    }
-
     removeBackground() {
         this.stopBackgroundPlayback?.();
         this.stopBackgroundPlayback = null;
@@ -691,24 +697,22 @@ class BackgroundManager {
         previewContainer.classList.remove('hidden');
         previewContainer.classList.add('show');
 
-        if (displayType === 'video') {
-            imgPreview.style.display = 'none';
-            videoPreview.style.display = 'block';
-            videoPreview.classList.remove('fade-out');
-            videoPreview.classList.add('fade-in');
-            videoPreview.muted = true;
-            videoPreview.playsInline = true;
-            videoPreview.src = displayUrl;
-            this.playVideo(videoPreview);
-            return;
-        }
-
         // 预加载资源以避免显示破损图片
         this.preloadResource(displayUrl, displayType)
             .then(() => {
                 if (this.previewUrl !== displayUrl) return;
                 // 强制重排以确保动画效果
                 previewContainer.offsetHeight;
+
+                if (displayType === 'video') {
+                    imgPreview.style.display = 'none';
+                    videoPreview.style.display = 'block';
+                    videoPreview.classList.remove('fade-out');
+                    videoPreview.classList.add('fade-in');
+                    videoPreview.src = displayUrl;
+                    videoPreview.play().catch(() => {});
+                    return;
+                }
                 
                 imgPreview.src = displayUrl;
                 imgPreview.style.display = 'block';
