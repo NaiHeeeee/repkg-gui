@@ -1,0 +1,7 @@
+packages:
+  - '.'
+
+allowBuilds:
+  gifsicle: true
+  mozjpeg: true
+  optipng-bin: true

@@ -1,6 +1,6 @@
 [package]
 name = "repkg-gui"
-version = "0.7.3"
+version = "0.8.0"
 description = "repkg-gui"
 authors = ["NaiHe"]
 edition = "2021"
@@ -31,3 +31,8 @@ tauri-plugin-shell = "2"
 tauri-plugin-upload = "2"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+tempfile = "3.20"
+sha2 = "0.10"
+
+[profile.dev.package.sha2]
+opt-level = 3

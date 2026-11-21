@@ -6,7 +6,9 @@ class BackgroundManager {
         this.currentType = null; // 'image' or 'video'
         this.opacity = 0.3;
         this.previewUrl = null; // 预览URL，未应用前不设置背景
-        this.currentFile = null; // 当前选择的本地文件
+        this.currentFile = null; // 已应用的浏览器文件
+        this.pendingLocalFile = null;
+        this.selectionVersion = 0;
         this.currentFilePath = null; // 当前本地文件路径，用于重启后恢复
         this.savedLocalFileName = null;
         this.savedLocalFileSize = null;
@@ -49,9 +51,9 @@ class BackgroundManager {
         return filePath;
     }
 
-    init() {
+    async init() {
+        await this.loadSavedSettings();
         this.bindEvents();
-        this.loadSavedSettings();
     }
 
     bindEvents() {
@@ -96,19 +98,16 @@ class BackgroundManager {
             const url = e.target.value.trim();
             
             if (url) {
-                // 用户正在输入URL，清除本地文件选择
-                this.currentFile = null;
-                this.currentFilePath = null;
-                this.savedLocalFileName = null;
-                this.savedLocalFileSize = null;
-                this.savedLocalFileType = null;
+                this.discardFileSelection();
                 fileInput.value = '';
                 this.clearFileInfo();
                 
                 if (this.isValidUrl(url)) {
                     // 延迟500ms后显示预览，避免频繁请求
                     previewTimeout = setTimeout(() => {
-                        this.showPreview(url);
+                        if (!this.pendingLocalFile && urlInput.value.trim() === url) {
+                            this.showPreview(url);
+                        }
                     }, 500);
                 } else {
                     // 无效URL时隐藏预览
@@ -125,16 +124,19 @@ class BackgroundManager {
             const url = e.target.value.trim();
             if (url && this.isValidUrl(url)) {
                 this.showPreview(url);
-            } else {
+            } else if (!this.pendingLocalFile) {
                 this.hidePreview();
             }
         });
 
         // 监听URL输入框失去焦点事件
-        urlInput.addEventListener('blur', () => {
+        urlInput.addEventListener('blur', (e) => {
+            const url = e.target.value.trim();
             // 延迟隐藏，给用户时间点击应用按钮
             setTimeout(() => {
-                this.hidePreview();
+                if (this.previewUrl === url && !this.pendingLocalFile) {
+                    this.hidePreview();
+                }
             }, 200);
         });
 
@@ -174,24 +176,23 @@ class BackgroundManager {
         // 监听语言变化
         window.addEventListener('languageChanged', () => {
             this.updateOpacityDisplay();
-            // 如果有选中的文件，重新更新文件信息显示
-            if (this.currentFile) {
-                this.updateFileInfo(this.currentFile);
-            } else if (this.savedLocalFileName) {
-                this.updateSavedFileInfo();
-            }
         });
+
+        const resumeBackground = () => this.resumeBackgroundVideo();
+        document.addEventListener('visibilitychange', resumeBackground);
+        window.addEventListener('focus', resumeBackground);
     }
 
     async selectLocalBackgroundFile() {
         try {
-            const { invoke } = window.__TAURI__.core;
-            const selectedPath = await invoke('select_background_file');
+            const selectedPath = await window.__TAURI__.dialog.open({
+                filters: [{ name: 'Background Media', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'mov', 'avi'] }]
+            });
             if (!selectedPath) {
                 return;
             }
 
-            await this.handleLocalFilePath(selectedPath);
+            this.handleLocalFilePath(selectedPath);
         } catch (error) {
             const message = window.i18n && window.i18n.t
                 ? window.i18n.t('messages.select_file_error')
@@ -215,34 +216,43 @@ class BackgroundManager {
         }
     }
 
-    setBackground(url) {
+    async setBackground(url) {
         // 验证URL格式
         if (!this.isValidUrl(url)) {
-            const message = window.i18n && window.i18n.t ? window.i18n.t('background.invalid_url') : '请输入有效的图片或视频地址';
+            const message = window.i18n && window.i18n.t ? window.i18n.t('background.invalid_url') : '请输入图片或视频的完整链接，末尾须为支持的扩展名，例如 .jpg 或 .mp4。';
             alert(message);
             return;
         }
 
+        this.discardFileSelection();
+        const version = this.selectionVersion;
+        const type = this.getUrlType(url);
+        try {
+            await this.preloadResource(url, type);
+        } catch {
+            if (version === this.selectionVersion) {
+                const message = window.i18n?.t('background.load_failed') ?? '无法加载背景。请确认链接可以直接打开图片或视频。';
+                alert(message);
+            }
+            return;
+        }
+        if (version !== this.selectionVersion) return;
+
+        if (this.objectUrl) {
+            URL.revokeObjectURL(this.objectUrl);
+            this.objectUrl = null;
+        }
         this.currentUrl = url;
-        this.currentType = this.getUrlType(url);
-        this.previewUrl = null; // 清除预览状态
+        this.currentType = type;
+        this.previewUrl = null;
         this.currentFile = null;
         this.currentFilePath = null;
         this.savedLocalFileName = null;
         this.savedLocalFileSize = null;
         this.savedLocalFileType = null;
-
-        // 预加载并验证资源
-        this.preloadResource(url, this.currentType)
-            .then(async () => {
-                this.applyBackground();
-                await this.saveSettings();
-            })
-            .catch((error) => {
-//                 console.error('背景加载失败:', error);
-                const message = window.i18n && window.i18n.t ? window.i18n.t('background.load_failed') : '背景加载失败，请检查地址是否正确';
-                alert(message);
-            });
+        this.clearFileInfo();
+        this.applyBackground();
+        await this.saveSettings();
     }
 
     isValidUrl(url) {
@@ -285,7 +295,7 @@ class BackgroundManager {
         if (!allowedTypes.includes(file.type)) {
             const message = window.i18n && window.i18n.t ? 
                 window.i18n.t('background.invalid_file_type') : 
-                'Unsupported file type, please select image or video file';
+                'This file type is not supported. Choose one of the image or video formats listed below.';
             alert(message);
             return;
         }
@@ -295,35 +305,22 @@ class BackgroundManager {
         if (file.size > maxSize) {
             const message = window.i18n && window.i18n.t ? 
                 window.i18n.t('background.file_too_large') : 
-                'File size exceeds limit, maximum 1GB supported';
+                'Choose a file no larger than 1 GiB.';
             alert(message);
             return;
         }
 
-        this.currentFile = file;
-        this.currentFilePath = file.path || null;
-        this.savedLocalFileName = file.name;
-        this.savedLocalFileSize = file.size;
-        this.savedLocalFileType = file.type;
-        
-        // 创建临时URL对象
-        if (this.objectUrl) {
-            URL.revokeObjectURL(this.objectUrl);
-        }
-        this.objectUrl = URL.createObjectURL(file);
-        
-        // 确定文件类型
-        this.currentType = file.type.startsWith('image/') ? 'image' : 'video';
-        this.currentUrl = this.objectUrl;
-        
-        // 更新文件信息显示
+        this.discardFileSelection();
+        const url = URL.createObjectURL(file);
+        const type = file.type.startsWith('image/') ? 'image' : 'video';
+        this.pendingLocalFile = {
+            file, path: file.path || null, name: file.name, size: file.size, mimeType: file.type, url, type
+        };
         this.updateFileInfo(file);
-        
-        // 显示预览 - 修复：确保使用正确的URL和类型
-        this.showPreview(this.objectUrl, this.currentType);
+        this.showPreview(url, type);
     }
 
-    async handleLocalFilePath(filePath) {
+    handleLocalFilePath(filePath) {
         const extension = filePath.split('.').pop()?.toLowerCase() || '';
         const isImage = this.isImageExtension(extension);
         const isVideo = this.isVideoExtension(extension);
@@ -331,80 +328,107 @@ class BackgroundManager {
         if (!isImage && !isVideo) {
             const message = window.i18n && window.i18n.t
                 ? window.i18n.t('background.invalid_file_type')
-                : 'Unsupported file type, please select image or video file';
+                : 'This file type is not supported. Choose one of the image or video formats listed below.';
             alert(message);
             return;
         }
 
-        const { invoke } = window.__TAURI__.core;
-        const copiedFile = await invoke('copy_background_file', { sourcePath: filePath });
-        const mimeType = this.getMimeTypeFromExtension(extension);
+        this.discardFileSelection();
+        this.hidePreview();
+        const selected = {
+            file: null,
+            sourcePath: filePath,
+            name: filePath.split(/[\\/]/).pop(),
+            mimeType: this.getMimeTypeFromExtension(extension),
+            url: this.getLocalAssetUrl(filePath),
+            type: isVideo ? 'video' : 'image'
+        };
+        this.pendingLocalFile = selected;
+        this.updateFileInfo(selected);
+        this.showPreview(selected.url, selected.type);
+    }
 
-        this.currentFile = null;
-        this.currentFilePath = copiedFile.filePath;
-        this.savedLocalFileName = copiedFile.fileName;
-        this.savedLocalFileSize = copiedFile.fileSize;
-        this.savedLocalFileType = mimeType;
-        this.currentType = isVideo ? 'video' : 'image';
-        this.currentUrl = this.getLocalAssetUrl(copiedFile.filePath);
-
-        this.updateSavedFileInfo();
-        this.showPreview(this.currentUrl, this.currentType);
+    discardFileSelection() {
+        this.selectionVersion++;
+        const selected = this.pendingLocalFile;
+        if (selected?.file && selected.url !== this.objectUrl) {
+            URL.revokeObjectURL(selected.url);
+        }
+        this.pendingLocalFile = null;
     }
 
     // 应用本地文件作为背景
     async applyLocalFile() {
-        if (!this.currentFile && !this.currentFilePath) {
-            const message = window.i18n && window.i18n.t ? 
-                window.i18n.t('background.no_file_selected') : 
-                'Please select a file first';
-            alert(message);
-            return;
-        }
-
-        if (!this.isEnabled) {
-            this.isEnabled = true;
-            const toggle = document.getElementById('custom-bg-toggle');
-            if (toggle) {
-                toggle.checked = true;
+        const selected = this.pendingLocalFile;
+        if (!selected || selected.applying) return;
+        selected.applying = true;
+        const button = document.getElementById('apply-local-bg');
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        try {
+            if (selected.sourcePath && !selected.path) {
+                const copiedFile = await window.__TAURI__.core.invoke('copy_background_file', {
+                    sourcePath: selected.sourcePath
+                });
+                selected.path = copiedFile.filePath;
+                selected.size = copiedFile.fileSize;
             }
+            if (this.pendingLocalFile !== selected) return;
+
+            this.hidePreview();
+            if (this.objectUrl && this.objectUrl !== selected.url) {
+                URL.revokeObjectURL(this.objectUrl);
+            }
+            this.objectUrl = selected.file ? selected.url : null;
+            this.currentFile = selected.file;
+            this.currentFilePath = selected.path || null;
+            this.savedLocalFileName = selected.name;
+            this.savedLocalFileSize = selected.size;
+            this.savedLocalFileType = selected.mimeType;
+            this.currentType = selected.type;
+            this.currentUrl = selected.sourcePath ? this.getLocalAssetUrl(selected.path) : selected.url;
+            this.isEnabled = true;
+            document.getElementById('custom-bg-toggle').checked = true;
             this.toggleControls();
-        }
-
-        // 应用背景（逻辑与setBackground类似，但不需要预加载）
-        this.applyBackground();
-        
-        // 保存设置（注意：本地文件的URL是临时的，重启后会失效）
-        await this.saveSettings();
-
-        if (window.__TAURI__?.core?.invoke && this.currentFilePath) {
-            await window.__TAURI__.core.invoke('cleanup_background_files', {
-                keepFilePath: this.currentFilePath
-            });
+            await this.saveSettings();
+        } catch (error) {
+            if (this.pendingLocalFile === selected) alert(String(error));
+        } finally {
+            selected.applying = false;
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
         }
     }
 
     // 更新文件信息显示
-    updateFileInfo(file) {
+    updateFileInfo({ name, size }) {
         const fileInfoElement = document.getElementById('selected-file-info');
-        const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-        const fileName = file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name;
+        const sizeLabel = Number.isFinite(size) ? (size / (1024 * 1024)).toFixed(1) + ' MB' : '';
+        const fileName = name.length > 30 ? name.substring(0, 30) + '...' : name;
         
         // 大文件性能警告
-        const isLargeFile = file.size > 200 * 1024 * 1024; // 大于200MB
+        const isLargeFile = size > 200 * 1024 * 1024;
         const warningText = isLargeFile ? 
-            `<span class="text-yellow-500 text-xs ml-2" title="${window.i18n ? window.i18n.t('background.large_file_warning') : 'Large file warning'}">⚠</span>` : '';
+            `<span class="text-yellow-500 text-xs ml-2" data-i18n-title="background.large_file_warning" title="${window.i18n ? window.i18n.t('background.large_file_warning') : 'Large file warning'}">⚠</span>` : '';
         
         // 使用当前语言获取按钮文本
         const applyButtonText = window.i18n ? window.i18n.t('background.apply') : 'Apply';
+        const applyingText = window.i18n ? window.i18n.t('background.applying') : 'Applying…';
         
         fileInfoElement.innerHTML = `
-            <span class="truncate">${fileName}</span>
-            <span class="ml-2 shrink-0 text-[var(--text-secondary)]">(${sizeInMB} MB)</span>
+            <span class="truncate"></span>
+            ${sizeLabel ? '<span class="ml-2 shrink-0 text-[var(--text-secondary)]">(' + sizeLabel + ')</span>' : ''}
             ${warningText}
-            <button id="apply-local-bg" class="ml-2 shrink-0 glass-effect${settingsManager.get('glass-effect') ? '' : ' glass-disabled'} text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md">${applyButtonText}</button>
+            <button type="button" id="apply-local-bg" class="background-apply-button ml-2 shrink-0 glass-effect${settingsManager.get('glass-effect') ? '' : ' glass-disabled'} text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md">
+                <span class="background-apply-idle" data-i18n="background.apply">${applyButtonText}</span>
+                <span class="background-apply-progress">
+                    <span class="background-apply-spinner" aria-hidden="true"></span>
+                    <span data-i18n="background.applying">${applyingText}</span>
+                </span>
+            </button>
         `;
 
+        fileInfoElement.querySelector('span').textContent = fileName;
         // 绑定应用按钮事件
         const applyBtn = document.getElementById('apply-local-bg');
         applyBtn.addEventListener('click', async () => {
@@ -416,25 +440,7 @@ class BackgroundManager {
     clearFileInfo() {
         const fileInfoElement = document.getElementById('selected-file-info');
         const noFileText = window.i18n ? window.i18n.t('background.no_file_selected') : 'No file selected';
-        fileInfoElement.innerHTML = `<span>${noFileText}</span>`;
-    }
-
-    updateSavedFileInfo() {
-        const fileInfoElement = document.getElementById('selected-file-info');
-        const applyButtonText = window.i18n ? window.i18n.t('background.apply') : 'Apply';
-        const fileName = this.savedLocalFileName && this.savedLocalFileName.length > 30
-            ? this.savedLocalFileName.substring(0, 30) + '...'
-            : (this.savedLocalFileName || this.currentFilePath || '');
-
-        fileInfoElement.innerHTML = `
-            <span class="truncate">${fileName}</span>
-            <button id="apply-local-bg" class="ml-2 shrink-0 glass-effect${settingsManager.get('glass-effect') ? '' : ' glass-disabled'} text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md">${applyButtonText}</button>
-        `;
-
-        const applyBtn = document.getElementById('apply-local-bg');
-        applyBtn.addEventListener('click', async () => {
-            await this.applyLocalFile();
-        });
+        fileInfoElement.innerHTML = `<span data-i18n="background.no_file_selected">${noFileText}</span>`;
     }
 
     preloadResource(url, type) {
@@ -446,8 +452,16 @@ class BackgroundManager {
                 img.src = url;
             } else if (type === 'video') {
                 const video = document.createElement('video');
-                video.onloadeddata = resolve;
-                video.onerror = reject;
+                const finish = callback => {
+                    video.onloadedmetadata = null;
+                    video.onerror = null;
+                    video.removeAttribute('src');
+                    video.load();
+                    callback();
+                };
+                video.onloadedmetadata = () => finish(resolve);
+                video.onerror = () => finish(reject);
+                video.preload = 'metadata';
                 video.src = url;
                 video.load();
             }
@@ -462,6 +476,7 @@ class BackgroundManager {
 
         // 创建新的背景元素
         const bgElement = document.createElement('div');
+        let video;
         bgElement.id = 'custom-background';
         bgElement.style.cssText = `
             position: fixed;
@@ -480,8 +495,7 @@ class BackgroundManager {
             bgElement.style.backgroundPosition = 'center';
             bgElement.style.backgroundRepeat = 'no-repeat';
         } else if (this.currentType === 'video') {
-            const video = document.createElement('video');
-            video.src = this.currentUrl;
+            video = document.createElement('video');
             video.style.cssText = `
                 position: absolute;
                 top: 50%;
@@ -495,21 +509,55 @@ class BackgroundManager {
             `;
             video.autoplay = true;
             video.loop = true;
+            video.defaultMuted = true;
             video.muted = true;
+            video.playsInline = true;
+            video.src = this.currentUrl;
+            const resume = () => this.resumeBackgroundVideo(video);
+            video.addEventListener('pause', resume);
+            video.addEventListener('ended', resume);
             bgElement.appendChild(video);
         }
 
         document.body.appendChild(bgElement);
+        if (video) this.playVideo(video);
+    }
+
+    resumeBackgroundVideo(video = document.querySelector('#custom-background > video')) {
+        if (!this.isEnabled || document.hidden || !video?.isConnected || video.error) return;
+
+        if (video.ended) {
+            video.loop = true;
+            video.currentTime = 0;
+        }
+        if (video.paused) this.playVideo(video);
+    }
+
+    playVideo(video) {
+        video.play().catch(error => {
+            if (error.name === 'NotAllowedError' && video.isConnected) {
+                document.addEventListener('pointerdown', () => {
+                    if (video.isConnected && video.hasAttribute('src')) this.playVideo(video);
+                }, { once: true });
+            }
+        });
     }
 
     removeBackground() {
         const existingBg = document.getElementById('custom-background');
         if (existingBg) {
+            const video = existingBg.querySelector('video');
             existingBg.remove();
+            if (video) {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+            }
         }
     }
 
     async clearBackground() {
+        this.discardFileSelection();
         this.currentUrl = null;
         this.currentType = null;
         this.previewUrl = null;
@@ -556,37 +604,34 @@ class BackgroundManager {
         previewContainer.classList.remove('hidden');
         previewContainer.classList.add('show');
 
+        if (displayType === 'video') {
+            imgPreview.style.display = 'none';
+            videoPreview.style.display = 'block';
+            videoPreview.classList.remove('fade-out');
+            videoPreview.classList.add('fade-in');
+            videoPreview.muted = true;
+            videoPreview.playsInline = true;
+            videoPreview.src = displayUrl;
+            this.playVideo(videoPreview);
+            return;
+        }
+
         // 预加载资源以避免显示破损图片
         this.preloadResource(displayUrl, displayType)
             .then(() => {
+                if (this.previewUrl !== displayUrl) return;
                 // 强制重排以确保动画效果
                 previewContainer.offsetHeight;
                 
-                if (displayType === 'image') {
-                    imgPreview.src = displayUrl;
-                    imgPreview.style.display = 'block';
-                    imgPreview.classList.add('fade-in');
-                    imgPreview.classList.remove('fade-out');
-                    videoPreview.style.display = 'none';
-                    videoPreview.classList.remove('fade-in');
-                    videoPreview.classList.add('fade-out');
-                } else if (displayType === 'video') {
-                    videoPreview.src = displayUrl;
-                    videoPreview.style.display = 'block';
-                    videoPreview.classList.add('fade-in');
-                    videoPreview.classList.remove('fade-out');
-                    imgPreview.style.display = 'none';
-                    imgPreview.classList.remove('fade-in');
-                    imgPreview.classList.add('fade-out');
-                    
-                    // 播放视频
-                    videoPreview.play().catch(error => {
-                        // 静默处理播放失败，可能是由于浏览器策略限制
-                        // console.warn('视频自动播放失败:', error);
-                    });
-                }
+                imgPreview.src = displayUrl;
+                imgPreview.style.display = 'block';
+                imgPreview.classList.add('fade-in');
+                imgPreview.classList.remove('fade-out');
+                videoPreview.style.display = 'none';
+                this.releaseVideoPreview();
             })
             .catch((error) => {
+                if (this.previewUrl !== displayUrl) return;
                 // console.warn('预览加载失败:', error);
                 // 加载失败时不显示预览，但保持容器可见
                 imgPreview.style.display = 'none';
@@ -595,27 +640,33 @@ class BackgroundManager {
     }
 
     hidePreview() {
+        this.previewUrl = null;
         const previewContainer = document.getElementById('bg-preview-container');
-        
+        this.releaseVideoPreview();
         // 添加淡出动画
         previewContainer.classList.remove('show');
         
         // 动画结束后隐藏
             setTimeout(() => {
+                if (this.previewUrl) return;
                 previewContainer.classList.add('hidden');
                 
                 // 重置图片和视频状态
                 const imgPreview = document.getElementById('bg-image-preview');
                 const videoPreview = document.getElementById('bg-video-preview');
                 
-                // 暂停视频播放
-                if (videoPreview && !videoPreview.paused) {
-                    videoPreview.pause();
-                }
-                
                 imgPreview.classList.remove('fade-in', 'fade-out');
                 videoPreview.classList.remove('fade-in', 'fade-out');
             }, 200);
+    }
+
+    releaseVideoPreview() {
+        const video = document.getElementById('bg-video-preview');
+        if (video.hasAttribute('src')) {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
     }
 
     async saveSettings() {
@@ -634,7 +685,7 @@ class BackgroundManager {
             filePath: savedFilePath
         };
         await settingsManager.init();
-        settingsManager.set('custom-background', settings);
+        await settingsManager.set('custom-background', settings);
     }
 
     updateOpacityDisplay() {
@@ -656,7 +707,7 @@ class BackgroundManager {
                 this.isEnabled = settings.enabled || false;
                 this.currentUrl = settings.url || null;
                 this.currentType = settings.type || null;
-                this.opacity = settings.opacity || 0.3;
+                this.opacity = settings.opacity ?? 0.3;
                 this.currentFilePath = settings.filePath || null;
                 this.savedLocalFileName = settings.fileName || null;
                 this.savedLocalFileSize = settings.fileSize || null;
@@ -671,15 +722,13 @@ class BackgroundManager {
                 urlInput.value = this.currentUrl || '';
                 opacitySlider.value = this.opacity;
                 
-                // 确保在更新显示前i18n已经初始化
-                await this.waitForI18n();
                 this.updateOpacityDisplay();
 
                 // 如果是本地文件，优先尝试恢复
                 if (settings.isLocalFile && settings.fileName) {
                     const restored = await this.restoreLocalBackground(settings);
                     if (!restored) {
-                        await this.showLocalFileStatus(settings.fileName, 'background.file_missing', '保存的本地背景文件不存在，无法自动恢复');
+                        await this.showLocalFileStatus(settings.fileName, 'background.file_missing', '找不到已保存的背景，请重新选择文件。');
                     }
                 }
 
@@ -706,49 +755,50 @@ class BackgroundManager {
 
     // 显示本地文件警告信息
     async showLocalFileStatus(fileName, detailKey, fallbackDetail) {
-        // 更健壮的i18n等待机制
-        await this.waitForI18n();
-
         const fileInfoElement = document.getElementById('selected-file-info');
-        const warningText1 = window.i18n && window.i18n.t ? 
-            window.i18n.t('background.previous_file') : 
-            'Previously selected file: ';
-        const warningText2 = window.i18n && window.i18n.t ? 
-            window.i18n.t(detailKey) : 
-            fallbackDetail;
+        const warningText1 = window.i18n?.translations?.background?.previous_file ?? '上次选择的文件：';
+        const warningText2 = window.i18n?.translations?.background?.[detailKey.split('.').pop()] ?? fallbackDetail;
         
         fileInfoElement.innerHTML = `
             <div class="flex flex-col">
-                <span class="text-[var(--text-secondary)]">${warningText1} ${fileName}</span>
-                <span class="text-xs text-[var(--text-secondary)]">${warningText2}</span>
+                <span class="text-[var(--text-secondary)]"><span data-i18n="background.previous_file">${warningText1}</span> <span class="background-status-file"></span></span>
+                <span class="text-xs text-[var(--text-secondary)]" data-i18n="${detailKey}">${warningText2}</span>
             </div>
         `;
+        fileInfoElement.querySelector('.background-status-file').textContent = fileName;
     }
 
     async restoreLocalBackground(settings) {
-        if (!settings.filePath || !settings.type || !this.isEnabled) {
+        if (!settings.filePath || !settings.type) {
             return false;
         }
 
         try {
             const { invoke } = window.__TAURI__.core;
-            const exists = await invoke('check_file_exists', { path: settings.filePath });
-            if (!exists) {
+            const filePath = await invoke('resolve_background_file', {
+                filePath: settings.filePath,
+                fileName: settings.fileName,
+                fileSize: settings.fileSize ?? null
+            });
+            if (!filePath) {
                 return false;
             }
 
             this.currentFile = null;
-            this.currentFilePath = settings.filePath;
+            this.currentFilePath = filePath;
             this.savedLocalFileName = settings.fileName || null;
             this.savedLocalFileSize = settings.fileSize || null;
             this.savedLocalFileType = settings.fileType || null;
             this.currentType = settings.type;
-            this.currentUrl = this.getLocalAssetUrl(settings.filePath);
+            this.currentUrl = this.getLocalAssetUrl(filePath);
+            if (filePath !== settings.filePath) {
+                await this.saveSettings();
+            }
 
             await this.showLocalFileStatus(
                 settings.fileName,
                 'background.auto_restored',
-                '已在启动时自动恢复上次选择的本地背景'
+                '已恢复上次使用的背景。'
             );
 
             return true;
@@ -757,45 +807,11 @@ class BackgroundManager {
         }
     }
 
-    // 等待i18n初始化完成的通用方法
-    async waitForI18n() {
-        // 等待i18n可用
-        if (!window.i18n) {
-            await new Promise((resolve) => {
-                const checkI18n = () => {
-                    if (window.i18n) {
-                        resolve();
-                    } else {
-                        setTimeout(checkI18n, 50);
-                    }
-                };
-                checkI18n();
-            });
-        }
-
-        // 等待翻译加载完成
-        if (!window.i18n.translations) {
-            await new Promise((resolve) => {
-                const checkTranslations = () => {
-                    if (window.i18n && window.i18n.translations && Object.keys(window.i18n.translations).length > 0) {
-                        resolve();
-                    } else {
-                        setTimeout(checkTranslations, 50);
-                    }
-                };
-                checkTranslations();
-            });
-        }
-
-        // 额外等待一小段时间确保DOM更新完成
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
 }
 
 // 初始化背景管理器
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.backgroundManager = new BackgroundManager();
-    await window.backgroundManager.loadSavedSettings();
 });
 
 

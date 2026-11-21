@@ -24,75 +24,63 @@ class SettingsManager {
       'workshop-path': ''
     };
     this.settings = { ...this.defaultSettings };
-    this.initialized = false;
+    this.initialization = null;
+    this.pendingSave = Promise.resolve();
   }
 
   // 初始化设置管理器
-  async init() {
-    if (this.initialized) return;
-    
-    try {
-      await this.loadSettings();
-      this.initialized = true;
-    } catch (error) {
-      // console.error('初始化设置失败:', error);
-      this.settings = { ...this.defaultSettings };
-    }
+  init() {
+    this.initialization ??= this.loadSettings().catch(error => {
+      const message = window.i18n?.t('messages.settings_load_failed') ?? '读取设置失败，已使用默认设置。';
+      window.alert(`${message}\n${error}`);
+    });
+    return this.initialization;
   }
 
   // 加载设置
   async loadSettings() {
-    try {
-      if (window.__TAURI__) {
-        const { invoke } = window.__TAURI__.core;
-        const exists = await invoke('file_exists', { path: this.settingsPath });
-        
-        if (exists) {
-          const content = await invoke('read_text_file', { path: this.settingsPath });
-          const loadedSettings = JSON.parse(content);
-          this.settings = { ...this.defaultSettings, ...loadedSettings };
-        } else {
-          // 文件不存在，创建默认设置文件
-          await this.saveSettings();
+    let loadedSettings = {};
+    if (window.__TAURI__) {
+      const { invoke } = window.__TAURI__.core;
+      if (await invoke('file_exists', { path: this.settingsPath })) {
+        const content = await invoke('read_text_file', { path: this.settingsPath });
+        loadedSettings = JSON.parse(content);
+        if (!loadedSettings || typeof loadedSettings !== 'object' || Array.isArray(loadedSettings)) {
+          throw new Error('Invalid settings.json');
         }
-      } else {
-        // 非Tauri环境，使用localStorage作为后备
-        const loadedSettings = {};
-        Object.keys(this.defaultSettings).forEach(key => {
-          const value = localStorage.getItem(`repkg-${key}`);
-          if (value !== null) {
-            if (value === 'true') {
-              loadedSettings[key] = true;
-            } else if (value === 'false') {
-              loadedSettings[key] = false;
-            } else {
-              loadedSettings[key] = value;
-            }
-          }
-        });
-        this.settings = { ...this.defaultSettings, ...loadedSettings };
       }
-    } catch (error) {
-      // console.error('加载设置失败:', error);
+    } else {
+      for (const key of Object.keys(this.defaultSettings)) {
+        const value = localStorage.getItem(`repkg-${key}`);
+        if (value !== null) loadedSettings[key] = value;
+      }
     }
+
+    for (const [key, defaultValue] of Object.entries(this.defaultSettings)) {
+      if (typeof defaultValue === 'boolean' && typeof loadedSettings[key] === 'string') {
+        loadedSettings[key] = loadedSettings[key] === 'true';
+      }
+    }
+    this.settings = { ...this.defaultSettings, ...loadedSettings };
   }
 
   // 保存设置到文件
-  async saveSettings() {
-    try {
+  saveSettings() {
+    this.pendingSave = this.pendingSave.then(async () => {
       if (window.__TAURI__) {
         const { invoke } = window.__TAURI__.core;
         const content = JSON.stringify(this.settings, null, 2);
         await invoke('write_text_file', { path: this.settingsPath, contents: content });
       } else {
-        // 非Tauri环境，保存到localStorage
-        Object.keys(this.settings).forEach(key => {
-          localStorage.setItem(`repkg-${key}`, this.settings[key]);
-        });
+        for (const [key, value] of Object.entries(this.settings)) {
+          localStorage.setItem(`repkg-${key}`, value);
+        }
       }
-    } catch (error) {
-      // console.error('保存设置失败:', error);
-    }
+    }).catch(error => {
+      const message = window.i18n?.t('messages.settings_save_failed') ?? '无法保存设置，重启后可能恢复为旧值。';
+      window.alert(`${message}\n${error}`);
+    });
+    return this.pendingSave;
   }
 
   // 获取设置值
@@ -102,6 +90,7 @@ class SettingsManager {
 
   // 设置值并保存
   async set(key, value) {
+    await this.init();
     this.settings[key] = value;
     await this.saveSettings();
   }
@@ -113,12 +102,14 @@ class SettingsManager {
 
   // 重置为默认值
   async resetToDefaults() {
+    await this.init();
     this.settings = { ...this.defaultSettings };
     await this.saveSettings();
   }
 
   // 更新多个设置
   async updateSettings(newSettings) {
+    await this.init();
     this.settings = { ...this.settings, ...newSettings };
     await this.saveSettings();
   }

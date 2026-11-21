@@ -97,6 +97,8 @@ class I18n {
   }
 
   updateDOM() {
+    document.documentElement.lang = this.currentLanguage;
+
     // Update all elements with data-i18n attribute
     const elements = document.querySelectorAll('[data-i18n]');
     elements.forEach(element => {

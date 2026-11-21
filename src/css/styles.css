@@ -300,6 +300,49 @@ input:checked+.toggle-slider:before {
   animation: spin 1s linear;
 }
 
+.background-apply-button {
+  display: inline-grid;
+  place-items: center;
+}
+
+.background-apply-button > span {
+  grid-area: 1 / 1;
+}
+
+.background-apply-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  visibility: hidden;
+}
+
+.background-apply-spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.background-apply-button[aria-busy="true"] {
+  cursor: wait;
+}
+
+.background-apply-button[aria-busy="true"] .background-apply-idle {
+  visibility: hidden;
+}
+
+.background-apply-button[aria-busy="true"] .background-apply-progress {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .background-apply-button[aria-busy="true"] .background-apply-spinner {
+    animation: spin 0.8s linear infinite;
+  }
+}
+
 /* 180度旋转类 */
 .rotate-180 {
   transform: rotate(180deg);
@@ -414,7 +457,8 @@ input:checked+.toggle-slider:before {
 #language-toggle-btn:hover,
 .language-option:hover,
 .theme-btn:hover:not([style*="background-color: var(--accent-color)"]),
-#dropzone:hover {
+#dropzone:hover,
+#dropzone.is-drag-over {
     color: var(--accent-color) !important;
     background-color: var(--bg-tertiary) !important;
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
@@ -424,13 +468,20 @@ input:checked+.toggle-slider:before {
 #content-rating-filter-btn:hover svg,
 #content-rating-dropdown label:hover span,
 .language-option:hover .check-icon,
-#dropzone:hover p {
+#dropzone:hover p,
+#dropzone.is-drag-over p {
     color: var(--accent-color) !important;
     transition: color 0.2s ease-in-out;
 }
 
-#dropzone:hover {
+#dropzone:hover,
+#dropzone.is-drag-over {
     border-color: var(--accent-color);
+}
+
+#dropzone:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
 
 /* 背景预览容器动效 */
@@ -477,6 +528,24 @@ input:checked+.toggle-slider:before {
 /* 修复不可点击区域的鼠标样式 */
 p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
     cursor: default;
+}
+
+#extraction-result {
+  width: min(28rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  margin: auto;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+#extraction-result::backdrop {
+  background-color: rgb(0 0 0 / 38%);
+}
+
+#extraction-result-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .wallpaper-page-button {

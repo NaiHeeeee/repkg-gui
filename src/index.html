@@ -277,7 +277,7 @@
             <div id="manual" class="page p-8">
                 <div class="max-w-xl mx-auto">
                     <h2 class="text-2xl font-bold mb-10" data-i18n="extract.manual_extract">手动提取</h2>
-                    <div id="dropzone"
+                    <div id="dropzone" role="button" tabindex="0"
                         class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer settings-glass hover:border-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
                         <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -285,7 +285,7 @@
                                 d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M17.25 8.25L21 12m-18 0l3.75-3.75M3 12h18" />
                         </svg>
                         <p class="mt-4 text-lg font-medium text-[var(--text-primary)]" data-i18n="extract.drag_drop">
-                            点击此处批量选择.pkg文件</p>
+                            将 .pkg 文件拖到这里，或点击选择</p>
                         <input type="file" id="file-input" class="hidden" multiple accept=".pkg">
                     </div>
                     <div id="file-list" class="mt-4 space-y-2"></div>
@@ -331,9 +331,9 @@
                                         data-i18n="settings.system">跟随系统</button>
 
                                     <button class="theme-btn rounded" data-theme="light"
-                                        data-i18n="settings.light">亮色</button>
+                                        data-i18n="settings.light">浅色</button>
                                     <button class="theme-btn rounded" data-theme="dark"
-                                        data-i18n="settings.dark">暗色</button>
+                                        data-i18n="settings.dark">深色</button>
                                 </div>
                             </div>
                             <div class="p-4 settings-glass rounded-lg">
@@ -341,9 +341,7 @@
                                     <span class="font-medium" data-i18n="settings.language">语言</span>
                                     <button id="language-toggle-btn"
                                         class="glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
-                                        data-i18n="settings.select_language">
-                                        选择语言
-                                    </button>
+                                        data-i18n="settings.select_language">选择语言</button>
                                 </div>
                                 <div id="language-options" class="hidden mt-3 space-y-2">
                                     <button
@@ -390,12 +388,12 @@
 
 
                                     <div>
-                                        <label class="block text-sm font-medium mb-2"
-                                            data-i18n="background.network_url">网络地址</label>
+                                        <label for="bg-url-input" class="block text-sm font-medium mb-2"
+                                            data-i18n="background.network_url">图片或视频链接</label>
                                         <div class="flex gap-2">
                                             <input type="text" id="bg-url-input"
                                                 class="min-w-0 flex-1 p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm"
-                                                data-i18n-placeholder="background.enter_url" placeholder="请输入图片的URL">
+                                                data-i18n-placeholder="background.enter_url" placeholder="例如 https://example.com/background.jpg">
                                             <button id="apply-bg-url" class="glass-effect text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                                 data-i18n="background.apply">应用</button>
                                             <button id="clear-bg-btn"
@@ -412,15 +410,14 @@
                                                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-msvideo">
                                             <button id="select-bg-file"
                                                 class="glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md"
-                                                data-i18n="background.browse">浏览文件</button>
+                                                data-i18n="background.browse">选择文件</button>
                                             <div id="selected-file-info"
                                                 class="min-w-0 flex-1 text-sm text-[var(--text-secondary)] flex items-center">
                                                 <span data-i18n="background.no_file_selected">未选择文件</span>
                                             </div>
                                         </div>
                                         <p class="text-xs text-[var(--text-secondary)] mt-1"
-                                            data-i18n="background.supported_formats">支持格式：图片 (JPG, PNG, GIF, WebP) 和视频
-                                            (MP4, WebM, MOV, AVI)，最大1GB</p>
+                                            data-i18n="background.supported_formats">图片：JPG、PNG、GIF、WebP。视频：MP4、WebM、MOV、AVI。</p>
                                     </div>
 
                                     <div id="bg-preview-container" class="hidden">
@@ -435,19 +432,17 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium mb-2"
-                                            data-i18n="background.opacity">透明度</label>
+                                        <label for="bg-opacity" class="block text-sm font-medium mb-2"
+                                            data-i18n="background.opacity">背景不透明度</label>
                                         <input type="range" id="bg-opacity" min="0" max="1" step="0.01" value="0.3"
                                             class="w-full">
-                                        <span id="opacity-value" class="text-xs text-[var(--text-secondary)]"
-                                            data-i18n="background.opacity_value"
-                                            data-i18n-params="{&quot;value&quot;:&quot;30&quot;}">30%</span>
+                                        <span id="opacity-value" class="text-xs text-[var(--text-secondary)]">30%</span>
                                     </div>
                                     <div class="flex items-center justify-between mt-4">
                                         <div>
                                             <p class="font-medium" data-i18n="settings.glass_effect">毛玻璃效果</p>
                                             <p class="text-sm text-[var(--text-secondary)]"
-                                                data-i18n="settings.glass_effect_desc">启用或禁用界面的毛玻璃效果</p>
+                                                data-i18n="settings.glass_effect_desc">为界面面板添加半透明模糊效果。</p>
                                         </div>
                                         <label class="toggle-switch">
                                             <input type="checkbox" id="glass-effect-toggle" checked>
@@ -461,11 +456,11 @@
 
                     <!-- 创意工坊路径设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4" data-i18n="workshop.title">创意工坊路径设置</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="workshop.title">Steam 创意工坊</h3>
                         <div class="space-y-2">
                             <div class="p-4 settings-glass rounded-lg">
                                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                    <p class="font-medium" data-i18n="workshop.custom_path">自定义路径</p>
+                                    <label for="workshop-path" class="font-medium" data-i18n="workshop.custom_path">壁纸文件夹</label>
                                     <div class="ml-auto flex flex-wrap justify-end gap-2">
                                         <button id="browse-workshop-path"
                                             class="glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
@@ -479,45 +474,40 @@
                                 </div>
                                 <input type="text" id="workshop-path"
                                     class="w-full p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm mb-2"
-                                    placeholder="可输入基础路径如 D:/Steam，自动补全完整路径"
+                                    placeholder="例如 D:/SteamLibrary"
                                     data-i18n-placeholder="workshop.placeholder">
-                                <p class="text-xs text-[var(--text-secondary)] mt-1" data-i18n="workshop.hint">提示:
-                                    可输入基础路径如 <code class="text-[var(--accent-color)]">D:/Steam</code>，或部分路径如 <code
-                                        class="text-[var(--accent-color)]">E:/Game/Steam/steamapps</code>，系统会自动补全为完整路径
-                                </p>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1" data-i18n="workshop.hint">可填写 Steam 库文件夹，或直接填写 steamapps/workshop/content/431960 的完整路径。</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- 系统设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.system_settings">系统设置</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.system_settings">文件夹选项</h3>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.open_after_extract">提取完成后自动打开提取文件夹</p>
+                                    <p class="font-medium" data-i18n="settings.open_after_extract">提取后打开文件夹</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.open_after_extract_desc">解包完成后自动打开提取文件夹</p>
+                                        data-i18n="settings.open_after_extract_desc">提取成功后，在文件资源管理器中显示输出位置。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="auto-open-extract-folder"><span
                                         class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.open_after_import">导入壁纸编辑器后自动打开文件夹</p>
+                                    <p class="font-medium" data-i18n="settings.open_after_import">导入后打开文件夹</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.open_after_import_desc">导入壁纸到编辑器后自动打开项目文件夹</p>
+                                        data-i18n="settings.open_after_import_desc">导入壁纸编辑器后，在文件资源管理器中打开项目文件夹。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="auto-open-import-folder"><span
                                         class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.create_folder_per_wallpaper">为每个壁纸单独生成文件夹
-                                    </p>
+                                    <p class="font-medium" data-i18n="settings.create_folder_per_wallpaper">按壁纸创建文件夹</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.create_folder_per_wallpaper_desc">
-                                        首页壁纸自动以壁纸名创建文件夹，手动提取以文件名创建文件夹</p>
+                                        data-i18n="settings.create_folder_per_wallpaper_desc">本地壁纸沿用原文件夹名，手动提取使用 .pkg 文件名（不含扩展名）。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox"
                                         id="create-folder-per-wallpaper-checkbox"><span
@@ -528,40 +518,40 @@
 
                     <!-- 解包设置 -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.extract_settings">解包设置</h3>
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="settings.extract_settings">提取设置</h3>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.image_only">仅保留图像文件</p>
+                                    <p class="font-medium" data-i18n="settings.image_only">仅提取图片和视频</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.image_only_desc">只提取图片和视频，忽略其他文件</p>
+                                        data-i18n="settings.image_only_desc">仅输出图片和视频。启用「保留 .tex 文件」时也会保留纹理文件。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="only-images-checkbox"><span
                                         class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.no_convert">不把Tex文件转换为图像</p>
+                                    <p class="font-medium" data-i18n="settings.no_convert">保留 .tex 文件</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.no_convert_desc">保留原始的 .tex 文件</p>
+                                        data-i18n="settings.no_convert_desc">保留原始纹理格式，跳过图片转换。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="no-tex-convert-checkbox"><span
                                         class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.flatten_structure">忽略原有目录结构</p>
+                                    <p class="font-medium" data-i18n="settings.flatten_structure">不保留子文件夹</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.flatten_structure_desc">将所有文件放在同一级目录中</p>
+                                        data-i18n="settings.flatten_structure_desc">将提取的文件直接放入输出文件夹。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox"
                                         id="ignore-dir-structure-checkbox"><span class="toggle-slider"></span></label>
                             </div>
                             <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
                                 <div>
-                                    <p class="font-medium" data-i18n="settings.overwrite_existing">覆盖所有现有文件</p>
+                                    <p class="font-medium" data-i18n="settings.overwrite_existing">覆盖同名文件</p>
                                     <p class="text-sm text-[var(--text-secondary)]"
-                                        data-i18n="settings.overwrite_existing_desc">如果目标文件夹中存在同名文件则覆盖</p>
+                                        data-i18n="settings.overwrite_existing_desc">用提取的文件替换输出文件夹中的同名文件。</p>
                                 </div>
                                 <label class="toggle-switch"><input type="checkbox" id="overwrite-files-checkbox"><span
                                         class="toggle-slider"></span></label>
@@ -587,10 +577,10 @@
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                                 <div class="flex flex-wrap items-baseline gap-x-2">
-                                    <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
+                                    <span class="font-medium" data-i18n="about.version">版本</span>
                                     <a href="https://github.com/naiheeeee/repkg-gui/releases/latest" target="_blank"
                                         class="text-xs text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline tabular-nums"
-                                        id="app-version">v0.7.3</a>
+                                        id="app-version">v0.8.0</a>
                                 </div>
                                 <button id="check-for-updates" type="button" aria-describedby="update-check-status"
                                     class="ml-auto shrink-0 glass-effect rounded-md hover:bg-[var(--bg-tertiary)] disabled:opacity-50"
@@ -616,7 +606,7 @@
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
                             <div class="flex flex-wrap items-baseline gap-x-2">
-                                <span class="font-medium" data-i18n="about.version">RePKG 版本</span>
+                                <span class="font-medium" data-i18n="about.version">版本</span>
                                 <a href="https://github.com/notscuffed/repkg/releases/tag/v0.4.0-alpha" target="_blank"
                                     class="text-xs text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline tabular-nums"
                                     id="repkg-version">RePKG v0.4.0-alpha</a>
@@ -678,6 +668,17 @@
             </div>
         </div>
     </div>
+
+    <dialog id="extraction-result" class="rounded-xl p-5 shadow-2xl"
+        aria-labelledby="extraction-result-title" aria-describedby="extraction-result-message">
+        <h2 id="extraction-result-title" class="text-lg font-semibold" data-i18n="messages.extract_result">提取结果</h2>
+        <p id="extraction-result-message" class="mt-2 text-sm text-[var(--text-secondary)]"></p>
+        <form method="dialog" class="mt-5 flex justify-end">
+            <button type="submit" autofocus
+                class="btn-blue min-h-10 px-4 py-2 text-sm rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
+                data-i18n="buttons.confirm">确定</button>
+        </form>
+    </dialog>
 
     <script src="js/settings.js"></script>
     <script type="module" src="js/update-check.js"></script>

@@ -206,7 +206,7 @@ window.extractWallpaper = async function(wallpaper) {
     let wallpaperPath;
     if (wallpaper.scenePkgPath) {
         // 移除末尾的/scene.pkg，得到壁纸文件夹路径
-        wallpaperPath = wallpaper.scenePkgPath.replace(/\/scene\.pkg$/, '');
+        wallpaperPath = wallpaper.scenePkgPath.replace(/[\\/]scene\.pkg$/i, '');
     } else if (wallpaper.path) {
         wallpaperPath = wallpaper.path;
     } else {
@@ -215,22 +215,17 @@ window.extractWallpaper = async function(wallpaper) {
     }
     
     const extractPathInput = document.getElementById('extract-path');
-    const extractPath = extractPathInput ? extractPathInput.value : '';
+    const extractPath = extractPathInput?.value.trim();
     
     if (!extractPath) {
         alert(window.i18n?.t('messages.set_extract_path_first') || '请先设置提取路径');
         return;
     }
     
-    try {
-        // 调用main.js中的extractWallpaper函数
-        if (typeof extractWallpaperFromMain === 'function') {
-            await extractWallpaperFromMain(wallpaperPath, extractPath);
-        } else {
-            alert(window.i18n?.t('messages.extract_failed') || '提取功能未加载');
-        }
-    } catch (error) {
-        alert((window.i18n?.t('messages.extract_failed') || '提取失败：') + error);
+    if (typeof window.extractWallpaperFromMain === 'function') {
+        await window.extractWallpaperFromMain(wallpaperPath, extractPath);
+    } else {
+        alert(window.i18n?.t('messages.extract_failed') || '提取功能未加载');
     }
 };
 

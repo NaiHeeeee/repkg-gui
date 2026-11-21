@@ -82,16 +82,39 @@ async function setDefaultExtractPath() {
   window.addEventListener('load', checkStylesLoaded);
 })();
 
-// 主题切换优化 - 在样式加载前设置主题
-async function initializeTheme() {
-  await settingsManager.init();
-  const savedTheme = settingsManager.get('theme');
-  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+let extractionResultQueue = Promise.resolve();
 
-  if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-    document.documentElement.classList.add('dark');
-  } else if (savedTheme === 'light') {
-    document.documentElement.classList.remove('dark');
+function showExtractionResult(message) {
+  extractionResultQueue = extractionResultQueue.then(() => new Promise(resolve => {
+    const dialog = document.getElementById('extraction-result');
+    document.getElementById('extraction-result-message').textContent = message;
+    dialog.showModal();
+    const closeTimer = window.setTimeout(() => dialog.close(), 3000);
+    dialog.addEventListener('close', () => {
+      window.clearTimeout(closeTimer);
+      resolve();
+    }, { once: true });
+  }));
+  return extractionResultQueue;
+}
+
+async function readExtractionSettings() {
+  await settingsManager.init();
+  return {
+    only_images: settingsManager.get('only-images') === true,
+    no_tex_convert: settingsManager.get('no-tex-convert') === true,
+    single_dir: settingsManager.get('ignore-dir-structure') === true,
+    overwrite: settingsManager.get('overwrite-files') === true
+  };
+}
+
+async function openExtractionFolder(path) {
+  if (!path || settingsManager.get('auto-open-extract-folder') !== true) return;
+
+  try {
+    await window.__TAURI__.core.invoke('open_folder', { path });
+  } catch (error) {
+    await showExtractionResult(window.i18n.t('messages.open_folder_error') + error);
   }
 }
 
@@ -278,12 +301,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   initTranslations();
-  // --- 初始化主题和设置默认提取路径 ---
-  document.addEventListener('DOMContentLoaded', async () => {
-    await initializeTheme();
-    await setDefaultExtractPath();
-  });
-
   // 使用Tauri的API读取本地文件系统
   let wallpaperLoadVersion = 0;
   let wallpaperLoadStatus = 'loading';
@@ -988,217 +1005,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // --- 提取功能 ---
   async function extractWallpaper(wallpaperPath, extractPath) {
+    const extractBtn = document.getElementById('extract-btn');
+    if (extractBtn.disabled) return;
+
+    extractBtn.textContent = window.i18n.t('messages.extracting');
+    extractBtn.disabled = true;
     try {
-      // 显示提取进度或加载状态
-      const extractBtn = document.getElementById('extract-btn');
-      const originalText = extractBtn.textContent;
-      extractBtn.textContent = window.i18n.t('messages.extracting');
-      extractBtn.disabled = true;
-
-      // 调用 Rust 后端的提取功能
       const { invoke } = window.__TAURI__.core;
-
-      // 检查是否为每个壁纸单独生成文件夹
-      await settingsManager.init();
-      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
-
-      // 如果启用为每个壁纸单独生成文件夹，创建以壁纸名命名的文件夹
-      if (createFolderPerWallpaper) {
-        // 获取壁纸文件夹名称
-        const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
-        if (wallpaperFolderName) {
-          // 构造新的提取路径
-          extractPath = `${extractPath}/${wallpaperFolderName}`;
-
-          // 创建文件夹
-          try {
-            await invoke('create_directory', { path: extractPath });
-          } catch (createError) {
-            // 如果文件夹已存在
-            if (!overwriteFiles) {
-              // 如果未启用覆盖设置，添加后缀
-              const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
-              if (wallpaperFolderName) {
-                let suffix = 1;
-                let newPath;
-                do {
-                  newPath = `${extractPath.replace('/' + wallpaperFolderName, '')}/${wallpaperFolderName}_${suffix}`;
-                  try {
-                    await invoke('create_directory', { path: newPath });
-                    extractPath = newPath;
-                    break;
-                  } catch (e) {
-                    suffix++;
-                  }
-                } while (suffix <= 100); // 最多尝试100次
-              }
-            }
-            // 如果启用了覆盖设置，直接使用现有文件夹
-            // console.log('文件夹已存在，使用现有文件夹（覆盖模式）');
-          }
-        }
-      }
-
-      // 构造正确的scene.pkg文件路径
-      const scenePkgPath = `${wallpaperPath}/scene.pkg`;
-
-      // 获取解包设置
-      await settingsManager.init();
-      const overwriteFiles = settingsManager.get('overwrite-files') === true;
-      const onlyImages = settingsManager.get('only-images') === true;
-      const noTexConvert = settingsManager.get('no-tex-convert') === true;
-      const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
-
-      const options = {
-        output: extractPath,
-        ignore_exts: null,
-        only_exts: null,  // 不移除-e参数，让清理逻辑处理
-        debug_info: false,
-        tex: !noTexConvert,  // 根据设置决定是否转换 tex 文件为图像
-        single_dir: ignoreDirStructure,  // 根据设置决定是否忽略目录结构
-        recursive: true,  // 递归提取
-        copy_project: false,
-        use_name: false,
-        no_tex_convert: noTexConvert,  // 根据设置决定是否保留原始 .tex 文件
-        overwrite: overwriteFiles  // 覆盖现有文件设置
-      };
-
-      // 添加调试日志
-      // console.log('提取参数:', { input: scenePkgPath, options: options });
-
-      // 在提取前先清理目标目录
-      try {
-        await invoke('cleanup_directory_before_extract', { path: extractPath });
-        // console.log('已清理目标目录');
-      } catch (cleanupError) {
-        // console.warn('清理目标目录时出错:', cleanupError);
-      }
-
-      // 执行提取
-      const result = await invoke('extract_pkg', { input: scenePkgPath, options: options });
-
-      // 添加调试日志
-      // console.log('提取结果:', result);
-
-      // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
-      if (onlyImages) {
-        try {
-          const { invoke } = window.__TAURI__.core;
-
-          // 根据设置确定允许的文件扩展名
-          let allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'];
-
-          // 如果启用不转换Tex文件，添加.tex扩展名到允许列表
-          if (noTexConvert) {
-            allowedExtensions.push('.tex');
-          }
-
-          await invoke('cleanup_non_media_files', {
-            path: extractPath,
-            allowedExtensions: allowedExtensions
-          });
-          // console.log('已清理非媒体文件');
-
-          // 如果没有启用忽略目录结构，将所有媒体文件移动到根目录并删除文件夹
-          // 如果启用了忽略目录结构，RePKG已经将所有文件放在同一级目录中，无需额外处理
-          if (!ignoreDirStructure) {
-            await invoke('flatten_media_files', {
-              path: extractPath,
-              allowedExtensions: allowedExtensions,
-              overwrite: overwriteFiles
-            });
-            // console.log('已将所有媒体文件移动到根目录');
-          }
-        } catch (cleanupError) {
-          // console.warn('清理非媒体文件时出错:', cleanupError);
-        }
-      }
-
-      // 恢复按钮状态
-      extractBtn.textContent = originalText;
-      extractBtn.disabled = false;
-
-      // 显示成功消息
-      alert(window.i18n.t('messages.extract_success'));
-
-      // 返回结果
-      return result;
+      const settings = await readExtractionSettings();
+      const folderName = settingsManager.get('create-folder-per-wallpaper') === true
+        ? wallpaperPath.split(/[/\\]/).filter(Boolean).pop()
+        : null;
+      const output = await invoke('extract_pkg', {
+        input: wallpaperPath + '/scene.pkg',
+        options: { ...settings, output: extractPath, folder_name: folderName }
+      });
+      await showExtractionResult(window.i18n.t('messages.extract_success'));
+      await openExtractionFolder(output);
     } catch (error) {
-      // 恢复按钮状态
-      const extractBtn = document.getElementById('extract-btn');
-      if (extractBtn) {
-        extractBtn.textContent = window.i18n.t('buttons.extract_start');
-        extractBtn.disabled = false;
-      }
-
-      // 显示错误消息
-      // console.error('提取失败:', error);
-      alert(window.i18n.t('messages.extract_failed') + error);
-
-      throw error;
+      await showExtractionResult(window.i18n.t('messages.extract_failed') + error);
+    } finally {
+      extractBtn.textContent = window.i18n.t('buttons.extract_start');
+      extractBtn.disabled = false;
     }
   }
 
-  // 创建全局别名供context-menu.js使用
   window.extractWallpaperFromMain = extractWallpaper;
 
-  // 为提取按钮添加事件监听器
   document.getElementById('extract-btn').addEventListener('click', async () => {
-    // 获取当前选中的壁纸信息
-    const detailsName = document.getElementById('details-name');
-    const extractPathInput = document.getElementById('extract-path');
-
-    if (!detailsName || !extractPathInput) {
-      alert(window.i18n.t('messages.cannot_get_info'));
-      return;
-    }
-
-    // 获取壁纸路径（需要从当前打开的壁纸信息中获取）
-    // 这里我们假设在 openDrawer 函数中将壁纸路径存储在某个地方
-    const currentWallpaper = window.currentlySelectedWallpaper;
-    if (!currentWallpaper) {
+    const wallpaper = window.currentlySelectedWallpaper;
+    if (!wallpaper) {
       alert(window.i18n.t('messages.no_wallpaper_selected'));
       return;
     }
 
-    const wallpaperPath = currentWallpaper.path;
-    // 确保提取路径使用正斜杠
-    const extractPath = extractPathInput.value.replace(/\\/g, '/');
-
-    if (!wallpaperPath || !extractPath) {
+    const extractPath = document.getElementById('extract-path').value.trim();
+    if (!wallpaper.path || !extractPath) {
       alert(window.i18n.t('messages.empty_path'));
       return;
     }
 
-    try {
-      // 执行提取
-      await extractWallpaper(wallpaperPath, extractPath);
-
-      // 提取成功后，根据设置决定是否自动打开提取文件夹
-      await settingsManager.init();
-      const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
-      const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
-      if (autoOpenExtractFolder && window.__TAURI__) {
-        const { invoke } = window.__TAURI__.core;
-        // 确定要打开的路径
-        let pathToOpen = extractPath;
-        if (createFolderPerWallpaper) {
-          // 如果启用了为每个壁纸单独生成文件夹，打开壁纸文件夹
-          const wallpaperFolderName = wallpaperPath.split('/').pop().split('\\').pop();
-          if (wallpaperFolderName) {
-            pathToOpen = `${extractPath}/${wallpaperFolderName}`;
-          }
-        }
-        // 确保路径格式正确（使用反斜杠）
-        const normalizedPath = pathToOpen.replace(/\//g, '\\');
-        await invoke('open_folder', { path: normalizedPath });
-      }
-    } catch (error) {
-      //       console.error('提取过程出错:', error);
-    }
+    await extractWallpaper(wallpaper.path, extractPath);
   });
 
-  // 为打开提取文件夹按钮添加事件监听器
   document.getElementById('open-extract-folder-btn').addEventListener('click', async () => {
     const extractPathInput = document.getElementById('extract-path');
     const extractPath = extractPathInput.value;
@@ -1309,135 +1158,150 @@ document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('file-input');
   const fileList = document.getElementById('file-list');
 
-  // 点击拖放区域打开文件选择器
+  function isPkgFile(name) {
+    return /\.pkg$/i.test(name);
+  }
+
+  async function addManualPaths(paths) {
+    const { invoke } = window.__TAURI__.core;
+    const files = [];
+
+    for (const path of paths) {
+      if (!isPkgFile(path)) continue;
+      const name = path.split(/[/\\]/).pop();
+      let size = 0;
+      try {
+        const info = await invoke('get_file_info', { path });
+        if (info.is_dir) continue;
+        size = info.size;
+      } catch {
+        // Retain a selected file when optional size metadata is unavailable.
+      }
+      files.push({ name, path, size });
+    }
+
+    addManualFiles(files);
+  }
+
+  function addBrowserFiles(files) {
+    addManualFiles(Array.from(files)
+      .filter(file => isPkgFile(file.name))
+      .map(file => ({ name: file.name, path: file.name, size: file.size })));
+  }
+
   dropzone.addEventListener('click', () => fileInput.click());
-
-  dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
-  });
-  dropzone.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
-  });
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('border-[var(--accent-color)]', 'bg-[var(--border-color)]');
-    const files = e.dataTransfer.files;
-    handleFiles(files);
+  dropzone.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      fileInput.click();
+    }
   });
 
-  // 使用Tauri的文件选择器
-  fileInput.addEventListener('click', async (e) => {
-    e.preventDefault();
+  const manualWebview = window.__TAURI__?.webview?.getCurrentWebview();
+  if (manualWebview) {
+    let draggingPackages = false;
+    manualWebview.onDragDropEvent(({ payload }) => {
+      if (payload.type === 'leave') {
+        draggingPackages = false;
+        dropzone.classList.remove('is-drag-over');
+        return;
+      }
+
+      if (payload.type === 'enter') {
+        draggingPackages = payload.paths.some(isPkgFile);
+      }
+      const { x, y } = payload.position;
+      const target = document.elementFromPoint(x / window.devicePixelRatio, y / window.devicePixelRatio);
+      const overDropzone = dropzone.contains(target);
+      const dropped = payload.type === 'drop';
+      dropzone.classList.toggle('is-drag-over', !dropped && overDropzone && draggingPackages);
+
+      if (dropped) {
+        draggingPackages = false;
+        if (overDropzone) void addManualPaths(payload.paths);
+      }
+    });
+  } else if (!window.__TAURI__) {
+    dropzone.addEventListener('dragover', event => {
+      if (!event.dataTransfer.types.includes('Files')) return;
+      event.preventDefault();
+      dropzone.classList.add('is-drag-over');
+    });
+    dropzone.addEventListener('dragleave', event => {
+      if (!dropzone.contains(event.relatedTarget)) dropzone.classList.remove('is-drag-over');
+    });
+    dropzone.addEventListener('drop', event => {
+      event.preventDefault();
+      dropzone.classList.remove('is-drag-over');
+      addBrowserFiles(event.dataTransfer.files);
+    });
+  }
+
+  fileInput.addEventListener('click', async (event) => {
+    event.preventDefault();
 
     try {
       if (window.__TAURI__) {
         const { open } = window.__TAURI__.dialog;
-        const { invoke } = window.__TAURI__.core;
-        const selectedFiles = await open({
+        const paths = await open({
           multiple: true,
-          filters: [
-            {
-              name: 'PKG Files',
-              extensions: ['pkg']
-            }
-          ]
+          filters: [{ name: 'PKG Files', extensions: ['pkg'] }]
         });
-
-        if (selectedFiles && selectedFiles.length > 0) {
-          // 转换为文件对象数组，并获取文件大小
-          const files = [];
-          for (const path of selectedFiles) {
-            try {
-              // 使用Tauri的invoke调用Rust后端的文件信息获取
-              const stats = await invoke('get_file_info', { path });
-              files.push({
-                name: path.split('/').pop().split('\\').pop(),
-                path: path,
-                size: stats.size
-              });
-            } catch (error) {
-              // console.warn('获取文件信息失败:', path, error);
-              // 如果无法获取文件大小，使用默认值
-              files.push({
-                name: path.split('/').pop().split('\\').pop(),
-                path: path,
-                size: 0
-              });
-            }
-          }
-          handleFiles(files);
-        }
+        if (paths) await addManualPaths(Array.isArray(paths) ? paths : [paths]);
       } else {
-        // 非Tauri环境回退到原生文件选择
-        const originalInput = document.createElement('input');
-        originalInput.type = 'file';
-        originalInput.accept = '.pkg';
-        originalInput.multiple = true;
-        originalInput.onchange = (e) => {
-          const files = Array.from(e.target.files).map(file => ({
-            name: file.name,
-            path: file.name, // 在浏览器环境中使用文件名作为路径
-            size: file.size
-          }));
-          handleFiles(files);
-        };
-        originalInput.click();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pkg';
+        input.multiple = true;
+        input.addEventListener('change', () => addBrowserFiles(input.files));
+        input.click();
       }
     } catch (error) {
-      // console.error('选择文件失败:', error);
       alert(window.i18n.t('messages.select_file_error') + error);
     }
   });
 
-  function handleFiles(files) {
-    // 保留原有文件，过滤掉重复的文件
-    const uniqueFiles = files.filter(newFile =>
-      !manualFiles.some(existingFile => existingFile.name === newFile.name)
-    );
+  function addManualFiles(files) {
+    const knownPaths = new Set(manualFiles.map(file => file.path.replaceAll('\\', '/')));
+    const addedFiles = [];
+    for (const file of files) {
+      const key = file.path.replaceAll('\\', '/');
+      if (knownPaths.has(key)) continue;
+      knownPaths.add(key);
+      addedFiles.push(file);
+    }
+    if (addedFiles.length === 0) return;
+    manualFiles = [...manualFiles, ...addedFiles];
+    renderManualFiles();
+  }
 
-    // 将新文件添加到现有文件列表中
-    manualFiles = [...manualFiles, ...uniqueFiles];
-
-    // 清空文件列表显示
-    fileList.innerHTML = '';
-
-    // 重新渲染所有文件
+  function renderManualFiles() {
+    fileList.replaceChildren();
     for (const file of manualFiles) {
       const fileItem = document.createElement('div');
-      fileItem.className = 'flex items-center justify-between p-2 settings-glass rounded-md text-sm';
+      fileItem.className = 'flex items-center justify-between gap-2 p-2 settings-glass rounded-md text-sm';
       fileItem.innerHTML = `
-        <div class="flex items-center">
-          <button class="remove-file-btn mr-2 text-red-500 hover:text-red-700" data-filename="${file.name}">
+        <div class="flex min-w-0 items-center">
+          <button type="button" class="remove-file-btn shrink-0 mr-2 text-red-500 hover:text-red-700">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
-          <span>${file.name}</span>
+          <span class="truncate"></span>
         </div>
-        <span class="text-[var(--text-secondary)]">${(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+        <span class="shrink-0 text-[var(--text-secondary)]"></span>
       `;
+      const [name, size] = fileItem.querySelectorAll('span');
+      name.textContent = file.name;
+      name.title = file.path;
+      size.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+      fileItem.querySelector('button').addEventListener('click', () => {
+        manualFiles = manualFiles.filter(item => item.path !== file.path);
+        renderManualFiles();
+      });
       fileList.appendChild(fileItem);
     }
-
-    // 为删除按钮添加事件监听器
-    document.querySelectorAll('.remove-file-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const filename = button.getAttribute('data-filename');
-        removeFile(filename);
-      });
-    });
-  }
-
-  // 删除文件的函数
-  function removeFile(filename) {
-    // 从manualFiles数组中移除文件
-    manualFiles = manualFiles.filter(file => file.name !== filename);
-
-    // 重新渲染文件列表
-    handleFiles(manualFiles);
   }
 
   // 初始化窗口控制
@@ -1632,129 +1496,25 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- 解包设置逻辑 ---
   // 初始化解包设置
   async function initUnpackSettings() {
-    // 获取所有解包设置的复选框 - 使用ID选择器避免冲突
-    const onlyImagesCheckbox = document.getElementById('only-images-checkbox');
-    const noTexConvertCheckbox = document.getElementById('no-tex-convert-checkbox');
-    const ignoreDirStructureCheckbox = document.getElementById('ignore-dir-structure-checkbox');
-    const overwriteFilesCheckbox = document.getElementById('overwrite-files-checkbox');
-    const createFolderPerWallpaperCheckbox = document.getElementById('create-folder-per-wallpaper-checkbox');
-    const autoOpenExtractFolderCheckbox = document.getElementById('auto-open-extract-folder');
-    const autoOpenImportFolderCheckbox = document.getElementById('auto-open-import-folder');
-
-    // 等待settingsManager初始化完成
-    await settingsManager.init();
-
-    // 从settings.json读取保存的设置
-    const savedOnlyImages = settingsManager.get('only-images');
-    const savedNoTexConvert = settingsManager.get('no-tex-convert');
-    const savedIgnoreDirStructure = settingsManager.get('ignore-dir-structure');
-    const savedOverwriteFiles = settingsManager.get('overwrite-files');
-    const savedCreateFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper');
-    const savedAutoOpenExtractFolder = settingsManager.get('auto-open-extract-folder');
-    const savedAutoOpenImportFolder = settingsManager.get('auto-open-import-folder');
-
-    // 设置复选框的初始状态
-    if (onlyImagesCheckbox) onlyImagesCheckbox.checked = savedOnlyImages;
-    if (noTexConvertCheckbox) noTexConvertCheckbox.checked = savedNoTexConvert;
-    if (ignoreDirStructureCheckbox) ignoreDirStructureCheckbox.checked = savedIgnoreDirStructure;
-    if (overwriteFilesCheckbox) overwriteFilesCheckbox.checked = savedOverwriteFiles;
-    if (createFolderPerWallpaperCheckbox) createFolderPerWallpaperCheckbox.checked = savedCreateFolderPerWallpaper;
-    if (autoOpenExtractFolderCheckbox) autoOpenExtractFolderCheckbox.checked = savedAutoOpenExtractFolder;
-    if (autoOpenImportFolderCheckbox) autoOpenImportFolderCheckbox.checked = savedAutoOpenImportFolder;
-
-    // 为每个复选框添加事件监听器
-    if (onlyImagesCheckbox) {
-      onlyImagesCheckbox.addEventListener('change', () => {
-        settingsManager.set('only-images', onlyImagesCheckbox.checked);
-        syncAllCheckboxes('only-images', onlyImagesCheckbox.checked);
-      });
-    }
-
-    if (noTexConvertCheckbox) {
-      noTexConvertCheckbox.addEventListener('change', () => {
-        settingsManager.set('no-tex-convert', noTexConvertCheckbox.checked);
-        syncAllCheckboxes('no-tex-convert', noTexConvertCheckbox.checked);
-      });
-    }
-
-    if (ignoreDirStructureCheckbox) {
-      ignoreDirStructureCheckbox.addEventListener('change', () => {
-        settingsManager.set('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
-        syncAllCheckboxes('ignore-dir-structure', ignoreDirStructureCheckbox.checked);
-      });
-    }
-
-    if (overwriteFilesCheckbox) {
-      overwriteFilesCheckbox.addEventListener('change', () => {
-        settingsManager.set('overwrite-files', overwriteFilesCheckbox.checked);
-        syncAllCheckboxes('overwrite-files', overwriteFilesCheckbox.checked);
-      });
-    }
-
-    if (createFolderPerWallpaperCheckbox) {
-      createFolderPerWallpaperCheckbox.addEventListener('change', () => {
-        settingsManager.set('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
-        syncAllCheckboxes('create-folder-per-wallpaper', createFolderPerWallpaperCheckbox.checked);
-      });
-    }
-
-    if (autoOpenExtractFolderCheckbox) {
-      autoOpenExtractFolderCheckbox.addEventListener('change', () => {
-        settingsManager.set('auto-open-extract-folder', autoOpenExtractFolderCheckbox.checked);
-      });
-    }
-
-    if (autoOpenImportFolderCheckbox) {
-      autoOpenImportFolderCheckbox.addEventListener('change', () => {
-        settingsManager.set('auto-open-import-folder', autoOpenImportFolderCheckbox.checked);
-      });
-    }
-  }
-
-  // 同步所有复选框状态
-  function syncAllCheckboxes(settingName, value) {
     const checkboxIds = {
-      'only-images': ['only-images-checkbox'],
-      'no-tex-convert': ['no-tex-convert-checkbox'],
-      'ignore-dir-structure': ['ignore-dir-structure-checkbox'],
-      'overwrite-files': ['overwrite-files-checkbox'],
-      'create-folder-per-wallpaper': ['create-folder-per-wallpaper-checkbox']
+      'only-images': 'only-images-checkbox',
+      'no-tex-convert': 'no-tex-convert-checkbox',
+      'ignore-dir-structure': 'ignore-dir-structure-checkbox',
+      'overwrite-files': 'overwrite-files-checkbox',
+      'create-folder-per-wallpaper': 'create-folder-per-wallpaper-checkbox',
+      'auto-open-extract-folder': 'auto-open-extract-folder',
+      'auto-open-import-folder': 'auto-open-import-folder'
     };
 
-    const ids = checkboxIds[settingName];
-    if (ids) {
-      ids.forEach(id => {
-        const checkbox = document.getElementById(id);
-        if (checkbox) {
-          checkbox.checked = value;
-        }
-      });
+    await settingsManager.init();
+    for (const [key, id] of Object.entries(checkboxIds)) {
+      const checkbox = document.getElementById(id);
+      checkbox.checked = settingsManager.get(key) === true;
+      checkbox.addEventListener('change', () => settingsManager.set(key, checkbox.checked));
     }
   }
 
-  // 初始化解包设置
   initUnpackSettings();
-
-  // 同步所有复选框状态到页面
-  async function syncSettingsToCheckboxes() {
-    await settingsManager.init();
-    const settings = {
-      'only-images': settingsManager.get('only-images'),
-      'no-tex-convert': settingsManager.get('no-tex-convert'),
-      'ignore-dir-structure': settingsManager.get('ignore-dir-structure'),
-      'overwrite-files': settingsManager.get('overwrite-files'),
-      'create-folder-per-wallpaper': settingsManager.get('create-folder-per-wallpaper')
-    };
-
-    Object.keys(settings).forEach(settingName => {
-      syncAllCheckboxes(settingName, settings[settingName]);
-    });
-  }
-
-  // 页面加载时同步所有复选框
-  document.addEventListener('DOMContentLoaded', async () => {
-    await syncSettingsToCheckboxes();
-  });
 
   // 添加刷新按钮事件监听器
   const refreshButton = document.getElementById('refresh-wallpapers');
@@ -1951,155 +1711,64 @@ async function initManualExtractFunction() {
 
   if (manualExtractBtn) {
     manualExtractBtn.addEventListener('click', async () => {
-      if (manualFiles.length === 0) {
+      const files = manualFiles;
+      if (files.length === 0) {
         alert(window.i18n.t('messages.select_pkg_files'));
         return;
       }
 
-      const extractPathInput = document.getElementById('extract-path-manual');
-      const extractPath = extractPathInput.value.trim();
-
+      const extractPath = document.getElementById('extract-path-manual').value.trim();
       if (!extractPath) {
         alert(window.i18n.t('messages.enter_extract_path'));
         return;
       }
 
+      manualExtractBtn.textContent = window.i18n.t('messages.extracting');
+      manualExtractBtn.disabled = true;
       try {
-        // 显示提取进度
-        manualExtractBtn.textContent = window.i18n.t('messages.extracting');
-        manualExtractBtn.disabled = true;
-
         const { invoke } = window.__TAURI__.core;
+        const settings = await readExtractionSettings();
+        const separateFolders = settingsManager.get('create-folder-per-wallpaper') === true;
+        const usedFolderNames = new Set();
+        const outputs = new Set();
         let successCount = 0;
-        let errorCount = 0;
+        let firstError;
 
-        // 获取解包设置
-        await settingsManager.init();
-        const onlyImages = settingsManager.get('only-images') === true;
-        const noTexConvert = settingsManager.get('no-tex-convert') === true;
-        const ignoreDirStructure = settingsManager.get('ignore-dir-structure') === true;
-        const overwriteFiles = settingsManager.get('overwrite-files') === true;
-        const createFolderPerWallpaper = settingsManager.get('create-folder-per-wallpaper') === true;
-
-        // 构造提取选项
-        const options = {
-          output: extractPath.replace(/\\/g, '/'),
-          ignore_exts: null,
-          only_exts: null,  // 不移除-e参数，让清理逻辑处理
-          debug_info: false,
-          tex: !noTexConvert,
-          single_dir: ignoreDirStructure || onlyImages,
-          recursive: true,
-          copy_project: false,
-          use_name: false,
-          no_tex_convert: noTexConvert,
-          overwrite: overwriteFiles  // 覆盖现有文件
-        };
-
-        // 逐个处理文件
-        for (const file of manualFiles) {
-          try {
-            // console.log('正在提取文件:', file.name);
-
-            // 如果启用为每个壁纸单独生成文件夹，创建以文件名命名的文件夹
-            let fileExtractPath = extractPath;
-            if (createFolderPerWallpaper) {
-              // 获取文件名（不含扩展名）作为文件夹名
-              const fileName = file.name.replace(/\.pkg$/i, '');
-              if (fileName) {
-                // 构造新的提取路径
-                fileExtractPath = `${extractPath}/${fileName}`;
-
-                // 创建文件夹
-                try {
-                  await invoke('create_directory', { path: fileExtractPath });
-                } catch (createError) {
-                  // 如果文件夹已存在
-                  if (overwriteFiles) {
-                    // 如果启用了覆盖设置，直接使用现有文件夹
-                    // console.log('文件夹已存在，使用现有文件夹（覆盖模式）');
-                  } else {
-                    // 如果未启用覆盖设置，添加后缀
-                    let suffix = 1;
-                    let newPath;
-                    do {
-                      newPath = `${extractPath}/${fileName}_${suffix}`;
-                      try {
-                        await invoke('create_directory', { path: newPath });
-                        fileExtractPath = newPath;
-                        break;
-                      } catch (e) {
-                        suffix++;
-                      }
-                    } while (suffix <= 100); // 最多尝试100次
-                  }
-                }
-              }
+        for (const file of files) {
+          let folderName = null;
+          if (separateFolders) {
+            const stem = file.name.replace(/\.pkg$/i, '') || file.name;
+            folderName = stem;
+            for (let suffix = 1; settings.overwrite && usedFolderNames.has(folderName.toLowerCase()); suffix++) {
+              folderName = stem + '_' + suffix;
             }
-
-            // 更新提取选项中的输出路径
-            const fileOptions = {
-              ...options,
-              output: fileExtractPath.replace(/\\/g, '/')
-            };
-
-            const result = await invoke('extract_pkg', {
-              input: file.path,
-              options: fileOptions
-            });
-            successCount++;
-            // console.log(`文件 ${file.name} 提取成功`);
-          } catch (error) {
-            errorCount++;
-            // console.error(`文件 ${file.name} 提取失败:`, error);
+            usedFolderNames.add(folderName.toLowerCase());
           }
-        }
 
-        // 如果是仅保留图像文件，清理非媒体文件并扁平化目录结构
-        if (onlyImages && successCount > 0) {
           try {
-            await invoke('cleanup_non_media_files', {
-              path: extractPath,
-              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv']
+            const output = await invoke('extract_pkg', {
+              input: file.path,
+              options: { ...settings, output: extractPath, folder_name: folderName }
             });
-            // console.log('已清理非媒体文件');
-
-            // 将所有媒体文件移动到根目录并删除文件夹
-            await invoke('flatten_media_files', {
-              path: extractPath,
-              allowedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.bmp', '.tiff', '.webp', '.avi', '.mov', '.mkv'],
-              overwrite: overwriteFiles
-            });
-            // console.log('已将所有媒体文件移动到根目录');
-          } catch (cleanupError) {
-            // console.warn('清理非媒体文件时出错:', cleanupError);
+            outputs.add(output);
+            successCount++;
+          } catch (error) {
+            firstError ??= String(error);
           }
         }
 
-        // 恢复按钮状态
-        manualExtractBtn.textContent = window.i18n.t('buttons.extract_start');
-        manualExtractBtn.disabled = false;
-
-        // 显示结果
-        let message = window.i18n.t('messages.extract_complete', { success: successCount, error: errorCount });
-        if (errorCount > 0) {
-          message += '\n请检查控制台获取详细错误信息';
+        let message = window.i18n.t('messages.extract_complete', {
+          success: successCount, error: files.length - successCount
+        });
+        if (firstError) {
+          message += '\n' + window.i18n.t('messages.extract_failed') + firstError;
         }
-        alert(message);
-
-        // 提取成功后，根据设置决定是否自动打开提取文件夹
-        await settingsManager.init();
-        const autoOpenExtractFolder = settingsManager.get('auto-open-extract-folder') === true;
-        if (autoOpenExtractFolder && successCount > 0 && window.__TAURI__) {
-          const normalizedPath = extractPath.replace(/\\/g, '\\');
-          await invoke('open_folder', { path: normalizedPath });
-        }
-
+        await showExtractionResult(message);
+        const [output] = outputs;
+        await openExtractionFolder(outputs.size > 1 ? extractPath : output);
       } catch (error) {
-        // console.error('提取过程出错:', error);
-        alert(window.i18n.t('messages.extract_failed') + error);
-
-        // 恢复按钮状态
+        await showExtractionResult(window.i18n.t('messages.extract_failed') + error);
+      } finally {
         manualExtractBtn.textContent = window.i18n.t('buttons.extract_start');
         manualExtractBtn.disabled = false;
       }

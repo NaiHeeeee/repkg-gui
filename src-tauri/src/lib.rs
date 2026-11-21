@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fs;
-use std::path::Path;
+use std::io::{self, Read, Write};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri_plugin_opener::OpenerExt;
 
@@ -34,6 +36,8 @@ struct BackgroundFileInfo {
     file_size: u64,
 }
 
+const LEGACY_BACKGROUND_STEM_LEN: usize = 160;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -52,17 +56,6 @@ async fn get_home_dir() -> Result<String, String> {
 #[tauri::command]
 async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
     let path = app.dialog().file().blocking_pick_folder();
-    Ok(path.map(|p| p.to_string()))
-}
-
-#[tauri::command]
-async fn select_background_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    let path = app
-        .dialog()
-        .file()
-        .add_filter("Background Media", &["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "avi"])
-        .blocking_pick_file();
-
     Ok(path.map(|p| p.to_string()))
 }
 
@@ -140,7 +133,7 @@ async fn read_image_as_base64(path: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn file_exists(path: String) -> Result<bool, String> {
-    Ok(Path::new(&path).exists())
+    Path::new(&path).try_exists().map_err(|e| format!("无法检查文件: {e}"))
 }
 
 #[tauri::command]
@@ -150,15 +143,27 @@ async fn read_text_file(path: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn write_text_file(path: String, contents: String) -> Result<(), String> {
-    fs::write(&path, contents).map_err(|e| format!("无法写入文件: {}", e))
+    let path = std::path::absolute(&path).map_err(|e| format!("无法解析文件路径: {e}"))?;
+    let directory = path.parent().ok_or("文件路径没有父目录")?;
+    let mut temporary = tempfile::NamedTempFile::new_in(directory)
+        .map_err(|e| format!("无法创建临时文件: {e}"))?;
+    temporary
+        .write_all(contents.as_bytes())
+        .and_then(|()| temporary.as_file().sync_all())
+        .map_err(|e| format!("无法写入文件: {e}"))?;
+    temporary
+        .persist(&path)
+        .map_err(|e| format!("无法替换文件: {}", e.error))?;
+    Ok(())
 }
 
 #[tauri::command]
 async fn open_folder(path: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
+        let path = path.replace('/', "\\");
         // 确保路径存在
-        if !Path::new(&path).exists() {
+        if !Path::new(&path).is_dir() {
             return Err(format!("路径不存在: {}", path));
         }
 
@@ -247,95 +252,6 @@ async fn is_window_maximized(window: tauri::Window) -> Result<bool, String> {
 }
 
 #[tauri::command]
-async fn create_directory(path: String) -> Result<(), String> {
-    let path = Path::new(&path);
-    fs::create_dir_all(path).map_err(|e| format!("无法创建目录 {}: {}", path.display(), e))
-}
-
-#[tauri::command]
-async fn cleanup_directory_before_extract(
-    path: String,
-) -> Result<(), String> {
-    let path = Path::new(&path);
-    if !path.exists() {
-        return Ok(()); // 如果目录不存在，无需清理
-    }
-    
-    // 只删除根目录下的文件，不删除子目录中的文件
-    // 这样可以确保在为每个壁纸单独生成文件夹时，不会影响其他壁纸文件夹
-    let entries = fs::read_dir(path).map_err(|e| e.to_string())?;
-    
-    for entry in entries.flatten() {
-        let file_path = entry.path();
-        // 只处理根目录下的文件，不处理子目录
-        if file_path.is_file() && file_path.parent() == Some(path) {
-            match fs::remove_file(&file_path) {
-                Ok(_) => {},
-                Err(e) => {
-                    eprintln!("警告：无法删除文件 {}: {}", file_path.display(), e);
-                }
-            }
-        }
-    }
-    
-    Ok(())
-}
-
-#[tauri::command]
-async fn cleanup_non_media_files(
-    path: String,
-    allowed_extensions: Vec<String>,
-) -> Result<(), String> {
-    let path = Path::new(&path);
-    if !path.exists() {
-        return Err("路径不存在".to_string());
-    }
-
-    let allowed_extensions: Vec<String> = allowed_extensions
-        .iter()
-        .map(|ext| {
-            let mut ext = ext.clone();
-            if !ext.starts_with('.') {
-                ext.insert(0, '.');
-            }
-            ext.to_lowercase()
-        })
-        .collect();
-
-    fn cleanup_dir(dir_path: &Path, allowed: &[String]) -> Result<(), String> {
-        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
-
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension() {
-                    let ext_str = format!(".{}", ext.to_string_lossy().to_lowercase());
-                    if !allowed.contains(&ext_str) {
-                        fs::remove_file(&path).map_err(|e| e.to_string())?;
-                    }
-                } else {
-                    // 没有扩展名的文件也删除
-                    fs::remove_file(&path).map_err(|e| e.to_string())?;
-                }
-            } else if path.is_dir() {
-                // 递归处理子目录
-                cleanup_dir(&path, allowed)?;
-
-                // 如果目录为空，删除目录
-                if fs::read_dir(&path).map_err(|e| e.to_string())?.count() == 0 {
-                    fs::remove_dir(&path).map_err(|e| e.to_string())?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    cleanup_dir(path, &allowed_extensions)?;
-    Ok(())
-}
-
-#[tauri::command]
 async fn get_background_dir() -> Result<String, String> {
     let background_dir = dirs::data_dir()
         .ok_or("无法获取数据目录")?
@@ -350,26 +266,19 @@ async fn get_background_dir() -> Result<String, String> {
 
 #[tauri::command]
 async fn copy_background_file(source_path: String) -> Result<BackgroundFileInfo, String> {
-    let source = Path::new(&source_path);
-    if !source.exists() {
-        return Err("背景文件不存在".to_string());
-    }
+    let background_dir = PathBuf::from(get_background_dir().await?);
+    tauri::async_runtime::spawn_blocking(move || {
+        cache_background_file(Path::new(&source_path), &background_dir)
+            .map_err(|error| format!("无法复制背景文件: {error}"))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
 
-    if !source.is_file() {
-        return Err("选择的背景资源不是文件".to_string());
-    }
-
-    let background_dir = dirs::data_dir()
-        .ok_or("无法获取数据目录")?
-        .join("repkg-gui")
-        .join("backgrounds");
-    fs::create_dir_all(&background_dir).map_err(|e| format!("无法创建背景目录: {}", e))?;
-
-    let file_stem = source
-        .file_stem()
-        .and_then(|name| name.to_str())
-        .unwrap_or("background");
-    let sanitized_stem: String = file_stem
+fn background_file_stem(path: &Path) -> String {
+    path.file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
         .chars()
         .map(|c| {
             if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
@@ -378,86 +287,142 @@ async fn copy_background_file(source_path: String) -> Result<BackgroundFileInfo,
                 '_'
             }
         })
-        .collect();
+        .collect()
+}
 
+fn cache_background_file(source: &Path, directory: &Path) -> io::Result<BackgroundFileInfo> {
+    let name = source.file_name().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidInput, "背景文件缺少文件名")
+    })?;
     let extension = source
         .extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| ext.to_ascii_lowercase())
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_ascii_lowercase();
+    let mut input = fs::File::open(source)?;
+    let mut temporary = tempfile::NamedTempFile::new_in(directory)?;
+    let mut hash = Sha256::new();
+    let mut buffer = vec![0; 1024 * 1024];
+    let mut file_size = 0;
+    loop {
+        let count = input.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        temporary.write_all(&buffer[..count])?;
+        hash.update(&buffer[..count]);
+        file_size += count as u64;
+    }
 
-    let unique_suffix = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| format!("无法生成文件名: {}", e))?
-        .as_millis();
-
-    let target_file_name = if extension.is_empty() {
-        format!("{}_{}", sanitized_stem, unique_suffix)
-    } else {
-        format!("{}_{}.{}", sanitized_stem, unique_suffix, extension)
-    };
-
-    let target_path = background_dir.join(&target_file_name);
-    fs::copy(source, &target_path).map_err(|e| format!("无法复制背景文件: {}", e))?;
-
-    let metadata = fs::metadata(&target_path).map_err(|e| format!("无法读取背景文件信息: {}", e))?;
+    let target_path = directory.join(format!("{:x}.{extension}", hash.finalize()));
+    let already_cached = || is_background_copy(&target_path, file_size);
+    if !already_cached() {
+        temporary.as_file().sync_all()?;
+        if let Err(error) = temporary.persist_noclobber(&target_path) {
+            if error.error.kind() != io::ErrorKind::AlreadyExists || !already_cached() {
+                return Err(error.error);
+            }
+        }
+    }
 
     Ok(BackgroundFileInfo {
-        file_path: target_path.to_string_lossy().to_string(),
-        file_name: source
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or(&target_file_name)
-            .to_string(),
-        file_size: metadata.len(),
+        file_path: target_path.to_string_lossy().into_owned(),
+        file_name: name.to_string_lossy().into_owned(),
+        file_size,
     })
 }
 
+fn is_background_copy(path: &Path, file_size: u64) -> bool {
+    fs::symlink_metadata(path)
+        .is_ok_and(|metadata| metadata.is_file() && metadata.len() == file_size)
+}
+
+fn background_digest(path: &Path) -> Option<&str> {
+    path.file_stem()?
+        .to_str()?
+        .rsplit('_')
+        .next()
+        .filter(|digest| digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()))
+}
+
 #[tauri::command]
-async fn cleanup_background_files(keep_file_path: Option<String>) -> Result<(), String> {
+async fn resolve_background_file(
+    file_path: String,
+    file_name: String,
+    file_size: Option<u64>,
+) -> Result<Option<String>, String> {
+    let path = Path::new(&file_path);
+    if path.is_file() {
+        return Ok(Some(file_path));
+    }
+    let Some(file_size) = file_size else {
+        return Ok(None);
+    };
+
     let background_dir = dirs::data_dir()
         .ok_or("无法获取数据目录")?
         .join("repkg-gui")
         .join("backgrounds");
+    find_cached_background(&background_dir, path, Path::new(&file_name), file_size)
+        .map(|path| path.map(|path| path.to_string_lossy().into_owned()))
+        .map_err(|error| format!("无法查找背景文件: {error}"))
+}
 
-    if !background_dir.exists() {
-        return Ok(());
+fn find_cached_background(
+    directory: &Path,
+    previous_path: &Path,
+    original_name: &Path,
+    file_size: u64,
+) -> io::Result<Option<PathBuf>> {
+    let Some(extension) = original_name.extension().and_then(|ext| ext.to_str()) else {
+        return Ok(None);
+    };
+    let stem = background_file_stem(original_name);
+    let short_stem = &stem[..stem.len().min(LEGACY_BACKGROUND_STEM_LEN)];
+    let previous_digest = background_digest(previous_path);
+    if let Some(digest) = previous_digest {
+        let cached = directory.join(format!("{digest}.{}", extension.to_ascii_lowercase()));
+        if is_background_copy(&cached, file_size) {
+            return Ok(Some(cached));
+        }
     }
-
-    let keep_path = keep_file_path
-        .as_ref()
-        .map(|path| Path::new(path).to_path_buf());
-
-    let allowed_extensions = [
-        "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "avi",
-    ];
-
-    for entry in fs::read_dir(&background_dir).map_err(|e| format!("无法读取背景目录: {}", e))? {
-        let entry = entry.map_err(|e| format!("无法读取背景目录项: {}", e))?;
+    let entries = match fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let mut found = None;
+    for entry in entries {
+        let entry = entry?;
         let path = entry.path();
-
-        if !path.is_file() {
+        if !path.extension().and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case(extension))
+        {
             continue;
         }
-
-        if let Some(ref keep) = keep_path {
-            if &path == keep {
-                continue;
+        let matches_name = if let Some(digest) = previous_digest {
+            background_digest(&path) == Some(digest)
+        } else {
+            let filename = path.file_stem().unwrap_or_default().to_string_lossy();
+            filename.rsplit_once('_').is_some_and(|(prefix, suffix)| {
+                if background_digest(&path).is_some() {
+                    prefix == short_stem
+                } else {
+                    prefix == stem && suffix.len() == 13 && suffix.bytes().all(|b| b.is_ascii_digit())
+                }
+            })
+        };
+        if matches_name && is_background_copy(&path, file_size) {
+            if previous_digest.is_some() {
+                return Ok(Some(path));
             }
-        }
-
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|ext| ext.to_ascii_lowercase())
-            .unwrap_or_default();
-
-        if allowed_extensions.contains(&extension.as_str()) {
-            fs::remove_file(&path).map_err(|e| format!("无法删除旧背景文件: {}", e))?;
+            if found.is_some() {
+                return Ok(None);
+            }
+            found = Some(path);
         }
     }
-
-    Ok(())
+    Ok(found)
 }
 
 #[tauri::command]
@@ -513,193 +478,6 @@ async fn get_background_file_path(file_name: String) -> Result<String, String> {
     Ok(file_path.to_string_lossy().to_string())
 }
 
-#[tauri::command]
-async fn flatten_media_files(
-    path: String,
-    allowed_extensions: Vec<String>,
-    overwrite: bool,
-) -> Result<(), String> {
-    let path = Path::new(&path);
-    if !path.exists() {
-        return Err("路径不存在".to_string());
-    }
-
-    let allowed_extensions: Vec<String> = allowed_extensions
-        .iter()
-        .map(|ext| {
-            let mut ext = ext.clone();
-            if !ext.starts_with('.') {
-                ext.insert(0, '.');
-            }
-            ext.to_lowercase()
-        })
-        .collect();
-
-    // 收集所有需要移动的文件
-    let mut files_to_move = Vec::new();
-    
-    fn collect_media_files(
-        dir_path: &Path,
-        allowed: &[String],
-        files: &mut Vec<std::path::PathBuf>,
-    ) -> Result<(), String> {
-        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
-
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension() {
-                    let ext_str = format!(".{}", ext.to_string_lossy().to_lowercase());
-                    if allowed.contains(&ext_str) {
-                        files.push(path);
-                    }
-                }
-            } else if path.is_dir() {
-                // 递归收集子目录中的文件
-                collect_media_files(&path, allowed, files)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    collect_media_files(path, &allowed_extensions, &mut files_to_move)?;
-
-    // 移动所有文件到根目录
-    let mut successfully_moved = 0;
-    let mut failed_moves = 0;
-    
-    for file_path in files_to_move {
-        if let Some(file_name) = file_path.file_name() {
-            let target_path = path.join(file_name);
-            
-            // 如果目标路径已存在，根据overwrite参数决定是否覆盖
-            let final_target_path = if target_path.exists() {
-                if overwrite {
-                    // 如果启用覆盖，先删除现有文件
-                    fs::remove_file(&target_path)
-                        .map_err(|e| format!("无法删除现有文件 {}: {}", target_path.display(), e))?;
-                    target_path
-                } else {
-                    // 如果未启用覆盖，添加数字后缀
-                    let stem = file_path.file_stem()
-                        .and_then(|s| s.to_str())
-                        .unwrap_or("file");
-                    let extension = file_path.extension()
-                        .and_then(|e| e.to_str())
-                        .unwrap_or("");
-                    
-                    let mut counter = 1;
-                    loop {
-                        let new_name = if extension.is_empty() {
-                            format!("{}_{}", stem, counter)
-                        } else {
-                            format!("{}_{}.{}", stem, counter, extension)
-                        };
-                        let new_path = path.join(new_name);
-                        if !new_path.exists() {
-                            break new_path;
-                        }
-                        counter += 1;
-                    }
-                }
-            } else {
-                target_path
-            };
-            
-            // 尝试移动文件
-            match fs::rename(&file_path, &final_target_path) {
-                Ok(_) => {
-                    // 验证文件是否成功移动
-                    if final_target_path.exists() {
-                        successfully_moved += 1;
-                    } else {
-                        failed_moves += 1;
-                        eprintln!("警告：文件移动后验证失败: {}", file_path.display());
-                    }
-                }
-                Err(e) => {
-                    failed_moves += 1;
-                    eprintln!("警告：无法移动文件 {}: {}", file_path.display(), e);
-                }
-            }
-        }
-    }
-    
-    // 如果有文件移动失败，记录警告
-    if failed_moves > 0 {
-        eprintln!("警告：共移动 {} 个文件，其中 {} 个失败", successfully_moved, failed_moves);
-    }
-
-    // 删除所有子目录
-    fn remove_all_subdirs(dir_path: &Path) -> Result<(), String> {
-        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
-        let mut removed_dirs = 0;
-        let mut failed_dirs = 0;
-
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                // 尝试删除子目录及其所有内容
-                match fs::remove_dir_all(&path) {
-                    Ok(_) => {
-                        removed_dirs += 1;
-                    }
-                    Err(e) => {
-                        failed_dirs += 1;
-                        eprintln!("警告：无法删除目录 {}: {}", path.display(), e);
-                    }
-                }
-            }
-        }
-        
-        if failed_dirs > 0 {
-            eprintln!("警告：共尝试删除 {} 个目录，其中 {} 个失败", removed_dirs + failed_dirs, failed_dirs);
-        }
-
-        Ok(())
-    }
-    
-    // 检查子目录中是否有残留文件
-    fn check_remaining_files(dir_path: &Path) -> Result<bool, String> {
-        let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
-        
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                // 检查子目录中是否还有文件
-                let sub_entries = fs::read_dir(&path).map_err(|e| e.to_string())?;
-                for sub_entry in sub_entries.flatten() {
-                    let sub_path = sub_entry.path();
-                    if sub_path.is_file() {
-                        return Ok(true); // 在子目录中找到残留文件
-                    }
-                }
-                // 递归检查更深层的子目录
-                if check_remaining_files(&path)? {
-                    return Ok(true);
-                }
-            }
-        }
-        
-        Ok(false)
-    }
-    
-    // 在删除子目录之前，检查是否还有文件残留在子目录中
-    if check_remaining_files(path)? {
-        eprintln!("警告：子目录中仍有残留文件，但将继续尝试删除子目录");
-    }
-    
-    // 删除所有子目录，确保目录结构被完全扁平化
-    remove_all_subdirs(path)?;
-    
-    // 再次检查是否还有残留文件，如果有则记录更详细的警告
-    if check_remaining_files(path)? {
-        eprintln!("警告：删除子目录后仍有残留文件存在，这可能影响下次提取");
-    }
-    Ok(())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -711,7 +489,6 @@ pub fn run() {
             greet,
             get_home_dir,
             select_folder,
-            select_background_file,
             read_workshop_directory,
             read_json_file,
             check_file_exists,
@@ -728,12 +505,8 @@ pub fn run() {
             unmaximize_window,
             close_window,
             is_window_maximized,
-            create_directory,
             extract_pkg,
             info_pkg,
-            cleanup_directory_before_extract,
-            cleanup_non_media_files,
-            flatten_media_files,
             get_file_info,
             import_to_wallpaper_editor,
             get_steamapps_paths,
@@ -742,10 +515,83 @@ pub fn run() {
             remove_wallpaper_from_editor,
             get_background_dir,
             copy_background_file,
-            cleanup_background_files,
+            resolve_background_file,
             write_background_chunk,
             get_background_file_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod settings_tests {
+    use super::*;
+
+    #[test]
+    fn settings_file_can_be_replaced_without_leaving_temporary_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("settings.json");
+        let contents = r#"{"overwrite-files":true}"#;
+        fs::write(&path, r#"{"overwrite-files":false,"only-images":false}"#).unwrap();
+
+        tauri::async_runtime::block_on(write_text_file(
+            path.to_string_lossy().into_owned(),
+            contents.into(),
+        ))
+        .unwrap();
+
+        assert_eq!(fs::read_to_string(&path).unwrap(), contents);
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn missing_legacy_background_recovers_only_a_unique_matching_copy() {
+        let temporary = tempfile::tempdir().unwrap();
+        let directory = temporary.path();
+        let previous = directory.join("__-5K_1795238025744.mp4");
+        let original_name = Path::new("春日-5K.mp4");
+        let matching = directory.join("__-5K_1795242946300.mp4");
+        fs::write(&matching, b"media").unwrap();
+        fs::write(directory.join("__-5K_1795252946300.mp4"), b"wrong size").unwrap();
+        fs::write(directory.join("unrelated_1795262946300.mp4"), b"media").unwrap();
+        fs::write(directory.join("__-5K_1795242946300.webm"), b"media").unwrap();
+
+        assert_eq!(
+            find_cached_background(directory, &previous, original_name, 5).unwrap(),
+            Some(matching)
+        );
+
+        fs::write(directory.join("__-5K_1795272946300.mp4"), b"other").unwrap();
+        assert!(find_cached_background(directory, &previous, original_name, 5).unwrap().is_none());
+    }
+
+    #[test]
+    fn caching_reuses_identical_files_and_keeps_previous_versions() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("春日-5K.mp4");
+        let directory = temporary.path().join("backgrounds");
+        fs::create_dir(&directory).unwrap();
+        fs::write(&source, b"first").unwrap();
+        let first = cache_background_file(&source, &directory).unwrap();
+        let renamed = temporary.path().join("renamed.MP4");
+        fs::copy(&source, &renamed).unwrap();
+        let repeated = cache_background_file(&renamed, &directory).unwrap();
+        assert_eq!(first.file_path, repeated.file_path);
+        assert_eq!(repeated.file_name, "renamed.MP4");
+        let filename = Path::new(&first.file_path).file_name().unwrap().to_str().unwrap();
+        assert_eq!(filename, format!("{:x}.mp4", Sha256::digest(b"first")));
+
+        fs::write(&source, b"other").unwrap();
+        let edited = cache_background_file(&source, &directory).unwrap();
+        assert_ne!(first.file_path, edited.file_path);
+        assert_eq!(fs::read(&first.file_path).unwrap(), b"first");
+        assert_eq!(fs::read(&edited.file_path).unwrap(), b"other");
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 2);
+
+        let missing = temporary.path().join(format!("__-5K_{filename}"));
+        assert_eq!(
+            find_cached_background(&directory, &missing, &source, 5).unwrap(),
+            Some(PathBuf::from(first.file_path))
+        );
+    }
 }

@@ -109,7 +109,7 @@ class WallpaperEditorImporter {
 
             // 检查是否启用自动打开导入文件夹
             const autoOpenImportFolder = settingsManager.get('auto-open-import-folder');
-            if (autoOpenImportFolder) {
+            if (autoOpenImportFolder === true) {
                 try {
                     // 使用后端返回的实际文件夹路径
                     await window.__TAURI__.core.invoke('open_folder', { path: result });
