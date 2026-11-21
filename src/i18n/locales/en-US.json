@@ -19,7 +19,10 @@
     "next": "Next",
     "page": "Page {page} of {pages}",
     "no_matches": "No wallpapers match your filters",
-    "workshop_id": "Workshop ID"
+    "workshop_id": "Workshop ID",
+    "close_details": "Close wallpaper details",
+    "id_copied": "ID copied",
+    "id_copy_failed": "Could not copy ID"
   },
   "settings": {
     "title": "Settings",

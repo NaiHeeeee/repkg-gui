@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       mediaContainer.querySelector('p').textContent = wallpaper.name;
       card.appendChild(mediaContainer);
-      card.addEventListener('click', () => openDrawer(wallpaper));
+      card.addEventListener('click', () => openDrawer(wallpaper, card));
       wallpaperGrid.appendChild(card);
       wallpaperPreviewObserver.observe(card);
     }
@@ -931,24 +931,89 @@ document.addEventListener('DOMContentLoaded', function () {
   const detailsBackdrop = document.getElementById('details-backdrop');
   const detailsImg = document.getElementById('details-img');
   const detailsName = document.getElementById('details-name');
+  const detailsClose = document.getElementById('close-details-drawer');
+  const detailsWorkshopId = document.getElementById('details-workshop-id');
+  const copyWorkshopId = document.getElementById('copy-workshop-id');
+  const copyStatus = document.getElementById('details-copy-status');
+  const detailsBackground = detailsDrawer.parentElement.querySelectorAll(':scope > aside, :scope > main');
+  let detailsAnchor;
+  let previousDrawerFocus;
+  let copyRequest = 0;
 
-  window.openDrawer = (wallpaper) => {
+  copyWorkshopId.addEventListener('click', async () => {
+    const request = ++copyRequest;
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(detailsWorkshopId.textContent);
+      copied = true;
+    } catch {
+      // 剪贴板不可用时，在按钮下方显示错误。
+    }
+    if (request !== copyRequest) return;
+
+    const key = copied ? 'wallpapers.id_copied' : 'wallpapers.id_copy_failed';
+    copyStatus.textContent = window.i18n.t(key);
+    copyStatus.toggleAttribute('data-error', !copied);
+  });
+
+  function positionDetailsDrawer() {
+    const gap = 16;
+    const { clientWidth, clientHeight } = document.documentElement;
+    const topLimit = document.getElementById('titlebar').getBoundingClientRect().bottom + gap;
+    const bottomLimit = clientHeight - gap;
+    // 卡片本身给出预览图的基准位置，避免悬停缩放影响对齐。
+    const anchor = detailsAnchor.getBoundingClientRect();
+    const columns = getComputedStyle(wallpaperGrid).gridTemplateColumns.split(' ').length;
+    const index = Array.prototype.indexOf.call(wallpaperGrid.children, detailsAnchor);
+    const openOnLeft = index % columns >= columns - 2;
+    const sideWidth = openOnLeft ? anchor.left - 2 * gap : clientWidth - anchor.right - 2 * gap;
+
+    detailsDrawer.style.setProperty('--details-side-width', `${sideWidth}px`);
+    detailsDrawer.style.setProperty('--details-slide-x', openOnLeft ? '12px' : '-12px');
+    detailsDrawer.style.maxHeight = `${bottomLimit - topLimit}px`;
+
+    const { offsetWidth, offsetHeight } = detailsDrawer;
+    const left = openOnLeft ? anchor.left - gap - offsetWidth : anchor.right + gap;
+    const anchorTop = Math.max(topLimit, anchor.top);
+    const anchorBottom = Math.min(bottomLimit, anchor.bottom);
+    const spaceBelow = bottomLimit - anchorTop;
+    const spaceAbove = anchorBottom - topLimit;
+    const alignBottom = offsetHeight > spaceBelow && spaceAbove > spaceBelow;
+
+    detailsDrawer.style.maxHeight = `${alignBottom ? spaceAbove : spaceBelow}px`;
+    detailsDrawer.style.left = `${Math.max(gap, Math.min(left, clientWidth - gap - offsetWidth))}px`;
+    detailsDrawer.style.top = alignBottom ? 'auto' : `${anchorTop}px`;
+    detailsDrawer.style.bottom = alignBottom ? `${clientHeight - anchorBottom}px` : 'auto';
+  }
+
+  function openDrawer(wallpaper, card) {
+    if (detailsDrawer.inert) previousDrawerFocus = document.activeElement;
+    detailsAnchor = card;
+
     // 存储当前选中的壁纸信息，供提取功能使用
     window.currentlySelectedWallpaper = wallpaper;
 
     detailsImg.src = wallpaper.image;
     detailsName.textContent = wallpaper.name;
 
-    document.getElementById('details-workshop-id').textContent = wallpaper.workshopId || '—';
+    copyRequest++;
+    copyStatus.textContent = '';
+    copyStatus.removeAttribute('data-error');
+    detailsWorkshopId.textContent = wallpaper.workshopId || '—';
+    copyWorkshopId.disabled = !wallpaper.workshopId;
     const contentRating = document.getElementById('details-contentrating');
     const ratingKey = `content_rating.${wallpaper.contentRating?.toLowerCase()}`;
     const ratingText = window.i18n?.t(ratingKey);
     contentRating.textContent = ratingText && ratingText !== ratingKey ? ratingText : (wallpaper.contentRating || '');
     contentRating.hidden = !contentRating.textContent;
     detailsDrawer.scrollTop = 0;
+    positionDetailsDrawer();
 
+    detailsDrawer.inert = false;
     detailsDrawer.classList.add('open');
-    detailsBackdrop.classList.remove('opacity-0', 'pointer-events-none');
+    detailsBackdrop.classList.add('open');
+    detailsBackground.forEach(element => { element.inert = true; });
+    detailsClose.focus({ preventScroll: true });
 
     // 设置壁纸文件夹路径
     const folderPath = wallpaper.path;
@@ -975,9 +1040,26 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   window.closeDrawer = () => {
+    if (detailsDrawer.inert) return;
+    detailsAnchor = null;
+    copyRequest++;
+    detailsDrawer.inert = true;
     detailsDrawer.classList.remove('open');
-    detailsBackdrop.classList.add('opacity-0', 'pointer-events-none');
-  }
+    detailsBackdrop.classList.remove('open');
+    detailsBackground.forEach(element => { element.inert = false; });
+    previousDrawerFocus?.focus({ preventScroll: true });
+  };
+
+  window.addEventListener('resize', () => {
+    if (detailsAnchor?.isConnected) positionDetailsDrawer();
+    else if (detailsAnchor) window.closeDrawer();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !detailsDrawer.inert && !document.querySelector('dialog:modal')) {
+      window.closeDrawer();
+    }
+  });
 
   // --- 提取功能 ---
   async function extractWallpaper(wallpaperPath, extractPath) {

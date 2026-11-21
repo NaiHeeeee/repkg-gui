@@ -145,13 +145,16 @@ html.dark {
   }
 }
 
-/* 侧边栏详情页过渡效果 */
+/* 壁纸详情弹窗 */
 #details-drawer {
-  background-color: var(--bg-primary);
-  background-color: color-mix(in srgb, var(--bg-primary) 86%, transparent);
-  backdrop-filter: blur(18px);
-  transition: transform 0.3s ease-in-out;
-  transform: translateX(100%);
+  width: min(28rem, max(18rem, var(--details-side-width)), calc(100% - 2rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-color);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(var(--details-slide-x, 0));
+  transition: opacity 160ms ease-in, transform 160ms ease-in, visibility 160ms;
 }
 
 #details-contentrating[hidden] {
@@ -159,11 +162,59 @@ html.dark {
 }
 
 #details-drawer.open {
+  opacity: 1;
+  visibility: visible;
   transform: translateX(0);
+  transition: opacity 220ms ease-out, transform 220ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
 #details-backdrop {
-  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+#details-backdrop.open {
+  pointer-events: auto;
+}
+
+#copy-workshop-id {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+#copy-workshop-id:not(:disabled):hover {
+  border-color: var(--accent-color);
+  background-color: var(--bg-tertiary);
+}
+
+#copy-workshop-id:disabled {
+  cursor: default;
+}
+
+#copy-workshop-id:disabled svg {
+  display: none;
+}
+
+#details-drawer :is(#copy-workshop-id, #close-details-drawer):focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+#details-copy-status {
+  color: var(--accent-color);
+}
+
+#details-copy-status[data-error] {
+  color: var(--danger-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #details-drawer,
+  #details-drawer.open,
+  #copy-workshop-id {
+    transition: none;
+  }
 }
 
 /* 自定义开关样式 */
@@ -575,11 +626,6 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
 .wallpaper-page-button:disabled {
     cursor: default;
     opacity: 0.45;
-}
-
-/* 详情弹窗内容区域滚动修复 */
-#details-drawer {
-    overflow-y: auto;
 }
 
 /* 保持可点击元素的鼠标样式 */

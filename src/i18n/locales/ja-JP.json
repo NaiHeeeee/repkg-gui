@@ -19,7 +19,10 @@
     "next": "次へ",
     "page": "{page} / {pages} ページ",
     "no_matches": "条件に一致する壁紙がありません",
-    "workshop_id": "ワークショップ ID"
+    "workshop_id": "ワークショップ ID",
+    "close_details": "壁紙の詳細を閉じる",
+    "id_copied": "IDをコピーしました",
+    "id_copy_failed": "IDをコピーできませんでした"
   },
   "settings": {
     "title": "設定",
