@@ -780,7 +780,8 @@ document.addEventListener('DOMContentLoaded', function () {
       card.className = 'wallpaper-card group cursor-pointer';
       card.dataset.wallpaperId = wallpaper.id;
       card.dataset.index = index;
-      card.dataset.scenePkgPath = wallpaper.scenePkgPath;
+      card.dataset.scenePkgPath = wallpaper.scenePkgPath || '';
+      card.dataset.wallpaperPath = wallpaper.path || '';
 
       const mediaContainer = document.createElement('div');
       mediaContainer.className = 'aspect-square bg-[var(--bg-tertiary)] rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-105 relative';

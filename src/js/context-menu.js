@@ -67,6 +67,7 @@ class WallpaperContextMenu {
             id: wallpaperId,
             index: index,
             scenePkgPath: scenePkgPath,
+            path: card.dataset.wallpaperPath,
             card: card
         };
 
@@ -231,58 +232,32 @@ window.extractWallpaper = async function(wallpaper) {
 
 // 创建全局openWorkshop函数
 window.openWorkshop = async function(wallpaper) {
-    if (!wallpaper || (!wallpaper.scenePkgPath && !wallpaper.path)) {
+    const wallpaperPath = wallpaper?.path || wallpaper?.scenePkgPath?.replace(/[\\/]scene\.pkg$/i, '');
+    if (!wallpaperPath) {
         alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
         return;
     }
-    
-    // 获取壁纸文件夹路径
-    let wallpaperPath;
-    if (wallpaper.scenePkgPath) {
-        wallpaperPath = wallpaper.scenePkgPath.replace(/\/scene\.pkg$/, '');
-    } else if (wallpaper.path) {
-        wallpaperPath = wallpaper.path;
-    } else {
-        alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
+
+    if (!window.__TAURI__) {
+        alert(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
         return;
     }
-    
+
     try {
-        if (window.__TAURI__) {
-            const { invoke } = window.__TAURI__.core;
-            const projectJsonPath = `${wallpaperPath}/project.json`;
-            
-            // 从壁纸路径中提取实际文件夹ID（如 C:\...\workshop\content\431960\3660962877 中的 3660962877）
-            const folderIdMatch = wallpaperPath.match(/workshop[/\\]content[/\\]\d+[/\\](\d+)$/);
-            const actualFolderId = folderIdMatch ? folderIdMatch[1] : null;
-            
-            // 读取project.json文件
-            const projectData = await invoke('read_json_file', { path: projectJsonPath });
-            
-            if (projectData && projectData.workshopurl) {
-                let workshopUrl = projectData.workshopurl;
-                
-                // 自动修正：如果获取到了实际文件夹ID且与workshopurl中的ID不同，则替换
-                if (actualFolderId) {
-                    const urlIdMatch = workshopUrl.match(/CommunityFilePage[\\/](\d+)/);
-                    const urlId = urlIdMatch ? urlIdMatch[1] : null;
-                    
-                    if (urlId && urlId !== actualFolderId) {
-                        workshopUrl = workshopUrl.replace(/CommunityFilePage[\\/]\d+/, `CommunityFilePage/${actualFolderId}`);
-                    }
-                }
-                
-                // 打开Steam创意工坊链接
-                const { invoke } = window.__TAURI__.core;
-                await invoke('open_shell', { path: workshopUrl });
-            } else {
-                alert(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
-            }
+        const { invoke } = window.__TAURI__.core;
+        const folderName = wallpaperPath.replace(/[\\/]+$/, '').split(/[\\/]/).pop();
+        if (/^\d+$/.test(folderName)) {
+            await invoke('open_shell', { path: `steam://url/CommunityFilePage/${folderName}` });
+            return;
+        }
+
+        const projectData = await invoke('read_json_file', { path: `${wallpaperPath}/project.json` });
+        if (typeof projectData?.workshopurl === 'string' && projectData.workshopurl.trim()) {
+            await invoke('open_shell', { path: projectData.workshopurl.trim() });
         } else {
-            alert(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
+            alert(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
         }
     } catch (error) {
-//         console.error('读取project.json失败:', error);
         alert((window.i18n?.t('messages.read_project_failed') || '读取项目信息失败：') + error);
     }
 };
