@@ -14,6 +14,7 @@ class BackgroundManager {
         this.savedLocalFileSize = null;
         this.savedLocalFileType = null;
         this.objectUrl = null; // 临时URL对象，用于本地文件
+        this.stopBackgroundPlayback = null;
         this.init();
     }
 
@@ -178,9 +179,6 @@ class BackgroundManager {
             this.updateOpacityDisplay();
         });
 
-        const resumeBackground = () => this.resumeBackgroundVideo();
-        document.addEventListener('visibilitychange', resumeBackground);
-        window.addEventListener('focus', resumeBackground);
     }
 
     async selectLocalBackgroundFile() {
@@ -244,7 +242,7 @@ class BackgroundManager {
         }
         this.currentUrl = url;
         this.currentType = type;
-        this.previewUrl = null;
+        this.hidePreview();
         this.currentFile = null;
         this.currentFilePath = null;
         this.savedLocalFileName = null;
@@ -513,24 +511,111 @@ class BackgroundManager {
             video.muted = true;
             video.playsInline = true;
             video.src = this.currentUrl;
-            const resume = () => this.resumeBackgroundVideo(video);
-            video.addEventListener('pause', resume);
-            video.addEventListener('ended', resume);
             bgElement.appendChild(video);
         }
 
         document.body.appendChild(bgElement);
-        if (video) this.playVideo(video);
+        if (video) this.keepBackgroundVideoPlaying(video);
     }
 
-    resumeBackgroundVideo(video = document.querySelector('#custom-background > video')) {
-        if (!this.isEnabled || document.hidden || !video?.isConnected || video.error) return;
+    keepBackgroundVideoPlaying(video) {
+        const controller = new AbortController();
+        const options = { signal: controller.signal };
+        let playPending = false;
+        let lastTime = video.currentTime;
+        let lastProgress = performance.now();
+        let lastFrame = lastProgress;
+        let frameRequest;
+        let frameRecovery = null;
+        const watchFrame = () => {
+            lastFrame = performance.now();
+            frameRecovery = null;
+            frameRequest = video.requestVideoFrameCallback(watchFrame);
+        };
+        if (video.requestVideoFrameCallback) watchFrame();
 
-        if (video.ended) {
-            video.loop = true;
-            video.currentTime = 0;
+        const resume = async () => {
+            if (controller.signal.aborted || !video.isConnected || video.error || playPending ||
+                (!video.paused && !video.ended)) return;
+
+            playPending = true;
+            try {
+                await video.play();
+            } catch {
+                // 加载完成、窗口恢复或用户交互时会再次尝试。
+            } finally {
+                playPending = false;
+            }
+        };
+
+        for (const event of ['pause', 'ended', 'canplay']) {
+            video.addEventListener(event, resume, options);
         }
-        if (video.paused) this.playVideo(video);
+        for (const event of ['pointerdown', 'keydown']) {
+            document.addEventListener(event, resume, options);
+        }
+        for (const event of ['visibilitychange', 'resume', 'fullscreenchange']) {
+            document.addEventListener(event, resume, options);
+        }
+        for (const event of ['focus', 'pageshow', 'resize']) {
+            window.addEventListener(event, resume, options);
+        }
+
+        const reloadVideo = () => {
+            const position = video.currentTime;
+            lastProgress = lastFrame = performance.now();
+            video.addEventListener('loadedmetadata', () => {
+                video.currentTime = position;
+            }, { ...options, once: true });
+            video.playbackRate = 1;
+            video.load();
+            resume();
+        };
+
+        const retryTimer = setInterval(async () => {
+            resume();
+            const now = performance.now();
+            const position = video.currentTime;
+            if (document.hidden || video.paused || video.seeking || video.error ||
+                video.readyState < HTMLMediaElement.HAVE_METADATA || position !== lastTime) {
+                lastTime = position;
+                lastProgress = now;
+            }
+            if (document.hidden || this.opacity === 0 || video.paused ||
+                video.seeking || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+                lastFrame = now;
+            }
+            if (video.error || frameRecovery === 'refreshing') return;
+            if (now - lastProgress >= 8000) {
+                reloadVideo();
+                return;
+            }
+            if (frameRequest === undefined || now - lastFrame < 2500 || now - lastProgress >= 2500 ||
+                frameRecovery === 'reloaded') return;
+
+            // 时间仍在推进时，先恢复 WebView2 出帧，避免重新下载或解码视频。
+            if (!frameRecovery && window.__TAURI__?.core?.invoke) {
+                frameRecovery = 'refreshing';
+                const refreshed = await window.__TAURI__.core.invoke('refresh_background_webview').catch(() => false);
+                if (controller.signal.aborted || frameRecovery !== 'refreshing') return;
+                frameRecovery = 'refreshed';
+                if (refreshed) {
+                    lastFrame = performance.now();
+                    return;
+                }
+            }
+            // 当窗口仍被遮挡时，不因缺少画面回调而重新加载视频。
+            if (!document.hidden && document.hasFocus()) {
+                frameRecovery = 'reloaded';
+                reloadVideo();
+            }
+        }, 1000);
+        this.stopBackgroundPlayback = () => {
+            controller.abort();
+            clearInterval(retryTimer);
+            if (frameRequest !== undefined) video.cancelVideoFrameCallback(frameRequest);
+        };
+        resume();
     }
 
     playVideo(video) {
@@ -544,6 +629,8 @@ class BackgroundManager {
     }
 
     removeBackground() {
+        this.stopBackgroundPlayback?.();
+        this.stopBackgroundPlayback = null;
         const existingBg = document.getElementById('custom-background');
         if (existingBg) {
             const video = existingBg.querySelector('video');

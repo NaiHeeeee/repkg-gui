@@ -208,6 +208,43 @@ async fn unmaximize_window(window: tauri::Window) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn refresh_background_webview(window: tauri::WebviewWindow) -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        let (sender, mut result) = tauri::async_runtime::channel(1);
+        let host = window.clone();
+        window
+            .with_webview(move |webview| {
+                let refresh = || -> Result<bool, String> {
+                    if host.is_minimized().map_err(|e| e.to_string())?
+                        || !host.is_visible().map_err(|e| e.to_string())?
+                    {
+                        return Ok(false);
+                    }
+                    let controller = webview.controller();
+                    // Both visibility changes run on the WebView2 UI thread.
+                    unsafe {
+                        controller.SetIsVisible(false).map_err(|e| e.to_string())?;
+                        controller.SetIsVisible(true).map_err(|e| e.to_string())?;
+                    }
+                    Ok(true)
+                };
+                let _ = sender.try_send(refresh());
+            })
+            .map_err(|e| e.to_string())?;
+        result
+            .recv()
+            .await
+            .ok_or_else(|| "WebView closed".to_string())?
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = window;
+        Ok(false)
+    }
+}
+
+#[tauri::command]
 async fn close_window(window: tauri::Window) -> Result<(), String> {
     window.close().map_err(|e| e.to_string())
 }
@@ -503,6 +540,7 @@ pub fn run() {
             minimize_window,
             maximize_window,
             unmaximize_window,
+            refresh_background_webview,
             close_window,
             is_window_maximized,
             extract_pkg,

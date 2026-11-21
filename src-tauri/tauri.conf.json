@@ -17,7 +17,8 @@
         "minHeight": 600,
         "decorations": false,
         "transparent": false,
-        "center": true
+        "center": true,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --disable-background-media-suspend --disable-backgrounding-occluded-windows"
       }
     ],
     "security": {
