@@ -543,7 +543,7 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
     cursor: default;
 }
 
-#extraction-result {
+#app-notification {
   width: min(28rem, calc(100% - 2rem));
   max-height: calc(100% - 2rem);
   margin: auto;
@@ -552,11 +552,11 @@ p, span, div, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td {
   color: var(--text-primary);
 }
 
-#extraction-result::backdrop {
+#app-notification::backdrop {
   background-color: rgb(0 0 0 / 38%);
 }
 
-#extraction-result-message {
+#app-notification-message {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

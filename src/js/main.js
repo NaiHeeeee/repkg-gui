@@ -82,20 +82,8 @@ async function setDefaultExtractPath() {
   window.addEventListener('load', checkStylesLoaded);
 })();
 
-let extractionResultQueue = Promise.resolve();
-
 function showExtractionResult(message) {
-  extractionResultQueue = extractionResultQueue.then(() => new Promise(resolve => {
-    const dialog = document.getElementById('extraction-result');
-    document.getElementById('extraction-result-message').textContent = message;
-    dialog.showModal();
-    const closeTimer = window.setTimeout(() => dialog.close(), 3000);
-    dialog.addEventListener('close', () => {
-      window.clearTimeout(closeTimer);
-      resolve();
-    }, { once: true });
-  }));
-  return extractionResultQueue;
+  return showNotification(message, { titleKey: 'messages.extract_result', duration: 3000 });
 }
 
 async function readExtractionSettings() {
@@ -114,7 +102,7 @@ async function openExtractionFolder(path) {
   try {
     await window.__TAURI__.core.invoke('open_folder', { path });
   } catch (error) {
-    await showExtractionResult(window.i18n.t('messages.open_folder_error') + error);
+    await showNotification(window.i18n.t('messages.open_folder_error') + error, { duration: 3000 });
   }
 }
 
@@ -980,7 +968,7 @@ document.addEventListener('DOMContentLoaded', function () {
           await invoke('open_folder', { path: normalizedPath });
         } catch (error) {
           // console.error('打开文件夹失败:', error);
-          alert(window.i18n.t('messages.open_folder_error') + error);
+          showNotification(window.i18n.t('messages.open_folder_error') + error);
         }
       };
     }
@@ -1023,13 +1011,13 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('extract-btn').addEventListener('click', async () => {
     const wallpaper = window.currentlySelectedWallpaper;
     if (!wallpaper) {
-      alert(window.i18n.t('messages.no_wallpaper_selected'));
+      showNotification(window.i18n.t('messages.no_wallpaper_selected'));
       return;
     }
 
     const extractPath = document.getElementById('extract-path').value.trim();
     if (!wallpaper.path || !extractPath) {
-      alert(window.i18n.t('messages.empty_path'));
+      showNotification(window.i18n.t('messages.empty_path'));
       return;
     }
 
@@ -1041,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const extractPath = extractPathInput.value;
 
     if (!extractPath) {
-      alert(window.i18n.t('messages.set_extract_path_first'));
+      showNotification(window.i18n.t('messages.set_extract_path_first'));
       return;
     }
 
@@ -1054,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } catch (error) {
       // console.error('打开文件夹失败:', error);
-      alert(window.i18n.t('messages.open_folder_error') + error);
+      showNotification(window.i18n.t('messages.open_folder_error') + error);
     }
   });
 
@@ -1063,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof importToWallpaperEditor === 'function') {
       await importToWallpaperEditor('detail');
     } else {
-      alert(window.i18n.t('messages.wallpaper_editor_not_loaded'));
+      showNotification(window.i18n.t('messages.wallpaper_editor_not_loaded'));
     }
   });
 
@@ -1245,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.click();
       }
     } catch (error) {
-      alert(window.i18n.t('messages.select_file_error') + error);
+      showNotification(window.i18n.t('messages.select_file_error') + error);
     }
   });
 
@@ -1440,11 +1428,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (currentWorkshopPath) {
           currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: path });
         }
-        alert(window.i18n.t('messages.path_saved'));
+        await showNotification(window.i18n.t('messages.path_saved'));
         // 重新加载壁纸
         loadSteamWorkshopWallpapers();
       } else {
-        alert(window.i18n.t('messages.enter_valid_path'));
+        showNotification(window.i18n.t('messages.enter_valid_path'));
       }
     });
   }
@@ -1460,7 +1448,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (error) {
         // console.error('选择文件夹失败:', error);
-        alert(window.i18n.t('messages.select_folder_error') + error);
+        showNotification(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1468,14 +1456,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // 恢复默认按钮事件
   const restoreDefaultPathBtn = document.getElementById('restore-default-path');
   if (restoreDefaultPathBtn) {
-    restoreDefaultPathBtn.addEventListener('click', () => {
+    restoreDefaultPathBtn.addEventListener('click', async () => {
       const defaultPath = 'C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\431960';
       workshopPathInput.value = defaultPath;
       settingsManager.set('workshop-path', defaultPath);
       if (currentWorkshopPath) {
         currentWorkshopPath.textContent = window.i18n.t('workshop.current_path', { path: defaultPath });
       }
-      alert(window.i18n.t('messages.path_restored'));
+      await showNotification(window.i18n.t('messages.path_restored'));
       // 重新加载壁纸
       loadSteamWorkshopWallpapers();
     });
@@ -1575,7 +1563,7 @@ async function initExtractPathEvents() {
         }
       } catch (error) {
         // console.error('选择文件夹失败:', error);
-        alert(window.i18n.t('messages.select_folder_error') + error);
+        showNotification(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1616,7 +1604,7 @@ async function initManualExtractPathEvents() {
         }
       } catch (error) {
         // console.error('选择文件夹失败:', error);
-        alert(window.i18n.t('messages.select_folder_error') + error);
+        showNotification(window.i18n.t('messages.select_folder_error') + error);
       }
     });
   }
@@ -1701,13 +1689,13 @@ async function initManualExtractFunction() {
     manualExtractBtn.addEventListener('click', async () => {
       const files = manualFiles;
       if (files.length === 0) {
-        alert(window.i18n.t('messages.select_pkg_files'));
+        showNotification(window.i18n.t('messages.select_pkg_files'));
         return;
       }
 
       const extractPath = document.getElementById('extract-path-manual').value.trim();
       if (!extractPath) {
-        alert(window.i18n.t('messages.enter_extract_path'));
+        showNotification(window.i18n.t('messages.enter_extract_path'));
         return;
       }
 
@@ -1769,7 +1757,7 @@ async function initManualExtractFunction() {
       const extractPath = extractPathInput.value;
 
       if (!extractPath) {
-        alert(window.i18n.t('messages.set_extract_path_first'));
+        showNotification(window.i18n.t('messages.set_extract_path_first'));
         return;
       }
 
@@ -1781,7 +1769,7 @@ async function initManualExtractFunction() {
         }
       } catch (error) {
         // console.error('打开文件夹失败:', error);
-        alert(window.i18n.t('messages.open_folder_error') + error);
+        showNotification(window.i18n.t('messages.open_folder_error') + error);
       }
     });
   }

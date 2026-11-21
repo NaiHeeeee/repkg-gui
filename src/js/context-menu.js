@@ -177,7 +177,7 @@ class WallpaperContextMenu {
 // 创建全局openFolder函数
 window.openFolder = async function(path) {
     if (!path) {
-        alert(window.i18n?.t('messages.empty_path') || '路径不能为空');
+        showNotification(window.i18n?.t('messages.empty_path') || '路径不能为空');
         return;
     }
     
@@ -188,18 +188,18 @@ window.openFolder = async function(path) {
             const normalizedPath = path.replace(/\//g, '\\');
             await invoke('open_folder', { path: normalizedPath });
         } else {
-            alert(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
+            showNotification(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
         }
     } catch (error) {
 //         console.error('打开文件夹失败:', error);
-        alert((window.i18n?.t('messages.open_folder_error') || '打开文件夹失败：') + error);
+        showNotification((window.i18n?.t('messages.open_folder_error') || '打开文件夹失败：') + error);
     }
 };
 
 // 创建全局extractWallpaper函数
 window.extractWallpaper = async function(wallpaper) {
     if (!wallpaper || (!wallpaper.scenePkgPath && !wallpaper.path)) {
-        alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
+        showNotification(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
         return;
     }
     
@@ -211,7 +211,7 @@ window.extractWallpaper = async function(wallpaper) {
     } else if (wallpaper.path) {
         wallpaperPath = wallpaper.path;
     } else {
-        alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
+        showNotification(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
         return;
     }
     
@@ -219,14 +219,14 @@ window.extractWallpaper = async function(wallpaper) {
     const extractPath = extractPathInput?.value.trim();
     
     if (!extractPath) {
-        alert(window.i18n?.t('messages.set_extract_path_first') || '请先设置提取路径');
+        showNotification(window.i18n?.t('messages.set_extract_path_first') || '请先设置提取路径');
         return;
     }
     
     if (typeof window.extractWallpaperFromMain === 'function') {
         await window.extractWallpaperFromMain(wallpaperPath, extractPath);
     } else {
-        alert(window.i18n?.t('messages.extract_failed') || '提取功能未加载');
+        showNotification(window.i18n?.t('messages.extract_failed') || '提取功能未加载');
     }
 };
 
@@ -234,12 +234,12 @@ window.extractWallpaper = async function(wallpaper) {
 window.openWorkshop = async function(wallpaper) {
     const wallpaperPath = wallpaper?.path || wallpaper?.scenePkgPath?.replace(/[\\/]scene\.pkg$/i, '');
     if (!wallpaperPath) {
-        alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
+        showNotification(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
         return;
     }
 
     if (!window.__TAURI__) {
-        alert(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
+        showNotification(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
         return;
     }
 
@@ -255,10 +255,10 @@ window.openWorkshop = async function(wallpaper) {
         if (typeof projectData?.workshopurl === 'string' && projectData.workshopurl.trim()) {
             await invoke('open_shell', { path: projectData.workshopurl.trim() });
         } else {
-            alert(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
+            showNotification(window.i18n?.t('messages.no_workshop_url') || '该壁纸没有创意工坊链接');
         }
     } catch (error) {
-        alert((window.i18n?.t('messages.read_project_failed') || '读取项目信息失败：') + error);
+        showNotification((window.i18n?.t('messages.read_project_failed') || '读取项目信息失败：') + error);
     }
 };
 
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof importToWallpaperEditor === 'function') {
                     importToWallpaperEditor('context-menu');
                 } else {
-                    alert(window.i18n?.t('messages.wallpaper_editor_not_loaded') || '壁纸编辑器功能未加载');
+                    showNotification(window.i18n?.t('messages.wallpaper_editor_not_loaded') || '壁纸编辑器功能未加载');
                 }
             }
         },

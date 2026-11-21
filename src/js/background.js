@@ -194,7 +194,7 @@ class BackgroundManager {
             const message = window.i18n && window.i18n.t
                 ? window.i18n.t('messages.select_file_error')
                 : '选择文件失败: ';
-            alert(message + error);
+            showNotification(message + error);
         }
     }
 
@@ -217,7 +217,7 @@ class BackgroundManager {
         // 验证URL格式
         if (!this.isValidUrl(url)) {
             const message = window.i18n && window.i18n.t ? window.i18n.t('background.invalid_url') : '请输入图片或视频的完整链接，末尾须为支持的扩展名，例如 .jpg 或 .mp4。';
-            alert(message);
+            showNotification(message);
             return;
         }
 
@@ -229,7 +229,7 @@ class BackgroundManager {
         } catch {
             if (version === this.selectionVersion) {
                 const message = window.i18n?.t('background.load_failed') ?? '无法加载背景。请确认链接可以直接打开图片或视频。';
-                alert(message);
+                showNotification(message);
             }
             return;
         }
@@ -293,7 +293,7 @@ class BackgroundManager {
             const message = window.i18n && window.i18n.t ? 
                 window.i18n.t('background.invalid_file_type') : 
                 'This file type is not supported. Choose one of the image or video formats listed below.';
-            alert(message);
+            showNotification(message);
             return;
         }
 
@@ -303,7 +303,7 @@ class BackgroundManager {
             const message = window.i18n && window.i18n.t ? 
                 window.i18n.t('background.file_too_large') : 
                 'Choose a file no larger than 1 GiB.';
-            alert(message);
+            showNotification(message);
             return;
         }
 
@@ -326,7 +326,7 @@ class BackgroundManager {
             const message = window.i18n && window.i18n.t
                 ? window.i18n.t('background.invalid_file_type')
                 : 'This file type is not supported. Choose one of the image or video formats listed below.';
-            alert(message);
+            showNotification(message);
             return;
         }
 
@@ -406,7 +406,7 @@ class BackgroundManager {
             this.toggleControls();
             await this.saveSettings();
         } catch (error) {
-            if (this.pendingLocalFile === selected) alert(String(error));
+            if (this.pendingLocalFile === selected) showNotification(String(error));
         } finally {
             selected.applying = false;
             button.disabled = false;

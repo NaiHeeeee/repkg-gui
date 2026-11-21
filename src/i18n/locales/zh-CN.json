@@ -62,6 +62,7 @@
   },
   "messages": {
     "extract_result": "提取结果",
+    "notification_title": "提示",
     "extracting": "提取中...",
     "importing": "导入中...",
     "extract_success": "提取完成!",

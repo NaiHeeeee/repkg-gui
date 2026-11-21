@@ -32,7 +32,7 @@ class SettingsManager {
   init() {
     this.initialization ??= this.loadSettings().catch(error => {
       const message = window.i18n?.t('messages.settings_load_failed') ?? '读取设置失败，已使用默认设置。';
-      window.alert(`${message}\n${error}`);
+      return showNotification(`${message}\n${error}`);
     });
     return this.initialization;
   }
@@ -78,7 +78,7 @@ class SettingsManager {
       }
     }).catch(error => {
       const message = window.i18n?.t('messages.settings_save_failed') ?? '无法保存设置，重启后可能恢复为旧值。';
-      window.alert(`${message}\n${error}`);
+      return showNotification(`${message}\n${error}`);
     });
     return this.pendingSave;
   }

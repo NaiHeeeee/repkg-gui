@@ -62,6 +62,7 @@
   },
   "messages": {
     "extract_result": "抽出結果",
+    "notification_title": "お知らせ",
     "extracting": "抽出中...",
     "importing": "インポート中...",
     "extract_success": "抽出が完了しました",

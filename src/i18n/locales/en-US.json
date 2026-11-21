@@ -62,6 +62,7 @@
   },
   "messages": {
     "extract_result": "Extraction result",
+    "notification_title": "Notice",
     "extracting": "Extracting...",
     "importing": "Importing...",
     "extract_success": "Extraction completed!",

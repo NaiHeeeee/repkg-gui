@@ -55,7 +55,7 @@ class WallpaperEditorImporter {
                 }
 
                 if (!this.steamappsPath) {
-                    alert(window.i18n?.t('messages.steam_not_found') || '无法找到Steam或Wallpaper Engine安装路径，请确保已安装Wallpaper Engine');
+                    showNotification(window.i18n?.t('messages.steam_not_found') || '无法找到Steam或Wallpaper Engine安装路径，请确保已安装Wallpaper Engine');
                     return;
                 }
 
@@ -105,7 +105,7 @@ class WallpaperEditorImporter {
 
             this.hideImportProgress();
             const successTitle = window.i18n?.t('messages.import_success') || '导入成功';
-            alert(`${successTitle}\n${result}`);
+            await showNotification(`${successTitle}\n${result}`);
 
             // 检查是否启用自动打开导入文件夹
             const autoOpenImportFolder = settingsManager.get('auto-open-import-folder');
@@ -122,7 +122,7 @@ class WallpaperEditorImporter {
             this.hideImportProgress();
             // console.error('导入壁纸编辑器失败:', error);
             const failedTitle = window.i18n?.t('messages.import_failed') || '导入失败';
-            alert(`${failedTitle}\n${error}`);
+            showNotification(`${failedTitle}\n${error}`);
         }
     }
 
@@ -184,7 +184,7 @@ class WallpaperEditorImporter {
             }
         }
         
-        alert(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
+        showNotification(window.i18n?.t('messages.no_wallpaper_selected') || '请先选择一个壁纸');
         return null;
     }
 
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 导出全局函数供HTML调用
 window.importToWallpaperEditor = async function(type = 'detail') {
     if (!window.__TAURI__) {
-        alert(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
+        showNotification(window.i18n?.t('messages.desktop_only') || '此功能仅在桌面应用中可用');
         return;
     }
 
