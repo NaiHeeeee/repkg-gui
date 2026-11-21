@@ -1,0 +1,35 @@
+{
+  "width": 1200,
+  "fps": 25,
+  "duration": 4.8,
+  "colors": 256,
+  "dither": "none",
+  "clip_to_base_alpha": true,
+  "max_size_mb": 2.0,
+  "reveals": [
+    {
+      "id": "extraction-flow",
+      "axis": "x",
+      "start": 0.16,
+      "end": 0.68,
+      "exit": { "start": 3.84, "end": 4.56 }
+    }
+  ],
+  "layers": [
+    {
+      "id": "scene-back",
+      "enter": { "start": 0.6, "end": 1.56, "from": [-58, 39] },
+      "exit": { "start": 3.84, "end": 4.48, "to": [-54, 39] }
+    },
+    {
+      "id": "scene-middle",
+      "enter": { "start": 0.48, "end": 1.48, "from": [-50, 21] },
+      "exit": { "start": 3.88, "end": 4.52, "to": [-45, 21] }
+    },
+    {
+      "id": "scene-front",
+      "enter": { "start": 0.32, "end": 1.4, "from": [-50, 10] },
+      "exit": { "start": 3.92, "end": 4.56, "to": [-33, 10] }
+    }
+  ]
+}

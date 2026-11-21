@@ -14,7 +14,7 @@ let wallpapers = [];
 let currentSortMethod = 'date'; // 默认按时间排序
 let sortOrders = {
   name: 'desc', // 'asc' 表示正序，'desc' 表示倒序
-  date: 'asc' // 默认时间正序（最旧的在前）
+  date: 'desc'
 };
 
 
@@ -285,7 +285,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 使用Tauri的API读取本地文件系统
+  let wallpaperLoadVersion = 0;
+  let wallpaperLoadStatus = 'loading';
+
   async function loadSteamWorkshopWallpapers() {
+    const loadVersion = ++wallpaperLoadVersion;
+    wallpaperLoadStatus = 'loading';
+    showLoadingAnimation();
+
     try {
       // console.log('开始加载Steam创意工坊壁纸...');
 
@@ -304,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
           try {
             // 使用自动补全功能
             const completedPath = await autoCompleteWorkshopPath(customPath);
+            if (loadVersion !== wallpaperLoadVersion) return;
             if (completedPath !== customPath) {
               // 如果路径被补全，更新存储的路径
               await settingsManager.init();
@@ -355,6 +363,8 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
+        if (loadVersion !== wallpaperLoadVersion) return;
+
         // 如果没有找到有效的路径
         if (!workshopPath) {
           // console.warn('未找到有效的Steam Workshop路径');
@@ -363,8 +373,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-          // 显示加载动画
-          showLoadingAnimation();
           // console.log('正在读取目录...');
           // console.log('找到的文件夹:', wallpaperFolders);
 
@@ -377,7 +385,9 @@ document.addEventListener('DOMContentLoaded', function () {
           const loadedWallpapers = [];
 
           for (const folder of wallpaperFolders) {
+            if (loadVersion !== wallpaperLoadVersion) return;
             const folderId = folder.name;
+            let workshopId = /^\d+$/.test(folderId) ? folderId : null;
             const folderPath = `${workshopPath}/${folderId}`;
 
             // console.log(`处理文件夹: ${folderId}`);
@@ -386,11 +396,19 @@ document.addEventListener('DOMContentLoaded', function () {
               // 读取project.json获取标题
               const projectJsonPath = `${folderPath}/project.json`;
               let name = `壁纸 ${folderId}`;
+              let contentRating = '';
 
               try {
                 const projectData = await invoke('read_json_file', { path: projectJsonPath });
                 // console.log(`Project.json内容:`, projectData);
-                name = projectData?.title || name;
+                if (typeof projectData?.title === 'string' && projectData.title) name = projectData.title;
+                contentRating = typeof projectData?.contentrating === 'string' ? projectData.contentrating : '';
+
+                if (!workshopId) {
+                  const steamUrlId = /^steam:\/\/url\/CommunityFilePage\/(\d+)\/?$/i.exec(projectData?.workshopurl);
+                  const webUrlId = /^https?:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/?\?(?:[^#]*&)?id=(\d+)(?:[&#]|$)/i.exec(projectData?.workshopurl);
+                  workshopId = steamUrlId?.[1] || webUrlId?.[1] || null;
+                }
               } catch (e) {
                 // console.warn(`无法读取project.json: ${projectJsonPath}`, e);
               }
@@ -502,6 +520,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
               loadedWallpapers.push({
                 id: folderId,
+                workshopId,
+                contentRating,
                 name: name,
                 image: imageUrl,
                 path: folderPath,
@@ -516,6 +536,7 @@ document.addEventListener('DOMContentLoaded', function () {
               // 即使没有预览文件也添加基本信息
               loadedWallpapers.push({
                 id: folderId,
+                workshopId,
                 name: `壁纸 ${folderId}`,
                 image: 'https://placehold.co/600x400/6B7280/FFFFFF?text=No+Preview',
                 path: folderPath,
@@ -527,43 +548,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // console.log(`成功加载 ${loadedWallpapers.length} 个壁纸（已筛选包含scene.pkg的文件）`, loadedWallpapers);
 
-          // 更新壁纸数据
-          wallpapers.length = 0;
-          wallpapers.push(...loadedWallpapers);
-
-          // 应用当前排序设置
-          applyCurrentSort();
-
-          // 隐藏加载动画
-          hideLoadingAnimation();
-
-          // 重新渲染壁纸网格
-          renderWallpaperGrid();
-
-          // 重新应用内容评级筛选
-          if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
-            await window.contentRatingFilter.apply();
-          }
-
-          // 更新排序箭头显示
-          updateSortArrows();
-
-          // 预加载前几张图片
-          preloadFirstImages(6);
-
+          if (loadVersion !== wallpaperLoadVersion) return;
+          wallpapers = loadedWallpapers;
         } catch (error) {
-          // console.error('读取目录失败:', error);
+          if (loadVersion !== wallpaperLoadVersion) return;
+          wallpaperLoadStatus = 'error';
           document.getElementById('wallpaper-grid').innerHTML =
             `<div class="col-span-full flex flex-col items-center justify-center py-16">
               <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <h3 class="text-lg font-semibold text-red-600 mb-2" data-i18n="extract.load_failed">加载失败</h3>
-              <p class="text-sm text-gray-500 mb-4">${error.message}</p>
-              <button onclick="loadSteamWorkshopWallpapers()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" data-i18n="buttons.reload">
+              <p class="text-sm text-gray-500 mb-4"></p>
+              <button id="retry-wallpapers" type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" data-i18n="buttons.reload">
                 重新加载
               </button>
             </div>`;
+          document.querySelector('#wallpaper-grid p').textContent = error?.message ?? String(error);
+          document.getElementById('retry-wallpapers').addEventListener('click', loadSteamWorkshopWallpapers);
         }
       } else {
         // 如果不是在Tauri环境中，显示提示
@@ -571,34 +573,25 @@ document.addEventListener('DOMContentLoaded', function () {
         loadMockData();
       }
     } catch (error) {
-      // console.error('读取Steam创意工坊数据失败:', error);
-      loadMockData();
+      if (loadVersion === wallpaperLoadVersion) loadMockData();
+    } finally {
+      if (loadVersion === wallpaperLoadVersion && wallpaperLoadStatus !== 'error') {
+        wallpaperLoadStatus = 'ready';
+        applyCurrentSort();
+        updateSortArrows();
+        resetWallpaperPage();
+      }
     }
   }
 
-  async function loadMockData() {
+  function loadMockData() {
     // 保留一些模拟数据作为后备
     const mockWallpapers = [
       { id: 1, name: 'Cyberpunk Cityscape', image: 'https://placehold.co/600x400/000000/FFFFFF?text=Cyberpunk' },
       { id: 2, name: 'Peaceful Lake', image: 'https://placehold.co/600x400/3B82F6/FFFFFF?text=Lake' },
       { id: 3, name: 'Anime Girl Reading', image: 'https://placehold.co/600x400/EC4899/FFFFFF?text=Anime' },
     ];
-    wallpapers.length = 0;
-    wallpapers.push(...mockWallpapers);
-
-    // 应用当前排序设置
-    applyCurrentSort();
-
-    // 重新渲染壁纸网格
-    renderWallpaperGrid();
-
-    // 重新应用内容评级筛选
-    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
-      await window.contentRatingFilter.apply();
-    }
-
-    // 更新排序箭头显示
-    updateSortArrows();
+    wallpapers = mockWallpapers;
   }
 
   // --- 页面导航逻辑 ---
@@ -634,19 +627,12 @@ document.addEventListener('DOMContentLoaded', function () {
       pages.forEach(page => page.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
 
-      navLinks.forEach(nav => nav.classList.remove('active'));
-      link.classList.add('active');
-
-      // 为活动链接添加样式
-      document.querySelectorAll('.nav-link').forEach(l => {
-        if (l.dataset.page === pageId) {
-          l.style.backgroundColor = 'var(--accent-color)';
-          l.style.color = 'var(--accent-text)';
-        } else {
-          l.style.backgroundColor = 'transparent';
-          l.style.color = 'var(--text-primary)';
-        }
+      navLinks.forEach(nav => {
+        nav.classList.remove('active');
+        nav.removeAttribute('aria-current');
       });
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
 
       // 恢复目标页面滚动位置
       setTimeout(() => {
@@ -659,15 +645,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
   // --- 首页逻辑 ---
+  const wallpapersPerPage = 24;
+  let wallpaperPage = 1;
+  let wallpaperPageCount = 0;
+  const homePage = document.getElementById('home');
+  const wallpaperGrid = document.getElementById('wallpaper-grid');
+  const wallpaperPagination = document.getElementById('wallpaper-pagination');
+  const firstPage = document.getElementById('wallpaper-first-page');
+  const previousPage = document.getElementById('wallpaper-prev-page');
+  const nextPage = document.getElementById('wallpaper-next-page');
+  const lastPage = document.getElementById('wallpaper-last-page');
+  const pageIndicator = document.getElementById('wallpaper-page-indicator');
+  const pageStatus = document.getElementById('wallpaper-page-status');
+  const searchWallpapers = document.getElementById('search-wallpapers');
+  const ratingCheckboxes = [...document.querySelectorAll('.content-rating-checkbox')];
+
+  const wallpaperPreviewObserver = new IntersectionObserver((entries, observer) => {
+    for (const { isIntersecting, target } of entries) {
+      if (isIntersecting && target.isConnected) {
+        observer.unobserve(target);
+        loadWallpaperMedia(target);
+      }
+    }
+  }, { rootMargin: '100px 0px', threshold: 0.1 });
+
+  function updateWallpaperPageStatus() {
+    const params = { page: wallpaperPage, pages: wallpaperPageCount };
+    const text = window.i18n?.t('wallpapers.page', params);
+    const pageNumber = `${wallpaperPage} / ${wallpaperPageCount}`;
+    pageIndicator.textContent = pageNumber;
+    pageStatus.textContent = text && text !== 'wallpapers.page' ? text : pageNumber;
+  }
+
+  function resetWallpaperPage() {
+    wallpaperPage = 1;
+    renderWallpaperGrid();
+    homePage.scrollTop = 0;
+  }
+
+  searchWallpapers.addEventListener('input', resetWallpaperPage);
+  document.getElementById('content-rating-dropdown').addEventListener('change', resetWallpaperPage);
+  window.addEventListener('languageChanged', updateWallpaperPageStatus);
+
+  for (const [button, destination] of [
+    [firstPage, () => 1],
+    [previousPage, () => wallpaperPage - 1],
+    [nextPage, () => wallpaperPage + 1],
+    [lastPage, () => wallpaperPageCount]
+  ]) {
+    button.addEventListener('click', () => {
+      wallpaperPage = destination();
+      renderWallpaperGrid();
+      homePage.scrollTop = 0;
+    });
+  }
+
   function showLoadingAnimation() {
-    const grid = document.getElementById('wallpaper-grid');
+    wallpaperPreviewObserver.disconnect();
+    wallpaperPagination.hidden = true;
 
     // 计算视口高度减去头部区域
     const viewportHeight = window.innerHeight;
     const headerHeight = 120; // 估算的头部高度 (h2 + padding)
     const availableHeight = viewportHeight - headerHeight;
 
-    grid.innerHTML = `
+    wallpaperGrid.innerHTML = `
       <div class="col-span-full flex items-center justify-center" style="min-height: ${availableHeight}px;">
         <div class="flex flex-col items-center text-center">
           <div class="relative">
@@ -689,36 +731,47 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
   }
 
-  function hideLoadingAnimation() {
-    const loadingElement = document.querySelector('.loading-container');
-    if (loadingElement) {
-      loadingElement.style.opacity = '0';
-      setTimeout(() => {
-        if (loadingElement.parentNode) {
-          loadingElement.parentNode.removeChild(loadingElement);
-        }
-      }, 300);
-    }
-  }
-
   function renderWallpaperGrid() {
-    const wallpaperGrid = document.getElementById('wallpaper-grid');
-    wallpaperGrid.innerHTML = '';
+    if (wallpaperLoadStatus !== 'ready') return;
 
-    if (wallpapers.length === 0) {
+    const searchTerm = searchWallpapers.value.trim().toLowerCase();
+    const selectedRatings = ratingCheckboxes.filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+    const filterByRating = selectedRatings.length > 0 && selectedRatings.length < ratingCheckboxes.length;
+    const matchingIndexes = [];
+    wallpapers.forEach((wallpaper, index) => {
+      const matchesSearch = wallpaper.name.toLowerCase().includes(searchTerm) ||
+        String(wallpaper.id).toLowerCase().includes(searchTerm) || wallpaper.workshopId?.includes(searchTerm);
+      const matchesRating = !filterByRating || selectedRatings.includes(wallpaper.contentRating?.toLowerCase());
+      if (matchesSearch && matchesRating) matchingIndexes.push(index);
+    });
+
+    wallpaperPreviewObserver.disconnect();
+    wallpaperGrid.replaceChildren();
+    wallpaperPageCount = Math.ceil(matchingIndexes.length / wallpapersPerPage);
+    wallpaperPage = Math.max(1, Math.min(wallpaperPage, wallpaperPageCount));
+    wallpaperPagination.hidden = wallpaperPageCount < 2;
+    firstPage.disabled = previousPage.disabled = wallpaperPage === 1;
+    lastPage.disabled = nextPage.disabled = wallpaperPage >= wallpaperPageCount;
+    updateWallpaperPageStatus();
+
+    if (matchingIndexes.length === 0) {
+      const key = wallpapers.length ? 'wallpapers.no_matches' : 'extract.no_wallpapers';
+      const text = window.i18n?.t(key);
       wallpaperGrid.innerHTML = `
         <div class="col-span-full text-center py-12">
           <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-[var(--text-primary)]" data-i18n="extract.no_wallpapers">未找到壁纸</h3>
-          <p class="mt-1 text-sm text-[var(--text-secondary)]" data-i18n="extract.ensure_path">请确保Steam创意工坊路径存在且包含壁纸文件</p>
+          <h3 class="mt-2 text-sm font-medium text-[var(--text-primary)]" data-i18n="${key}">${text && text !== key ? text : '未找到壁纸'}</h3>
+          ${wallpapers.length ? '' : '<p class="mt-1 text-sm text-[var(--text-secondary)]" data-i18n="extract.ensure_path">请确保Steam创意工坊路径存在且包含壁纸文件</p>'}
         </div>
       `;
       return;
     }
 
-    wallpapers.forEach((wallpaper, index) => {
+    const start = (wallpaperPage - 1) * wallpapersPerPage;
+    for (const index of matchingIndexes.slice(start, start + wallpapersPerPage)) {
+      const wallpaper = wallpapers[index];
       const card = document.createElement('div');
       card.className = 'wallpaper-card group cursor-pointer';
       card.dataset.wallpaperId = wallpaper.id;
@@ -735,48 +788,20 @@ document.addEventListener('DOMContentLoaded', function () {
           </svg>
         </div>
         <div class="absolute bottom-0 left-0 right-0 h-13 bg-gradient-to-t from-black/80 via-black/50 to-transparent flex items-start justify-center p-2">
-          <p class="text-white text-sm font-medium text-center line-clamp-2 break-words w-full px-1 mt-2">${wallpaper.name}</p>
+          <p class="text-white text-sm font-medium text-center line-clamp-2 break-words w-full px-1 mt-2"></p>
         </div>
       `;
 
+      mediaContainer.querySelector('p').textContent = wallpaper.name;
       card.appendChild(mediaContainer);
       card.addEventListener('click', () => openDrawer(wallpaper));
       wallpaperGrid.appendChild(card);
-    });
-
-    lazyLoadImages();
+      wallpaperPreviewObserver.observe(card);
+    }
   }
 
-  function lazyLoadImages() {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const card = entry.target;
-          const index = parseInt(card.dataset.index);
-          loadWallpaperMedia(index);
-          observer.unobserve(card);
-        }
-      });
-    }, {
-      rootMargin: '100px 0px',
-      threshold: 0.1
-    });
-
-    document.querySelectorAll('[data-wallpaper-id]').forEach(card => {
-      imageObserver.observe(card);
-    });
-
-    // 预加载前6张
-    preloadFirstImages(6);
-  }
-
-  async function loadWallpaperMedia(index) {
-    if (index < 0 || index >= wallpapers.length) return;
-
-    const wallpaper = wallpapers[index];
-    const card = document.querySelector(`[data-index="${index}"]`);
-    if (!card) return;
-
+  function loadWallpaperMedia(card) {
+    const wallpaper = wallpapers[Number(card.dataset.index)];
     const container = card.querySelector('.aspect-square');
 
     try {
@@ -825,42 +850,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function preloadFirstImages(count = 6) {
-    for (let i = 0; i < Math.min(count, wallpapers.length); i++) {
-      setTimeout(() => loadWallpaperMedia(i), i * 150);
-    }
-  }
-
-  // 加载壁纸数据
-  loadSteamWorkshopWallpapers().then(async () => {
-    // 默认按时间倒序排序（新的在前）
-    currentSortMethod = 'date';
-    sortOrders.date = 'desc'; // 确保是降序（新的在前）
-
-    // 应用默认排序（新的在前）
-    wallpapers.sort((a, b) => {
-      if (!a.modifiedDate || !b.modifiedDate) return 0;
-      return new Date(b.modifiedDate) - new Date(a.modifiedDate);
-    });
-
-    // 更新箭头显示
-    updateSortArrows();
-
-    // 重新渲染壁纸网格
-    renderWallpaperGrid();
-
-    // 重新应用内容评级筛选
-    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
-      await window.contentRatingFilter.apply();
-    }
-
-    // 预加载前几张图片
-    preloadFirstImages(6);
-  });
+  loadSteamWorkshopWallpapers();
 
   // --- 排序功能 ---
 
-  async function sortWallpapers(method) {
+  function sortWallpapers(method) {
     // 如果切换了排序方法，重置新方法的排序顺序为升序
     if (currentSortMethod !== method) {
       sortOrders[method] = 'asc';
@@ -871,40 +865,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     currentSortMethod = method;
 
-    if (method === 'name') {
-      if (sortOrders.name === 'asc') {
-        wallpapers.sort((a, b) => a.name.localeCompare(b.name));
-      } else {
-        wallpapers.sort((a, b) => b.name.localeCompare(a.name));
-      }
-    } else if (method === 'date') {
-      if (sortOrders.date === 'asc') {
-        // 按文件夹修改日期正序排序（最旧的在前）
-        wallpapers.sort((a, b) => {
-          // 如果没有日期信息，则保持原有顺序
-          if (!a.modifiedDate || !b.modifiedDate) return 0;
-          return new Date(a.modifiedDate) - new Date(b.modifiedDate);
-        });
-      } else {
-        // 按文件夹修改日期倒序排序（最新的在前）
-        wallpapers.sort((a, b) => {
-          // 如果没有日期信息，则保持原有顺序
-          if (!a.modifiedDate || !b.modifiedDate) return 0;
-          return new Date(b.modifiedDate) - new Date(a.modifiedDate);
-        });
-      }
-    }
-
-    // 更新箭头显示
+    applyCurrentSort();
     updateSortArrows();
-
-    // 重新渲染壁纸网格
-    renderWallpaperGrid();
-
-    // 重新应用内容评级筛选
-    if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
-      await window.contentRatingFilter.apply();
-    }
+    resetWallpaperPage();
   }
 
   function applyCurrentSort() {
@@ -966,13 +929,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // 为排序按钮添加事件监听器
-  document.getElementById('sort-by-name').addEventListener('click', async () => {
-    await sortWallpapers('name');
-  });
+  document.getElementById('sort-by-name').addEventListener('click', () => sortWallpapers('name'));
 
-  document.getElementById('sort-by-date').addEventListener('click', async () => {
-    await sortWallpapers('date');
-  });
+  document.getElementById('sort-by-date').addEventListener('click', () => sortWallpapers('date'));
 
   // --- 详情弹窗逻辑 ---
   const detailsDrawer = document.getElementById('details-drawer');
@@ -980,40 +939,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const detailsImg = document.getElementById('details-img');
   const detailsName = document.getElementById('details-name');
 
-  window.openDrawer = async (wallpaper) => {
+  window.openDrawer = (wallpaper) => {
     // 存储当前选中的壁纸信息，供提取功能使用
     window.currentlySelectedWallpaper = wallpaper;
 
     detailsImg.src = wallpaper.image;
     detailsName.textContent = wallpaper.name;
 
-    // 读取并显示contentrating字段
-    const contentRatingElement = document.getElementById('details-contentrating');
-    if (contentRatingElement) {
-      try {
-        const { invoke } = window.__TAURI__.core;
-        const projectJsonPath = `${wallpaper.path}/project.json`;
-        const projectData = await invoke('read_json_file', { path: projectJsonPath });
-
-        if (projectData && projectData.contentrating) {
-          // 使用i18n获取内容评级的翻译
-          let contentRatingKey = projectData.contentrating.toLowerCase();
-          let contentRatingText = window.i18n.t(`content_rating.${contentRatingKey}`);
-
-          // 如果找不到对应的翻译，使用原始值
-          if (contentRatingText === `content_rating.${contentRatingKey}`) {
-            contentRatingText = projectData.contentrating;
-          }
-
-          contentRatingElement.textContent = contentRatingText;
-        } else {
-          contentRatingElement.textContent = '';
-        }
-      } catch (error) {
-        // console.error('读取contentrating失败:', error);
-        contentRatingElement.textContent = '';
-      }
-    }
+    document.getElementById('details-workshop-id').textContent = wallpaper.workshopId || '—';
+    const contentRating = document.getElementById('details-contentrating');
+    const ratingKey = `content_rating.${wallpaper.contentRating?.toLowerCase()}`;
+    const ratingText = window.i18n?.t(ratingKey);
+    contentRating.textContent = ratingText && ratingText !== ratingKey ? ratingText : (wallpaper.contentRating || '');
+    contentRating.hidden = !contentRating.textContent;
+    detailsDrawer.scrollTop = 0;
 
     detailsDrawer.classList.add('open');
     detailsBackdrop.classList.remove('opacity-0', 'pointer-events-none');
@@ -1313,12 +1252,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 更新GitHub图标显示
     updateThemeIcons();
-
-    // 更新内容评级下拉菜单背景色
-    if (window.contentRatingFilter && typeof window.contentRatingFilter.updateBackground === 'function') {
-      const isDark = rootHtml.classList.contains('dark') || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      window.contentRatingFilter.updateBackground(isDark);
-    }
 
     if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1832,44 +1765,13 @@ document.addEventListener('DOMContentLoaded', function () {
       // 添加旋转动画类
       icon.classList.add('refresh-icon-spinning');
 
-      loadSteamWorkshopWallpapers().then(async () => {
-        // 清空内容评级缓存
-        if (window.contentRatingFilter && typeof window.contentRatingFilter.clearCache === 'function') {
-          window.contentRatingFilter.clearCache();
-        }
+      ratingCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      currentSortMethod = 'date';
+      sortOrders.date = 'desc';
 
-        // 重置内容评级筛选复选框为默认全选
-        const checkboxes = document.querySelectorAll('.content-rating-checkbox');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = true;
-        });
-
-
-
-        // 刷新后恢复默认排序：新的在前
-        currentSortMethod = 'date';
-        sortOrders.date = 'desc'; // 确保是降序（新的在前）
-
-        // 应用默认排序（新的在前）
-        wallpapers.sort((a, b) => {
-          if (!a.modifiedDate || !b.modifiedDate) return 0;
-          return new Date(b.modifiedDate) - new Date(a.modifiedDate);
-        });
-
-        // 更新箭头显示
-        updateSortArrows();
-
-        // 重新渲染壁纸网格
-        renderWallpaperGrid();
-
-        // 重新应用内容评级筛选
-        if (window.contentRatingFilter && typeof window.contentRatingFilter.apply === 'function') {
-          await window.contentRatingFilter.apply();
-        }
-
-        // 预加载前几张图片
-        preloadFirstImages(6);
-      }).finally(() => {
+      loadSteamWorkshopWallpapers().finally(() => {
         // 动画完成后移除旋转类
         setTimeout(() => {
           icon.classList.remove('refresh-icon-spinning');
@@ -2041,67 +1943,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 初始化手动提取页面的提取功能
   await initManualExtractFunction();
 
-  // 初始化搜索功能
-  initSearchFunction();
 });
-
-// 搜索功能实现
-function initSearchFunction() {
-  const searchInput = document.getElementById('search-wallpapers');
-  if (!searchInput) return;
-
-  searchInput.addEventListener('input', async (e) => {
-    const searchTerm = e.target.value.toLowerCase().trim();
-    await filterWallpapers(searchTerm);
-  });
-}
-
-// 过滤壁纸列表
-async function filterWallpapers(searchTerm) {
-  const checkboxes = document.querySelectorAll('.content-rating-checkbox');
-  const selectedRatings = Array.from(checkboxes)
-    .filter(cb => cb.checked)
-    .map(cb => cb.value);
-
-  const wallpaperCards = document.querySelectorAll('.wallpaper-card');
-
-  wallpaperCards.forEach(async (card) => {
-    const wallpaperId = card.dataset.wallpaperId?.toLowerCase() || '';
-    const wallpaperName = card.querySelector('.text-white.text-sm.font-medium')?.textContent.toLowerCase() || '';
-
-    // 搜索条件匹配
-    const matchesSearch = searchTerm === '' ||
-      wallpaperName.includes(searchTerm) ||
-      wallpaperId.includes(searchTerm);
-
-    // 如果没有选择任何内容评级，只应用搜索筛选
-    if (selectedRatings.length === 0) {
-      card.style.display = matchesSearch ? 'block' : 'none';
-      return;
-    }
-
-    // 获取壁纸数据
-    const wallpaperIndex = parseInt(card.dataset.index);
-    const wallpaper = wallpapers[wallpaperIndex];
-
-    if (!wallpaper) {
-      card.style.display = 'none';
-      return;
-    }
-
-    // 获取内容评级
-    let contentRating = null;
-    if (window.contentRatingFilter && typeof window.contentRatingFilter.getWallpaperContentRating === 'function') {
-      contentRating = await window.contentRatingFilter.getWallpaperContentRating(wallpaper);
-    }
-
-    // 内容评级筛选条件匹配
-    const matchesContentRating = contentRating && selectedRatings.includes(contentRating);
-
-    // 同时满足搜索和内容评级条件才显示
-    card.style.display = (matchesSearch && matchesContentRating) ? 'block' : 'none';
-  });
-}
 
 async function initManualExtractFunction() {
   const manualExtractBtn = document.getElementById('manual-extract-btn');

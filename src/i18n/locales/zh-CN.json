@@ -12,6 +12,15 @@
     "no_wallpapers": "未找到壁纸",
     "ensure_path": "请确保Steam创意工坊路径存在且包含壁纸文件"
   },
+  "wallpapers": {
+    "first": "首页",
+    "last": "尾页",
+    "previous": "上一页",
+    "next": "下一页",
+    "page": "第 {page} / {pages} 页",
+    "no_matches": "没有符合条件的壁纸",
+    "workshop_id": "创意工坊 ID"
+  },
   "settings": {
     "title": "设置",
     "appearance": "外观",
@@ -41,6 +50,13 @@
     "glass_effect_desc": "启用或禁用界面的毛玻璃效果"
   },
   "about": {
+    "check_updates": "检查更新",
+    "checking_updates": "正在检查 RePKG-GUI 更新…",
+    "update_available": "有新版本 {latest}，当前版本为 {current}。",
+    "no_update": "当前版本为 {current}，暂无可用更新。",
+    "update_failed": "无法自动检查更新，可打开发布页查看版本。",
+    "view_release": "查看发布页",
+    "release_open_failed": "无法打开发布页，请重试。",
     "title": "关于 RePKG GUI",
     "version": "版本"
   },

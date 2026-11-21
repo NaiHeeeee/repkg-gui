@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340"
+     role="img" aria-labelledby="title description">
+  <title id="title">RePKG-GUI · Scene Wallpaper Extraction</title>
+  <desc id="description">A Wallpaper Engine .pkg archive unfolds into a stack of scene assets.</desc>
+
+  <defs>
+    <clipPath id="scene-frame">
+      <rect x="867" y="112" width="239" height="132" rx="11"/>
+    </clipPath>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="338" rx="20" fill="#101b2d" stroke="#30486a" stroke-width="2"/>
+
+  <g font-family="'Segoe UI', system-ui, sans-serif">
+    <text x="62" y="102" fill="#9ec9ff" font-size="28" font-weight="600">Wallpaper Engine</text>
+    <text x="56" y="197" fill="#f4f8ff" font-size="96" font-weight="700" letter-spacing="-4">RePKG-GUI</text>
+    <text x="62" y="257" fill="#c1cfe2" font-size="34" xml:space="preserve">Scene  Wallpaper Extraction</text>
+  </g>
+
+  <g id="archive" stroke-width="2">
+    <path d="M670 101h77l37 37v95a11 11 0 0 1-11 11H670a11 11 0 0 1-11-11V112a11 11 0 0 1 11-11Z"
+          fill="#192b46" stroke="#5679a6"/>
+    <path d="M747 101v29a8 8 0 0 0 8 8h29" fill="none" stroke="#6d94c6"/>
+    <path d="m691 156 26-14 26 14v22l-26 14-26-14Zm0 0 26 14 26-14m-26 14v22"
+          fill="none" stroke="#9ec9ff" stroke-linejoin="round"/>
+    <text x="721" y="223" text-anchor="middle" fill="#f4f8ff"
+          font-family="Consolas, 'SFMono-Regular', monospace" font-size="29" font-weight="700">.pkg</text>
+  </g>
+
+  <g id="output-slot" stroke="#5679a6" stroke-width="2">
+    <rect x="867" y="112" width="239" height="132" rx="11" fill="#172940"/>
+    <path d="m953 196 24-28 15 16 12-12 19 24Z" fill="none" stroke-linejoin="round"/>
+    <circle cx="999" cy="158" r="5" fill="none"/>
+  </g>
+
+  <g fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M801 179h49m-10-10 10 10-10 10" stroke="#5679a6"/>
+    <path id="extraction-flow" d="M801 179h49m-10-10 10 10-10 10" stroke="#9ec9ff"/>
+  </g>
+
+  <g id="scene-layers">
+    <rect id="scene-back" x="901" y="71" width="239" height="132" rx="11" fill="#192b46" stroke="#5679a6" stroke-width="2"/>
+    <rect id="scene-middle" x="884" y="91" width="239" height="132" rx="11" fill="#203857" stroke="#6d94c6" stroke-width="2"/>
+    <g id="scene-front">
+      <g clip-path="url(#scene-frame)">
+        <rect x="867" y="112" width="239" height="132" fill="#2b4d76"/>
+        <circle cx="1027" cy="154" r="22" fill="#b9e6eb"/>
+        <path d="m863 211 65-63 46 44 21-17 71 69H863Z" fill="#789bc6"/>
+        <path d="m863 236 69-31 43 12 55-33 81 38v27H863Z" fill="#3a7596"/>
+        <path d="M863 243q76-24 139-12 57 12 109-9v27H863Z" fill="#224664"/>
+      </g>
+      <rect x="867" y="112" width="239" height="132" rx="11" fill="none" stroke="#9ec9ff" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

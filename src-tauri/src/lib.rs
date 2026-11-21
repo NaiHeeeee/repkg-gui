@@ -215,6 +215,33 @@ async fn open_shell(app: tauri::AppHandle, path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn get_latest_release_tag() -> Result<String, String> {
+    let response = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .user_agent("RePKG-GUI")
+        .build()
+        .map_err(|error| error.to_string())?
+        .head("https://github.com/naiheeeee/repkg-gui/releases/latest")
+        .send()
+        .await
+        .and_then(reqwest::Response::error_for_status)
+        .map_err(|error| error.to_string())?;
+
+    // GitHub redirects its latest-release permalink to the published tag page.
+    let url = response.url();
+    if let Some((path, tag)) = url.path().rsplit_once('/') {
+        if url.scheme() == "https"
+            && url.host_str() == Some("github.com")
+            && path.eq_ignore_ascii_case("/naiheeeee/repkg-gui/releases/tag")
+            && !tag.is_empty()
+        {
+            return Ok(tag.to_owned());
+        }
+    }
+    Err("GitHub did not redirect to a RePKG-GUI release tag".into())
+}
+
+#[tauri::command]
 async fn is_window_maximized(window: tauri::Window) -> Result<bool, String> {
     window.is_maximized().map_err(|e| e.to_string())
 }
@@ -695,6 +722,7 @@ pub fn run() {
             write_text_file,
             open_folder,
             open_shell,
+            get_latest_release_tag,
             minimize_window,
             maximize_window,
             unmaximize_window,

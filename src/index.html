@@ -8,25 +8,6 @@
 
     <!-- 内联关键样式防止FOUC -->
     <style>
-        /* 基础主题变量和关键样式 */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f7f7f7;
-            --border-color: #e5e5e5;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --accent-color: #3b82f6;
-            --accent-text: #ffffff;
-        }
-
-        html.dark {
-            --bg-primary: #18181b;
-            --bg-secondary: #27272a;
-            --border-color: #3f3f46;
-            --text-primary: #f4f4f5;
-            --text-secondary: #a1a1aa;
-        }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-primary);
@@ -100,7 +81,7 @@
 
     <!-- 自定义标题栏 -->
     <header id="titlebar"
-        class="h-8 bg-[var(--bg-secondary)] flex items-center justify-between px-2 drag-region fixed top-0 left-0 right-0 z-50 border-b border-[var(--border-color)]">
+        class="h-8 bg-[var(--bg-secondary)] flex items-center justify-between px-2 drag-region fixed top-0 left-0 right-0 z-50">
         <div class="flex items-center space-x-2">
             <!-- <img src="assets/icon.svg" alt="Icon" class="w-4 h-4"> -->
             <span class="text-xs font-medium">RePKG-GUI</span>
@@ -133,72 +114,52 @@
         </div>
     </header>
 
-    <div class="flex h-screen pt-8">
-        <!-- 左侧标签栏 (可折叠) -->
-        <aside
-            class="w-20 hover:w-60 bg-[var(--bg-secondary)] p-4 flex flex-col border-r border-[var(--border-color)] transition-all duration-300 ease-in-out group">
-            <div class="flex items-center mb-8 px-3">
-                <div class="w-[23px] h-[23px] flex-shrink-0">
-                    <img src="./assets/icon.svg" alt="repkg" width="23" height="23"
-                        class="text-[var(--accent-color)] w-full h-full object-contain">
-                </div>
-                <h1
-                    class="text-xl font-bold w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-2 transition-all duration-200 whitespace-nowrap">
-                    RePKG</h1>
+    <div class="app-layout h-screen pt-8">
+        <!-- 左侧导航栏 -->
+        <aside class="flex flex-col bg-[var(--bg-secondary)] p-4">
+            <div class="mb-6 flex justify-center">
+                <img src="./assets/icon.svg" alt="" width="30" height="30" class="shrink-0">
+                <h1 class="sr-only">RePKG</h1>
             </div>
-            <nav class="flex flex-col gap-2">
-                <a href="#" class="nav-link active flex items-center px-3 py-2 rounded-md text-base font-medium"
-                    data-page="home">
+            <nav class="flex flex-1 flex-col gap-2">
+                <a href="#" class="nav-link active" aria-current="page" data-page="home">
                     <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="flex-shrink-0">
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
-                    <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap"
-                        data-i18n="nav.home">首页</span>
+                    <span class="sr-only" data-i18n="nav.home">首页</span>
                 </a>
-                <a href="#" class="nav-link flex items-center px-3 py-2 rounded-md text-base font-medium"
-                    data-page="manual">
+                <a href="#" class="nav-link" data-page="manual">
                     <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="flex-shrink-0">
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path
                             d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                         <line x1="12" y1="22.08" x2="12" y2="12" />
                     </svg>
-                    <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap"
-                        data-i18n="nav.manual">手动提取</span>
+                    <span class="sr-only" data-i18n="nav.manual">手动提取</span>
                 </a>
-            </nav>
-            <div class="mt-auto">
-                <a href="#" class="nav-link flex items-center px-3 py-2 rounded-md text-base font-medium"
-                    data-page="settings">
-                    <svg t="1755013019415" class="icon flex-shrink-0 w-[23px] h-[23px]" viewBox="0 0 1024 1024"
-                        version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6832" width="200" height="200">
+                <a href="#" class="nav-link mt-auto" data-page="settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 1024 1024" aria-hidden="true">
                         <path
                             d="M449.194667 82.346667a128 128 0 0 1 125.610666 0l284.16 160a128 128 0 0 1 65.194667 111.530666v316.245334a128 128 0 0 1-65.194667 111.530666l-284.16 160a128 128 0 0 1-125.610666 0l-284.16-160a128 128 0 0 1-65.194667-111.530666V353.877333A128 128 0 0 1 165.034667 242.346667z m83.754666 74.410666a42.666667 42.666667 0 0 0-41.898666 0L206.933333 316.714667a42.666667 42.666667 0 0 0-21.76 37.162666v316.245334a42.666667 42.666667 0 0 0 21.76 37.162666l284.16 160a42.666667 42.666667 0 0 0 41.898667 0l284.16-160a42.666667 42.666667 0 0 0 21.76-37.162666V353.877333a42.666667 42.666667 0 0 0-21.76-37.162666zM512 341.333333a170.666667 170.666667 0 1 1 0 341.333334 170.666667 170.666667 0 0 1 0-341.333334z m0 85.333334a85.333333 85.333333 0 1 0 0 170.666666 85.333333 85.333333 0 0 0 0-170.666666z"
-                            fill="currentColor" p-id="6833"></path>
+                            fill="currentColor"></path>
                     </svg>
-                    <span
-                        class="w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-3 transition-all duration-200 whitespace-nowrap"
-                        data-i18n="nav.settings">设置</span>
+                    <span class="sr-only" data-i18n="nav.settings">设置</span>
                 </a>
-            </div>
+            </nav>
         </aside>
 
         <!-- 右侧主内容区 -->
-        <main class="flex-1 overflow-y-auto relative">
+        <main class="overflow-y-auto relative">
             <!-- 首页 -->
             <div id="home" class="page active p-8">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
                     <h2 class="text-2xl font-bold" data-i18n="extract.local_wallpapers">本地壁纸</h2>
-                    <div class="flex space-x-2">
+                    <div class="flex flex-wrap gap-2">
                         <button id="refresh-wallpapers"
-                            class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md transition-colors">
+                            class="px-3 py-1 glass-effect hover:bg-[var(--bg-tertiary)] rounded-md transition-colors">
                             <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -213,12 +174,12 @@
                                     d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                             <input type="text" id="search-wallpapers"
-                                class="px-3 py-1 pl-8 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm w-56 focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
+                                class="px-3 py-1 pl-8 glass-effect hover:bg-[var(--bg-tertiary)] rounded-md text-sm w-56 focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
                                 data-i18n-placeholder="search.placeholder">
                         </div>
                         <div class="relative">
                             <button id="content-rating-filter-btn"
-                                class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm flex items-center space-x-1">
+                                class="px-3 py-1 glass-effect hover:bg-[var(--bg-tertiary)] rounded-md text-sm flex items-center space-x-1">
                                 <svg class="w-4 h-4 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg"
                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -234,21 +195,20 @@
                                 </svg>
                             </button>
                             <div id="content-rating-dropdown"
-                                class="absolute right-0 top-full mt-1 min-w-full rounded-md shadow-lg hidden z-10"
-                                style="background: rgba(var(--bg-secondary-rgb), 0.95); border: 2px solid rgba(0, 0, 0, 0.1);">
+                                class="absolute right-0 top-full mt-1 min-w-full rounded-md shadow-lg hidden z-10">
                                 <div class="p-2 space-y-1">
                                     <label
-                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--border-color)] rounded cursor-pointer">
+                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--bg-tertiary)] rounded cursor-pointer">
                                         <input type="checkbox" class="content-rating-checkbox" value="everyone">
                                         <span class="text-sm" data-i18n="content_rating.everyone">大众</span>
                                     </label>
                                     <label
-                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--border-color)] rounded cursor-pointer">
+                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--bg-tertiary)] rounded cursor-pointer">
                                         <input type="checkbox" class="content-rating-checkbox" value="questionable">
                                         <span class="text-sm" data-i18n="content_rating.questionable">家长指导级</span>
                                     </label>
                                     <label
-                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--border-color)] rounded cursor-pointer">
+                                        class="flex items-center space-x-2 p-2 hover:bg-[var(--bg-tertiary)] rounded cursor-pointer">
                                         <input type="checkbox" class="content-rating-checkbox" value="mature">
                                         <span class="text-sm" data-i18n="content_rating.mature">成人</span>
                                     </label>
@@ -258,13 +218,13 @@
                         <div class="flex items-center">
                             <span id="name-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
                             <button id="sort-by-name"
-                                class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm"
+                                class="px-3 py-1 glass-effect hover:bg-[var(--bg-tertiary)] rounded-md text-sm"
                                 data-i18n="buttons.sort_by_name">名称</button>
                         </div>
                         <div class="flex items-center">
                             <span id="date-sort-arrow" class="sort-arrow opacity-0 mr-1 text-lg">↑</span>
                             <button id="sort-by-date"
-                                class="px-3 py-1 glass-effect hover:bg-[var(--border-color)] rounded-md text-sm"
+                                class="px-3 py-1 glass-effect hover:bg-[var(--bg-tertiary)] rounded-md text-sm"
                                 data-i18n="buttons.sort_by_date">日期</button>
                         </div>
                     </div>
@@ -273,14 +233,52 @@
                 <div id="wallpaper-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     <!-- JS动态生成壁纸卡片 -->
                 </div>
+                <div id="wallpaper-pagination" class="mt-6" hidden>
+                    <div class="flex items-center justify-center gap-2 text-sm">
+                        <button id="wallpaper-first-page" type="button"
+                            class="wallpaper-page-button glass-effect rounded-md" data-i18n-title="wallpapers.first" title="首页">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 5v14M18 6l-6 6 6 6"></path>
+                            </svg>
+                            <span class="sr-only" data-i18n="wallpapers.first">首页</span>
+                        </button>
+                        <button id="wallpaper-prev-page" type="button"
+                            class="wallpaper-page-button glass-effect rounded-md" data-i18n-title="wallpapers.previous" title="上一页">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                            <span class="sr-only" data-i18n="wallpapers.previous">上一页</span>
+                        </button>
+                        <span id="wallpaper-page-indicator" class="px-2 text-[var(--text-secondary)] tabular-nums" aria-hidden="true"></span>
+                        <span id="wallpaper-page-status" class="sr-only" role="status"></span>
+                        <button id="wallpaper-next-page" type="button"
+                            class="wallpaper-page-button glass-effect rounded-md" data-i18n-title="wallpapers.next" title="下一页">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                            <span class="sr-only" data-i18n="wallpapers.next">下一页</span>
+                        </button>
+                        <button id="wallpaper-last-page" type="button"
+                            class="wallpaper-page-button glass-effect rounded-md" data-i18n-title="wallpapers.last" title="尾页">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M18 5v14M6 6l6 6-6 6"></path>
+                            </svg>
+                            <span class="sr-only" data-i18n="wallpapers.last">尾页</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- 手动提取页 -->
             <div id="manual" class="page p-8">
-                <h2 class="text-2xl font-bold mb-6" data-i18n="extract.manual_extract">手动提取</h2>
-                <div class="max-w-xl mx-auto mt-10">
+                <div class="max-w-xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-10" data-i18n="extract.manual_extract">手动提取</h2>
                     <div id="dropzone"
-                        class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer settings-glass hover:border-[var(--accent-color)] hover:bg-[var(--border-color)] transition-colors">
+                        class="border-2 border-dashed border-[var(--border-color)] rounded-xl p-12 text-center cursor-pointer settings-glass hover:border-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
                         <svg class="mx-auto h-12 w-12 text-[var(--text-secondary)]" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -298,10 +296,10 @@
                             <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                             <div class="flex gap-2">
                                 <button id="change-extract-path-manual"
-                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                     data-i18n="buttons.change">更改</button>
                                 <button id="restore-default-extract-path-manual"
-                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                    class="px-3 py-1 text-sm glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                     data-i18n="buttons.restore_default">恢复默认</button>
                             </div>
                         </div>
@@ -320,21 +318,21 @@
 
             <!-- 设置页 -->
             <div id="settings" class="page p-8">
-                <h2 class="text-2xl font-bold mb-8" data-i18n="settings.title">设置</h2>
                 <div class="max-w-2xl mx-auto space-y-8">
+                    <h2 class="text-2xl font-bold" data-i18n="settings.title">设置</h2>
                     <!-- 外观设置 -->
                     <div>
                         <h3 class="text-lg font-semibold mb-4" data-i18n="settings.appearance">外观</h3>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-4 settings-glass rounded-lg">
+                            <div class="flex flex-wrap items-center justify-between gap-2 p-4 settings-glass rounded-lg">
                                 <span class="font-medium" data-i18n="settings.theme">主题</span>
-                                <div class="flex items-center gap-2 p-1 glass-effect rounded-md">
-                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="system"
+                                <div class="ml-auto grid max-w-full grid-cols-3 gap-1 p-1 glass-effect rounded-md">
+                                    <button class="theme-btn rounded" data-theme="system"
                                         data-i18n="settings.system">跟随系统</button>
 
-                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="light"
+                                    <button class="theme-btn rounded" data-theme="light"
                                         data-i18n="settings.light">亮色</button>
-                                    <button class="theme-btn px-3 py-1 text-sm rounded" data-theme="dark"
+                                    <button class="theme-btn rounded" data-theme="dark"
                                         data-i18n="settings.dark">暗色</button>
                                 </div>
                             </div>
@@ -342,35 +340,35 @@
                                 <div class="flex items-center justify-between">
                                     <span class="font-medium" data-i18n="settings.language">语言</span>
                                     <button id="language-toggle-btn"
-                                        class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                        class="glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                         data-i18n="settings.select_language">
                                         选择语言
                                     </button>
                                 </div>
                                 <div id="language-options" class="hidden mt-3 space-y-2">
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="zh-CN">
                                         <span>简体中文</span>
                                         <span
                                             class="check-icon opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
                                     </button>
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="zh-TW">
                                         <span>繁體中文</span>
                                         <span
                                             class="check-icon opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
                                     </button>
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="en-US">
                                         <span>English</span>
                                         <span
                                             class="check-icon opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
                                     </button>
                                     <button
-                                        class="language-option w-full px-3 py-2 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
+                                        class="language-option w-full glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md text-left flex items-center justify-between group"
                                         data-lang="ja-JP">
                                         <span>日本語</span>
                                         <span
@@ -396,12 +394,12 @@
                                             data-i18n="background.network_url">网络地址</label>
                                         <div class="flex gap-2">
                                             <input type="text" id="bg-url-input"
-                                                class="flex-1 p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm"
+                                                class="min-w-0 flex-1 p-2 rounded-md glass-effect border border-[var(--border-color)] text-sm"
                                                 data-i18n-placeholder="background.enter_url" placeholder="请输入图片的URL">
-                                            <button id="apply-bg-url" class="px-3 py-1 text-sm btn-blue rounded-md"
+                                            <button id="apply-bg-url" class="glass-effect text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                                 data-i18n="background.apply">应用</button>
                                             <button id="clear-bg-btn"
-                                                class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 transition-colors rounded-md"
+                                                class="glass-effect text-[var(--danger-text)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                                 data-i18n="background.clear">清除背景</button>
                                         </div>
                                     </div>
@@ -413,10 +411,10 @@
                                             <input type="file" id="bg-file-input" class="hidden"
                                                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-msvideo">
                                             <button id="select-bg-file"
-                                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md"
+                                                class="glass-effect hover:bg-[var(--accent-color)] hover:text-[var(--accent-text)] transition-colors rounded-md"
                                                 data-i18n="background.browse">浏览文件</button>
                                             <div id="selected-file-info"
-                                                class="flex-1 text-sm text-[var(--text-secondary)] flex items-center">
+                                                class="min-w-0 flex-1 text-sm text-[var(--text-secondary)] flex items-center">
                                                 <span data-i18n="background.no_file_selected">未选择文件</span>
                                             </div>
                                         </div>
@@ -466,16 +464,16 @@
                         <h3 class="text-lg font-semibold mb-4" data-i18n="workshop.title">创意工坊路径设置</h3>
                         <div class="space-y-2">
                             <div class="p-4 settings-glass rounded-lg">
-                                <div class="flex items-center justify-between mb-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                                     <p class="font-medium" data-i18n="workshop.custom_path">自定义路径</p>
-                                    <div class="flex gap-2">
+                                    <div class="ml-auto flex flex-wrap justify-end gap-2">
                                         <button id="browse-workshop-path"
-                                            class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                            class="glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                             data-i18n="buttons.browse">浏览</button>
                                         <button id="restore-default-path"
-                                            class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                            class="glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                             data-i18n="buttons.restore_default">恢复默认</button>
-                                        <button id="save-workshop-path" class="px-3 py-1 text-sm btn-blue rounded-md"
+                                        <button id="save-workshop-path" class="glass-effect text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                             data-i18n="buttons.save">保存</button>
                                     </div>
                                 </div>
@@ -579,7 +577,7 @@
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG-GUI</span>
                                 <a href="https://github.com/naiheeeee/repkg-gui" target="_blank"
-                                    class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline flex items-center gap-1">
+                                    class="text-sm text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline flex items-center gap-1">
                                     <img src="./assets/github.svg" alt="GitHub" class="w-4 h-4 theme-icon-light">
                                     <img src="./assets/github-white.svg" alt="GitHub"
                                         class="w-4 h-4 theme-icon-dark hidden">
@@ -587,18 +585,29 @@
                                 </a>
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
-                                <a href="https://github.com/naiheeeee/repkg-gui/releases/latest" target="_blank"
-                                    class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline"
-                                    id="app-version">v0.7.2</a>
+                            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                                <div class="flex flex-wrap items-baseline gap-x-2">
+                                    <span class="font-medium" data-i18n="about.version">RePKG-GUI版本</span>
+                                    <a href="https://github.com/naiheeeee/repkg-gui/releases/latest" target="_blank"
+                                        class="text-xs text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline tabular-nums"
+                                        id="app-version">v0.7.3</a>
+                                </div>
+                                <button id="check-for-updates" type="button" aria-describedby="update-check-status"
+                                    class="ml-auto shrink-0 glass-effect rounded-md hover:bg-[var(--bg-tertiary)] disabled:opacity-50"
+                                    data-i18n="about.check_updates">检查更新</button>
+                            </div>
+                            <div class="flex flex-wrap items-baseline gap-x-3">
+                                <p id="update-check-status" class="mt-2 text-sm text-[var(--text-secondary)] empty:hidden" role="status"></p>
+                                <a id="update-release-link" target="_blank" rel="noopener noreferrer" hidden
+                                    class="mt-2 text-sm text-[var(--accent-color)] hover:underline"
+                                    data-i18n="about.view_release">查看发布页</a>
                             </div>
                         </div>
                         <div class="p-4 settings-glass rounded-lg mt-4">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium">RePKG</span>
                                 <a href="https://github.com/notscuffed/repkg" target="_blank"
-                                    class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline flex items-center gap-1">
+                                    class="text-sm text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline flex items-center gap-1">
                                     <img src="./assets/github.svg" alt="GitHub" class="w-4 h-4 theme-icon-light">
                                     <img src="./assets/github-white.svg" alt="GitHub"
                                         class="w-4 h-4 theme-icon-dark hidden">
@@ -606,10 +615,10 @@
                                 </a>
                             </div>
                             <hr class="border-[var(--border-color)] my-3">
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-baseline gap-x-2">
                                 <span class="font-medium" data-i18n="about.version">RePKG 版本</span>
-                                <a href="https://github.com/notscuffed/repkg/releases/latest" target="_blank"
-                                    class="text-sm text-[var(--text-secondary)] hover:text-blue-500 hover:underline"
+                                <a href="https://github.com/notscuffed/repkg/releases/tag/v0.4.0-alpha" target="_blank"
+                                    class="text-xs text-[var(--text-secondary)] hover:text-[var(--accent-color)] hover:underline tabular-nums"
                                     id="repkg-version">RePKG v0.4.0-alpha</a>
                             </div>
                         </div>
@@ -622,16 +631,20 @@
         <div id="details-backdrop" class="fixed inset-0 bg-black/30 z-10 opacity-0 pointer-events-none"
             onclick="closeDrawer()"></div>
         <div id="details-drawer"
-            class="fixed top-8 right-0 h-[calc(100%-2rem)] w-[500px] bg-[var(--bg-primary)] shadow-2xl z-20 p-6 flex flex-col">
+            class="fixed top-8 right-0 h-[calc(100%-2rem)] w-[500px] shadow-2xl z-20 p-6 flex flex-col">
             <div class="flex-shrink-0">
                 <!-- <button onclick="closeDrawer()" class="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button> -->
                 <img id="details-img" src=""
                     class="w-48 h-48 mx-auto aspect-square object-cover rounded-lg mb-4 bg-[var(--bg-tertiary)]">
-                <h3 id="details-name" class="text-lg font-bold mb-4 text-center"></h3>
+                <h3 id="details-name" class="text-lg font-bold mb-2 text-center"></h3>
+                <dl class="mb-3 flex justify-center gap-2 text-sm text-[var(--text-secondary)]">
+                    <dt data-i18n="wallpapers.workshop_id">创意工坊 ID</dt>
+                    <dd id="details-workshop-id" class="select-text font-mono text-[var(--text-primary)]">—</dd>
+                </dl>
                 <div class="mb-4 text-center">
-                    <div id="details-contentrating"
+                    <div id="details-contentrating" hidden
                         class="text-xs text-[var(--text-secondary)] settings-glass rounded-xl glass-disabled px-2 py-0.5 inline-block">
                     </div>
                 </div>
@@ -642,10 +655,10 @@
                         <p class="font-medium" data-i18n="extract.select_output">提取到</p>
                         <div class="flex gap-2">
                             <button id="change-extract-path"
-                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                 data-i18n="buttons.change">更改</button>
                             <button id="restore-default-extract-path"
-                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--border-color)] transition-colors rounded-md"
+                                class="px-3 py-1 text-sm glass-effect hover:bg-[var(--bg-tertiary)] transition-colors rounded-md"
                                 data-i18n="buttons.restore_default">恢复默认</button>
                         </div>
                     </div>
@@ -667,6 +680,7 @@
     </div>
 
     <script src="js/settings.js"></script>
+    <script type="module" src="js/update-check.js"></script>
     <script type="module" src="./i18n/i18n.js"></script>
     <script src="js/tailwindcss.js"></script>
     <script src="js/wallpaper-editor.js"></script>

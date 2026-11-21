@@ -12,6 +12,15 @@
     "no_wallpapers": "壁紙が見つかりません",
     "ensure_path": "Steamワークショップのパスが正しく、壁紙ファイルが含まれているか確認してください"
   },
+  "wallpapers": {
+    "first": "最初のページ",
+    "last": "最後のページ",
+    "previous": "前へ",
+    "next": "次へ",
+    "page": "{page} / {pages} ページ",
+    "no_matches": "条件に一致する壁紙がありません",
+    "workshop_id": "ワークショップ ID"
+  },
   "settings": {
     "title": "設定",
     "appearance": "外観",
@@ -41,6 +50,13 @@
     "glass_effect_desc": "インターフェースのガラス効果（半透明）を有効にします"
   },
   "about": {
+    "check_updates": "更新を確認",
+    "checking_updates": "RePKG-GUI の更新を確認しています…",
+    "update_available": "バージョン {latest} が利用可能です。現在のバージョンは {current} です。",
+    "no_update": "利用可能な更新はありません。現在のバージョンは {current} です。",
+    "update_failed": "更新を確認できませんでした。リリースページで確認できます。",
+    "view_release": "リリースページを表示",
+    "release_open_failed": "リリースページを開けませんでした。再試行してください。",
     "title": "RePKG GUI について",
     "version": "バージョン"
   },

@@ -12,6 +12,15 @@
     "no_wallpapers": "No wallpapers found",
     "ensure_path": "Please ensure Steam Workshop path exists and contains wallpaper files"
   },
+  "wallpapers": {
+    "first": "First page",
+    "last": "Last page",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {pages}",
+    "no_matches": "No wallpapers match your filters",
+    "workshop_id": "Workshop ID"
+  },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",
@@ -41,6 +50,13 @@
     "glass_effect_desc": "Enable or disable the glass effect for the interface"
   },
   "about": {
+    "check_updates": "Check for updates",
+    "checking_updates": "Checking for RePKG-GUI updates…",
+    "update_available": "Version {latest} is available. You have {current}.",
+    "no_update": "No updates available. You have {current}.",
+    "update_failed": "Could not check for updates. Open the release page to check manually.",
+    "view_release": "View release",
+    "release_open_failed": "Could not open the release page. Try again.",
     "title": "About RePKG GUI",
     "version": "Version"
   },

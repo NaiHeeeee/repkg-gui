@@ -1,0 +1,71 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    if: ${{ !github.event.deleted }}
+    runs-on: windows-2025
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check release version
+        id: version
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          $package = Get-Content package.json -Raw | ConvertFrom-Json
+          $tauri = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          if ($package.version -ne $version -or $tauri.version -ne $version) {
+            throw "Tag $env:GITHUB_REF_NAME does not match package.json ($($package.version)) and tauri.conf.json ($($tauri.version))."
+          }
+          "number=$version" >> $env:GITHUB_OUTPUT
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '9.15.9'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows x64 installer
+        run: pnpm run tauri:build
+
+      - name: Package portable ZIP
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.number }}
+        run: |
+          $buildDir = 'src-tauri/target/release'
+          Compress-Archive -LiteralPath @("$buildDir/repkg-gui.exe", "$buildDir/bin") `
+            -DestinationPath "$buildDir/repkg-gui_${env:RELEASE_VERSION}_x64.zip"
+
+      - name: Read release notes from tag
+        run: |
+          git tag --list --format='%(contents)' $env:GITHUB_REF_NAME |
+            Set-Content -Encoding utf8 "$env:RUNNER_TEMP/release-notes.md"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: repkg-gui_${{ steps.version.outputs.number }}_x64
+          body_path: ${{ runner.temp }}/release-notes.md
+          fail_on_unmatched_files: true
+          files: |
+            src-tauri/target/release/bundle/nsis/repkg-gui_${{ steps.version.outputs.number }}_x64-setup.exe
+            src-tauri/target/release/repkg-gui_${{ steps.version.outputs.number }}_x64.zip

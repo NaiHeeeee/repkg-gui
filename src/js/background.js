@@ -400,9 +400,9 @@ class BackgroundManager {
         
         fileInfoElement.innerHTML = `
             <span class="truncate">${fileName}</span>
-            <span class="ml-2 text-[var(--text-secondary)]">(${sizeInMB} MB)</span>
+            <span class="ml-2 shrink-0 text-[var(--text-secondary)]">(${sizeInMB} MB)</span>
             ${warningText}
-            <button id="apply-local-bg" class="ml-2 px-2 py-1 text-xs btn-blue rounded">${applyButtonText}</button>
+            <button id="apply-local-bg" class="ml-2 shrink-0 glass-effect${settingsManager.get('glass-effect') ? '' : ' glass-disabled'} text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md">${applyButtonText}</button>
         `;
 
         // 绑定应用按钮事件
@@ -428,7 +428,7 @@ class BackgroundManager {
 
         fileInfoElement.innerHTML = `
             <span class="truncate">${fileName}</span>
-            <button id="apply-local-bg" class="ml-2 px-2 py-1 text-xs btn-blue rounded">${applyButtonText}</button>
+            <button id="apply-local-bg" class="ml-2 shrink-0 glass-effect${settingsManager.get('glass-effect') ? '' : ' glass-disabled'} text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors rounded-md">${applyButtonText}</button>
         `;
 
         const applyBtn = document.getElementById('apply-local-bg');
